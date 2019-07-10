@@ -1,4 +1,12 @@
-%% BEST CHANGE LOG %%
+% 19 - 06 - 2019
+- be_main_call: Fix opening of MATLAB parallel pool
+- process_inverse_mem: Suppress warning 'eval(macro_method);'
+
+% 25 - 07 - 2017
+- launch from the 2016 SOURCE PANEL is now operational
+
+% 08 - 09 - 2015
+- cMEM EEG/MEG fusion is now operational
 
 % 05 - 12 - 2014
 - be_install 	            :   automatic update added
@@ -83,14 +91,14 @@
 % 07 - 03 - 2014
 - be_wavelet_inverse.m 		:	remplacer "iwt_po" par "IWT_PO" (ligne 48)
 - be_discrete_wavelet_transform :	remplacer "fwt_po" par "FWT_PO" (ligne 44)
-- be_struct_copy_fields		: 	ajouter le champ "varargin" dans l'appel � 
+- be_struct_copy_fields		: 	ajouter le champ "varargin" dans l'appel à
                                 la fonction "be_struct_copy_fields". Ceci   
-                                permet de sp�cifier si les options choisies 
-                                dans l'appel � la fonction doivent "override" 
-                                les options par d�faut (ce qui n'�tait pas 
+                                permet de spécifier si les options choisies 
+                                dans l'appel à la fonction doivent "override" 
+                                les options par défaut (ce qui n'était pas 
                                 le cas avant)
 - be_pipelineoptions		: 	changer l'appel "be_struct_copyfields()" en 
-                                ajoutant le param�tre 1 � la fin (override)     
+                                ajoutant le paramètre 1 à la fin (override)     
                                 (ligne 23)
 
  

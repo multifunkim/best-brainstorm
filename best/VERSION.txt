@@ -1,4 +1,6 @@
-2.6.3
-july 25th, 2017
-Minor change:
-- launch from the 2016 SOURCE PANEL is now operational
+2.7.1
+
+june 19th, 2019
+Minor changes:
+- Fix MATLAB parallelism
+- Suppress warning for the custom Brainstorm process

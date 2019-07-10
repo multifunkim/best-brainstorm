@@ -1,4 +1,4 @@
-function [Results, OPTIONS] = be_main_call(HeadModel, OPTIONS)
+function [Results, OPTIONS] = be_main_call_NIRS_fusion(HeadModel, OPTIONS)
 % BE_MAIN launches the MEM inverse solution pipeline that fits the
 % OPTIONS.
 % 
@@ -88,13 +88,7 @@ if ~stand_alone && isfield( OPTIONS, 'MEMpaneloptions' )
     [dummy, MEMoptions.automatic.iItem]                 =   be_get_id( MEMoptions );
     MEMoptions.automatic.DataInfo                       =   load( be_fullfile(MEMoptions.automatic.iProtocol.STUDIES, OPTIONS.DataFile) );
     % solver
-    if isfield(OPTIONS, 'NoiseCov')
-        MEMoptions.solver.NoiseCov                    	=   OPTIONS.NoiseCov;
-    elseif isfield(OPTIONS, 'NoiseCovMat')
-        MEMoptions.solver.NoiseCov                      =   OPTIONS.NoiseCovMat.NoiseCov;
-    else
-        error('MEM: cannot find noise covariance matrix in the OPTIONS');
-    end
+    MEMoptions.solver.NoiseCov                          =   OPTIONS.NoiseCov;
     if OPTIONS.MEMpaneloptions.solver.NoiseCov_recompute
         MEMoptions.solver.NoiseCov = []; 
     end
@@ -135,17 +129,17 @@ end
 if (nargout==2) && ~FLAG
     
     % Initialize parallel computing
-    close_pool = true;
-    if MEMoptions.solver.parallel_matlab 
-        if isempty(gcp('nocreate'))
-            gcp;
-        else
-            close_pool = false;
-        end
-    end
+%     close_pool = true;
+%     if MEMoptions.solver.parallel_matlab 
+%         if ~matlabpool('size')
+%             matlabpool open
+%         else
+%             close_pool = false;
+%         end
+%     end
     
     % THE CODE STARTS HERE:    
-    [Results, MEMoptions]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions, Results );
+    [Results, MEMoptions]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver_NIRS_fusion'], HeadModel, MEMoptions, Results );
     OPTIONS.TimeSegment     = MEMoptions.mandatory.DataTime([1 end]);
     OPTIONS.BaselineSegment = MEMoptions.optional.BaselineSegment([1 end]);
     OPTIONS.ResultFile      = MEMoptions.optional.ResultFile;
@@ -154,9 +148,9 @@ if (nargout==2) && ~FLAG
     OPTIONS.DataTime        = MEMoptions.mandatory.DataTime;
     
     % Initialize parallel computing
-    if MEMoptions.solver.parallel_matlab && close_pool
-        delete(gcp('nocreate'))
-    end
+%     if MEMoptions.solver.parallel_matlab && close_pool
+%         matlabpool close
+%     end
     
 elseif (nargout==1)
     Results = MEMoptions;

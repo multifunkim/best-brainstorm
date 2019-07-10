@@ -51,7 +51,8 @@ if exist('minFunc','dir')~=7
 end
 
 
-if exist([matlabroot '/toolbox/optim/optim'],'dir')==7 && strcmp(mem_struct.optim_algo,'fminunc')
+% if exist([matlabroot '/toolbox/optim/optim'],'dir')==7 && strcmp(mem_struct.optim_algo,'fminunc')
+if (license('test','Optimization_Toolbox')&&strcmp(mem_struct.optim_algo,'fminunc'))
     % Creating the options structure for MATLAB's fminunc function
     options = optimset('GradObj', 'on', ...
         'LargeScale', 'off', ...
@@ -70,8 +71,9 @@ if exist([matlabroot '/toolbox/optim/optim'],'dir')==7 && strcmp(mem_struct.opti
         mem_struct.nb_clusters);
     iter = out.iterations;
 
-elseif strcmp(mem_struct.optim_algo,'fminunc') && ...
-        exist([matlabroot '/toolbox/optim/optim'],'dir')~=7
+% elseif strcmp(mem_struct.optim_algo,'fminunc') && ...
+%         exist([matlabroot '/toolbox/optim/optim'],'dir')~=7
+elseif (~license('test','Optimization_Toolbox')&&strcmp(mem_struct.optim_algo,'fminunc'))
     disp(['Matlab Optimization toolbox fminunc.m not found.' ...
         ' Using alternate optimization routine...'])
     options = [];
