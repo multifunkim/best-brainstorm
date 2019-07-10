@@ -1,4 +1,4 @@
-2.6.2
-september 8th, 2015
-Major changes:
-- cMEM EEG/MEG fusion is now operational
+2.6.3
+july 25th, 2017
+Minor change:
+- launch from the 2016 SOURCE PANEL is now operational
