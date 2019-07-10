@@ -29,11 +29,11 @@ end
 function sProcess = GetDescription() %#ok<DEFNU>
     % ===== PROCESS =====
     % Description the process
-    sProcess.Comment     = 'Compute BEst sources';
+    sProcess.Comment     = 'Compute sources: BEst';
     sProcess.FileTag     = '';
     sProcess.Category    = 'Custom';
     sProcess.SubGroup    = 'Sources';
-    sProcess.Index       = 325;
+    sProcess.Index       = 328;
     % Definition of the input accepted by this process
     sProcess.InputTypes  = {'data', 'raw'};
     sProcess.OutputTypes = {'results', 'results'};
@@ -76,7 +76,7 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
     
     % ===== GET OPTIONS =====
     % Default inverse options
-    OPTIONS = bst_sourceimaging();
+    OPTIONS = process_inverse('Compute');
     % MEM options
     if ~isfield(sProcess.options.mem.Value, 'MEMpaneloptions')
         fprintf('\n\n***\tError in BEst process\t***\n\tyou MUST edit options before lauching the MEM.\n\n')
@@ -146,7 +146,7 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
 
     % ===== START COMPUTATION =====
     % Call head modeler
-    [AllFiles, errMessage] = panel_inverse('ComputeInverse', iStudies, iDatas, OPTIONS);
+    [AllFiles, errMessage] = process_inverse('Compute', iStudies, iDatas, OPTIONS);
     % Report errors
     if isempty(AllFiles) && ~isempty(errMessage)
         bst_report('Error', sProcess, sInputs, errMessage);

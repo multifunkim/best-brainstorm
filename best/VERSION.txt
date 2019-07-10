@@ -1,0 +1,4 @@
+2.6.2
+september 8th, 2015
+Major changes:
+- cMEM EEG/MEG fusion is now operational
