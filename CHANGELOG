@@ -1,3 +1,13 @@
+% 17 - 04 - 2021
+- be_gen_paths: 
+    - Fix addpath, should add [./brainentropy] instead of [./brainentropy/best/misc]
+- be_minimize_free_energy: 
+    - Add option to use minFunc without MEX files
+- panel_brainentropy: 
+    - Add option to load a baseline file from the current Brainstorm protocol using a substring
+    - Add option to use minFunc without MEX files
+    - Remove option for loading emptyroom data
+
 % 19 - 06 - 2019
 - be_main_call: Fix opening of MATLAB parallel pool
 - process_inverse_mem: Suppress warning 'eval(macro_method);'
