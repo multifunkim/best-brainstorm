@@ -19,7 +19,7 @@ function [lambda, entropy, iter] = be_minimize_free_energy(mem_struct)
 %  Authors: LATIS team, 2011
 %
 %% ==============================================
-% License 
+% License
 %
 % BEst is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ function [lambda, entropy, iter] = be_minimize_free_energy(mem_struct)
 %
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
-% -------------------------------------------------------------------------   
+% -------------------------------------------------------------------------
 
 
 % Constants
@@ -41,7 +41,7 @@ MAX_ITER = 10000;  % The maximum number of itterations
 
 % MINIMIZING THE FUNCTION
 
-%Adds the folder with the minimization routines to the search path if it 
+%Adds the folder with the minimization routines to the search path if it
 % does not exist
 if exist('minFunc','dir')~=7
     p=mfilename('fullpath');
@@ -51,8 +51,9 @@ if exist('minFunc','dir')~=7
 end
 
 
-% if exist([matlabroot '/toolbox/optim/optim'],'dir')==7 && strcmp(mem_struct.optim_algo,'fminunc')
-if (license('test','Optimization_Toolbox')&&strcmp(mem_struct.optim_algo,'fminunc'))
+if license('test', 'Optimization_Toolbox') && ...
+        strcmpi(mem_struct.optim_algo, 'fminunc') && ...
+        exist('fminunc', 'file')
     % Creating the options structure for MATLAB's fminunc function
     options = optimset('GradObj', 'on', ...
         'LargeScale', 'off', ...
@@ -70,38 +71,24 @@ if (license('test','Optimization_Toolbox')&&strcmp(mem_struct.optim_algo,'fminun
         mem_struct.clusters, ...
         mem_struct.nb_clusters);
     iter = out.iterations;
-
-% elseif strcmp(mem_struct.optim_algo,'fminunc') && ...
-%         exist([matlabroot '/toolbox/optim/optim'],'dir')~=7
-elseif (~license('test','Optimization_Toolbox')&&strcmp(mem_struct.optim_algo,'fminunc'))
-    disp(['Matlab Optimization toolbox fminunc.m not found.' ...
-        ' Using alternate optimization routine...'])
-    options = [];
-    options.MaxIter=MAX_ITER;
-    options.MaxFunEvals=MAX_ITER;
-    options.Display='off';
     
-    [lambda, entropy, xxxx, out]  = minFunc(...
-        @be_free_energy , ...
-        mem_struct.lambda, ...
-        options, ...
-        mem_struct.M, ...
-        mem_struct.noise_var, ...
-        mem_struct.clusters, ...
-        mem_struct.nb_clusters);
-    iter = out.iterations;
 else
     % call an alternate unconstrained minimization routine if Matlab
     %  optimization toolbox is not available. Uses Mark Schmidt's
     % implementation of Nocedal's Quasi Newton method with BFGS updates
     % See minFunc.m for additional options.
-    %
-    
-    % Creating the options structure for MATLAB's fminunc function
+    if strcmpi(mem_struct.optim_algo, 'fminunc')
+        disp(['BEst> No license found for the Optimization Toolbox or ', ...
+            'missing the function ''fminunc''.'])
+        disp('BEst> Using alternate optimization routine...')
+    end
     options = [];
-    options.MaxIter=MAX_ITER;
-    options.MaxFunEvals=MAX_ITER;
-    options.Display='off';
+    options.MaxIter = MAX_ITER;
+    options.MaxFunEvals = MAX_ITER;
+    options.Display = 'off';
+    if strcmpi(mem_struct.optim_algo, 'minfuncnm')
+        options.useMex = 0;
+    end
     
     [lambda, entropy, xxxx, out]  = minFunc(...
         @be_free_energy , ...
@@ -113,5 +100,4 @@ else
         mem_struct.nb_clusters);
     iter = out.iterations;
 end
-return
-
+end
