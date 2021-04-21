@@ -60,9 +60,6 @@ elseif nargin==1
     error('MEM error : wrong pipeline input\n')    
 end
 
-% ==== make sure all paths are added
-be_gen_paths;
-
 % ==== Copy default options to OPTIONS structure (do not replace defined values)
 [stand_alone, process] = be_check_caller;
 if ~stand_alone && isfield( OPTIONS, 'MEMpaneloptions' )

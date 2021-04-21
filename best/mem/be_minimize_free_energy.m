@@ -41,15 +41,6 @@ MAX_ITER = 10000;  % The maximum number of itterations
 
 % MINIMIZING THE FUNCTION
 
-%Adds the folder with the minimization routines to the search path if it
-% does not exist
-if exist('minFunc','dir')~=7
-    p=mfilename('fullpath');
-    [pathstr]=fileparts(p);
-    file=be_fullfile(pathstr,'minFunc');
-    addpath(genpath(file));
-end
-
 
 if license('test', 'Optimization_Toolbox') && ...
         strcmpi(mem_struct.optim_algo, 'fminunc') && ...
