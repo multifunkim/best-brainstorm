@@ -61,6 +61,7 @@ elseif ~any(isRF)
         error('MEM : Channels of baseline file do not match channels in data file');
     end    
     OPTIONS.optional.Baseline = OPTIONS.optional.Baseline(CH,STb:NDb);
+    OPTIONS.optional.BaselineTime = OPTIONS.optional.BaselineTime(STb : NDb);
     
 end
 

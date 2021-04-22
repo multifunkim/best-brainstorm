@@ -1134,11 +1134,6 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
         else
             MEMpaneloptions.optional.Baseline = [];
         end
-        if isfield(MEMglobal, 'BaselineTime')
-            MEMpaneloptions.optional.BaselineTime = MEMglobal.BaselineTime;
-        else
-            MEMpaneloptions.optional.BaselineTime = [];
-        end
         if isfield(MEMglobal, 'BaselineChannels')
             MEMpaneloptions.optional.BaselineChannels = MEMglobal.BaselineChannels;
         else
@@ -1298,11 +1293,11 @@ else
             
             switch varargin{2}
                 case ''
-                    if isfield(MEMglobal, 'BaselineTime') 
-                        Time = MEMglobal.BaselineTime;
+                    if isfield(MEMglobal, 'Baseline') && ~isempty(MEMglobal.Baseline) 
+                        Time = getfield(load(MEMglobal.Baseline, 'Time'), 'Time');
                     end
                 case {'auto', 'import'}
-                    Time = MEMglobal.BaselineTime;   
+                    Time = getfield(load(MEMglobal.Baseline, 'Time'), 'Time');   
             end
     
     end
@@ -1401,11 +1396,9 @@ MEMglobal.BSLinfo.comment = S(K(1)).Comment;
 MEMglobal.BSLinfo.file = S(K(1)).FileName;
 if ~isfield(MEMglobal, 'BaselineHistory') || ~strcmp(MEMglobal.BSLinfo.file, ...
         MEMglobal.BaselineHistory{3})
-    bsl = load(file_fullpath(MEMglobal.BSLinfo.file), 'F', 'Time');
-    MEMglobal.Baseline = bsl.F;
-    MEMglobal.BaselineTime = bsl.Time;
-    MEMglobal.BaselineChannels = load(file_fullpath(bst_get(...
-        'ChannelFileForStudy', MEMglobal.BSLinfo.file)));
+    MEMglobal.Baseline = file_fullpath(MEMglobal.BSLinfo.file);
+    MEMglobal.BaselineChannels = file_fullpath(bst_get(...
+        'ChannelFileForStudy', MEMglobal.BSLinfo.file));
     MEMglobal.BaselineHistory{1} = 'auto';
     MEMglobal.BaselineHistory{2} = MEMglobal.BSLinfo.comment;
     MEMglobal.BaselineHistory{3} = MEMglobal.BSLinfo.file;
@@ -1455,17 +1448,19 @@ MEMglobal.BSLinfo.file    = Lst;
 MEMglobal.BSLinfo.format  = Frmt; 
 
 if strcmp(Frmt, 'BST-MAT')
-    BSL     =   load( Lst );
-    BSLc    =   load( fullfile( iP.STUDIES, bst_get('ChannelFileForStudy', Lst) ) );
+    BSL = Lst;
+    BSLc = fullfile(iP.STUDIES, bst_get('ChannelFileForStudy', Lst));
 else
     try
+        % This code block should not be correct as it is not consistent with the
+        % signature of in_data()...
         [BSL, BSLc] = in_data( Lst, Frmt, [], []);
         if numel(BSL)>1
             ctrl.jTextBSL.setText('loading only trial 1');
             pause(2)
             ctrl.jTextBSL.setText(Lst);
         end    
-        BSL = load(BSL(1).FileName);
+        BSL = BSL(1).FileName;
     catch
         ctrl.jTextBSL.setText('File cannot be used. Select new file');
         pause(2)
@@ -1475,8 +1470,7 @@ else
     end
 end
 
-MEMglobal.Baseline              = BSL.F;
-MEMglobal.BaselineTime          = BSL.Time;
+MEMglobal.Baseline              = BSL;
 MEMglobal.BaselineChannels      = BSLc;
 MEMglobal.BaselineHistory{1}    = 'import';
 MEMglobal.BaselineHistory{2}    = '';
