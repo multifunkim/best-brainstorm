@@ -1,3 +1,12 @@
+% 22 - 04 - 2021
+- All addpath were removed
+- process_inverse_mem:
+    - Remove unused options
+- be_main_call; be_check_timedef; panel_brainentropy:
+    - Baseline file is better handled, the panel no longer preloads it but point to its full path
+- panel_brainentropy; be_main:
+    - Files transfered from the Brainstorm repository
+
 % 17 - 04 - 2021
 - be_gen_paths: 
     - Fix addpath, should add [./brainentropy] instead of [./brainentropy/best/misc]

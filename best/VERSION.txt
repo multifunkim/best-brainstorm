@@ -1,7 +1,5 @@
-2.7.2
+2.7.3
 
-April 17, 2021
+April 22, 2021
 Minor changes:
-- Add option to use minFunc without MEX files
-- Remove option for loading emptyroom data
-- Add option to load a baseline file from the current Brainstorm protocol using a text field
+- Better handle for baseline file specification

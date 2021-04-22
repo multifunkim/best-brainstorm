@@ -91,7 +91,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         
         % Version
         if firstCall
-            OPTIONS.automatic.version       =   '2.7.2';
+            OPTIONS.automatic.version       =   '2.7.3';
             OPTIONS.automatic.last_update   =   '';
         end
         jTXTver =   JTextField(OPTIONS.automatic.version);
