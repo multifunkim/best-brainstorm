@@ -43,12 +43,7 @@ function sProcess = GetDescription() %#ok<DEFNU>
     sProcess.options.comment.Comment = 'Comment: ';
     sProcess.options.comment.Type    = 'text';
     sProcess.options.comment.Value   = '';
-    % Option: Inverse method
-    sProcess.options.method.Comment = {'Maximum Entropy on the Mean (MEM)'};
-    sProcess.options.method.Type    = 'radio';
-    sProcess.options.method.Value   = 1;
-    sProcess.options.method.Enabled = 0;
-    % Options: MNE options
+    % Options: MEM options
     sProcess.options.mem.Comment = {'panel_brainentropy', 'Source estimation options: '};
     sProcess.options.mem.Type    = 'editpref';
     sProcess.options.mem.Value   = be_main;
@@ -56,11 +51,6 @@ function sProcess = GetDescription() %#ok<DEFNU>
     sProcess.options.sensortypes.Comment = 'Sensor types:&nbsp;&nbsp;&nbsp;&nbsp;';
     sProcess.options.sensortypes.Type    = 'text';
     sProcess.options.sensortypes.Value   = 'MEG, MEG MAG, MEG GRAD, EEG';
-    % Option: Output
-    sProcess.options.sep3.Type      = 'separator';
-    sProcess.options.output.Comment = {'Full results: one per file'};
-    sProcess.options.output.Type    = 'radio';
-    sProcess.options.output.Value   = 1;
 end
 
 
