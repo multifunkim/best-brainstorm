@@ -47,7 +47,7 @@ param1 = [0.1:0.1:1 1:5:100 100:100:1000];
 
 display('cMEM, solving MNE by L-curve ... ');
 p = OPTIONS.model.depth_weigth_MNE;
-Sigma_s = diag(power(diag(G'*G),p)); 
+Sigma_s = diag(power(diag(G'*G),p)); % p or - p ? 
 W = sqrt(Sigma_s);
 scale = trace(G*G')./trace(W'*W);       % Scale alpha using trace(G*G')./trace(W'*W)
 alpha = param1.*scale;

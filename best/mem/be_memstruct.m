@@ -115,6 +115,12 @@ MNS = be_solve_wmn(obj.data+rand(size(obj.data))*10, obj.gain, speye(nb_sources)
 % the following loop goes though each of the clusters (non null clusters)
 % and initializes the parameters of the model attached to each of them
 
+%% Add option 
+if OPTIONS.model.depth_weigth_MEM > 0 
+    p = OPTIONS.model.depth_weigth_MEM;
+    G = obj.gain;%./OPTIONS.automatic.Modality.units.Gain_units;
+    Sigma_s = diag(power(diag(G'*G) ,-p));
+end
 for ii = 1:nb_clusters
 
     % CLUSTER: Extraction of the parcel-wise lead field and index of sources
@@ -153,7 +159,11 @@ for ii = 1:nb_clusters
     if isfield(OPTIONS.optional.clustering, 'initial_sigma')
         active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(cID{ii}) );     
     elseif strcmp(OPTIONS.optional.normalization, 'adaptive')       
-        active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2 );
+        if OPTIONS.model.depth_weigth_MEM > 0 
+            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2) * Sigma_s(cID{ii},cID{ii});
+        else
+            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2 );
+        end
     elseif strcmp(OPTIONS.optional.normalization, 'fixed')  
         active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( (cluster_G{ii}'*GpGptinv_M).^2 );    
 %     else
