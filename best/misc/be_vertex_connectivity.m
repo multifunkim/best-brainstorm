@@ -3,7 +3,7 @@ function [OPTIONS, VertConn] = be_vertex_connectivity(HeadModel, OPTIONS)
 VertConn    =   [];    
 
 % Brainstorm architecture
-if ~OPTIONS.automatic.stand_alone
+if ~OPTIONS.automatic.stand_alone && ~( isfield(HeadModel,'vertex_connectivity') || isfield(HeadModel, 'VertConn'))
     load( be_fullfile(OPTIONS.automatic.iProtocol.STUDIES, OPTIONS.optional.DataFile), 'Time')
     OPTIONS.mandatory.DataTime = Time;
     

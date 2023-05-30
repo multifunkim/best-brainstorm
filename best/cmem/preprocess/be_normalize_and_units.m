@@ -75,8 +75,8 @@ switch OPTIONS.optional.normalization
         end
         
         % % Add option OPTIONS.model.depth_weigth_MNE
-        if OPTIONS.model.depth_weigth_MNE || NIRS > 0 
-            J   =   be_jmne_NIRS(G,M,OPTIONS); % use depth weighting MNE for NIRS MEM 
+        if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp( OPTIONS.mandatory.DataTypes,'NIRS')) 
+            J   =   be_jmne_lcurve(G,M,OPTIONS); % use depth weighting MNE for NIRS MEM 
         else
             J   =   be_jmne(G,M,OPTIONS);
         end

@@ -1,4 +1,4 @@
-function [ImageGridAmp, OPTIONS] = be_launch_mem_NIRS(obj, OPTIONS)
+function [ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS)
 % BE_LAUNCH_MEM loops on all time samples and solves the MEM 
 %
 %   INPUTS:
@@ -32,8 +32,10 @@ function [ImageGridAmp, OPTIONS] = be_launch_mem_NIRS(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-% normalize alpha for each coloum
-obj.ALPHA = bsxfun(@rdivide,obj.ALPHA,max(obj.ALPHA,[],1)); % Normalize M
+if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+    % normalize alpha for each coloum
+    obj.ALPHA = bsxfun(@rdivide,obj.ALPHA,max(obj.ALPHA,[],1)); % Normalize M
+end
 
 % All samples or a selection?
 Data  = [];
@@ -64,17 +66,15 @@ end
 entropy_drop    = zeros(1,nbSmp);
 final_alpha     = cell(1,nbSmp);
 final_sigma     = cell(1,nbSmp);
-lambda          = cell(1,nbSmp);
 
 if OPTIONS.solver.parallel_matlab == 1
     warning off
     time_it_starts = tic;
     parfor ii = 1 : nbSmp
-        [R, E, A, S, L] = MEM_mainLoop(ii, Data, obj, OPTIONS);
+        [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS);
         entropy_drop(ii)    =   E;
         final_alpha{ii}     =   A;
         final_sigma{ii}     =   S;
-        lambda{ii}          =   L;
         
         %Store in a matrix
         ImageSourceAmp = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS );
@@ -92,11 +92,11 @@ else
     end
     time_it_starts = tic;
     for ii = 1 : nbSmp
-        [R, E, A, S, L] = MEM_mainLoop(ii, Data, obj, OPTIONS);
+        [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS);
         entropy_drop(ii)	= E;        
         final_alpha{ii}  	= A;
         final_sigma{ii}     = S;
-        lambda{ii}          = L;
+        
         % Store in matrix
         ImageSourceAmp      = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS);        
     end
@@ -126,14 +126,12 @@ end
 OPTIONS.automatic.entropy_drops = entropy_drop;
 OPTIONS.automatic.final_alpha   = final_alpha;
 OPTIONS.automatic.final_sigma   = final_sigma;
-OPTIONS.automatic.lambda        = lambda;
-
 
 end
 
 % =========================================================================
 
-function [R, E, A, S, L] = MEM_mainLoop(ii, Data, obj, OPTIONS)
+function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
 
     % MEM parameters structure
     obj.ind    = ii;
@@ -141,8 +139,12 @@ function [R, E, A, S, L] = MEM_mainLoop(ii, Data, obj, OPTIONS)
     obj.data   = Data(:,ii);
     %obj.scores = obj.SCR(:,ii);
     
-    if strcmp(OPTIONS.optional.normalization, 'adaptive')       
-        obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii)./max(abs(OPTIONS.automatic.Modality(1).Jmne(:,ii)));
+    if strcmp(OPTIONS.optional.normalization, 'adaptive')  
+        obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii);
+
+        if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+            obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
+        end
     end
     
     % check if there's a noise cov for each scale
@@ -169,15 +171,14 @@ function [R, E, A, S, L] = MEM_mainLoop(ii, Data, obj, OPTIONS)
         obj.active_probability = obj.ALPHA(:,ii);
 
         % initialize the MEM
-        [OPTIONS, mem_structure, act_var] = be_memstruct_NIRS(OPTIONS, obj);
+        [OPTIONS, mem_structure, act_var] = be_memstruct(OPTIONS, obj);
         
         % solve the MEM for the current time
         [J, mem_results_struct] = be_solve_mem(mem_structure);   
             nclus       = max(obj.CLS(:,ii));
             niter       = mem_results_struct.iterations;
             entropy_drop= mem_results_struct.entropy;
-            act_proba   = mem_results_struct.active_probability; 
-            lambda      = mem_results_struct.lambda;
+            act_proba   = mem_results_struct.active_probability;            
          if OPTIONS.optional.verbose, fprintf('Sample %3d(%2d,%3.3f):',ii,obj.scale(ii),obj.time(ii)); end;           
         
         % Print output
@@ -194,7 +195,6 @@ function [R, E, A, S, L] = MEM_mainLoop(ii, Data, obj, OPTIONS)
     E = entropy_drop;
     A = act_proba;
     S = act_var;
-    L = lambda;
     
 end
 

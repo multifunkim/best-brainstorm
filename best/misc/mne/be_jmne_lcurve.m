@@ -1,4 +1,4 @@
-function [J,varargout] = be_jmne_NIRS(G,M,OPTIONS)
+function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS)
 % Compute the regularisation parameter based on what brainstorm already
 % do. Note that this function replace be_solve_l_curve:
 % BAYESEST2 solves the inverse problem by estimating the maximal posterior probability (MAP estimator).

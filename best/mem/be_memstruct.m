@@ -101,8 +101,6 @@ regul = trace(GpGpt)/sum(obj.clusters~=0);
 eigen = diag(S);
 I = find(cumsum(eigen.^2)./ sum(eigen.^2) > 0.9,1,'first');
 GpGptinv_M = V(:,1:I) * diag(1./eigen(1:I)) * U(:,1:I)' * obj.data;
-% the following function is in /misc
-MNS = be_solve_wmn(obj.data+rand(size(obj.data))*10, obj.gain, speye(nb_sources) );
 
 % perform leadfield normalization
 %normG       =   (sqrt( sum(obj.gain.^2) )).^(-%OPTIONS.solver.rho_depthweighting);
@@ -138,6 +136,8 @@ for ii = 1:nb_clusters
     % parcels)
     switch OPTIONS.model.active_mean_method
         case 1  % Method 1
+            % the following function is in /misc
+            MNS = be_solve_wmn(obj.data+rand(size(obj.data))*10, obj.gain, speye(nb_sources) );
             active_mean{ii} = mean( MNS(obj.clusters==ii) );
         case 2  % Method 2
             active_mean{ii} = 0;
