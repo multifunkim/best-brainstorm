@@ -564,8 +564,37 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     %% ----------------------------------------------------------------- %%
      
     
-    
-    
+    jPanelNewR = gui_river();
+
+
+    % ===== depth-weighting METHOD =====
+    JPanelDepth = gui_river([1,1], [0, 6, 6, 6], 'Depth-weighting');
+
+
+    jCheckDepthWeighting = gui_component('checkbox', JPanelDepth, [], 'Use depth-weighting', [], [], @switchDepth, []);
+
+    jTxtDepthMNE  = JTextField( num2str(OPTIONS.model.depth_weigth_MNE ) );
+    jTxtDepthMNE.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
+    jTxtDepthMNE.setHorizontalAlignment(JTextField.RIGHT);
+    jTxtDepthMNE.setToolTipText('Depth-weitghing coeficient for MNE (between 0 and 1)');        
+    jTxtDepthMNE.setEnabled(0);
+
+    JPanelDepth.add('p left', JLabel('Weight for MNE:') );
+    JPanelDepth.add('tab', jTxtDepthMNE);
+
+    jTxtDepthMEM  = JTextField( num2str(OPTIONS.model.depth_weigth_MEM ) );
+    jTxtDepthMEM.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
+    jTxtDepthMEM.setHorizontalAlignment(JTextField.RIGHT);
+    jTxtDepthMEM.setToolTipText('Depth-weitghing coeficient for MNE (between 0 and 1)');        
+    jTxtDepthMEM.setEnabled(0);
+
+    JPanelDepth.add('p left', JLabel('Weight for MEM:') );
+    JPanelDepth.add('tab', jTxtDepthMEM);
+
+    jPanelNewR.add('br hfill', JPanelDepth);
+
+
+
     %% ---------------------- EXPERT OPTIONS PANEL --------------------- %%
     jTxtMuMet  = JTextField( num2str(OPTIONS.model.active_mean_method) );
         jTxtMuMet.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
@@ -714,7 +743,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
       
     end
             
-    jPanelNewR = gui_river();
 
     % Model priors
     jPanelModP = gui_river([1,1], [0, 6, 6, 6], 'Model priors');
@@ -845,7 +873,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                   'jButOk',               JButOK, ...
                   'jBoxShow',             jBoxShow, ...
                   'jTXTver',              jTXTver, ...
-                  'jTXTupd',              jTXTupd);              
+                  'jTXTupd',              jTXTupd, ...
+                  'jCheckDepthWeighting',jCheckDepthWeighting ,...
+                  'jTxtDepthMNE', jTxtDepthMNE,...
+                  'jTxtDepthMEM',jTxtDepthMEM);              
       
 
     if any( strcmp(OPTIONS.mandatory.pipeline, {'wMEM', 'rMEM'}) )
@@ -959,6 +990,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         UpdatePanel;
         bst_mutex('waitfor', 'InverseOptionsMEM');
         
+    end
+
+    function switchDepth(varargin)
+         ctrl.jTxtDepthMNE.setEnabled( ctrl.jCheckDepthWeighting.isSelected());
+         ctrl.jTxtDepthMEM.setEnabled( ctrl.jCheckDepthWeighting.isSelected());
     end
 
 end
@@ -1159,6 +1195,14 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.model.alpha_method          =   str2double( ctrl.jAlphaMethod.getText() );
     MEMpaneloptions.model.alpha_threshold      	=   str2double( ctrl.jAlphaThresh.getText() );
     MEMpaneloptions.model.initial_lambda        =   str2double( ctrl.jLambda.getText() );
+
+    if ctrl.jCheckDepthWeighting.isSelected()
+        MEMpaneloptions.model.depth_weigth_MNE  = str2double( ctrl.jTxtDepthMNE.getText() );
+        MEMpaneloptions.model.depth_weigth_MEM  = str2double( ctrl.jTxtDepthMEM.getText() );
+    else
+        MEMpaneloptions.model.depth_weigth_MNE  =  0;
+        MEMpaneloptions.model.depth_weigth_MEM  =  0;
+    end
     
     MEMpaneloptions.solver.spatial_smoothing    =   str2double(char(ctrl.jTextSmooth.getText()));
     MEMpaneloptions.solver.active_var_mult      =   str2double( ctrl.jActiveVar.getText() );
