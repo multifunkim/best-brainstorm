@@ -44,16 +44,19 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         % Internal call, nothing to do
         firstCall   =   0;
         caller      =   'internal';           
-    elseif isfield(OPTIONS, 'Function') && contains( func2str(OPTIONS.Function),'process')
+    elseif isfield(OPTIONS, 'Function') && contains( func2str(OPTIONS.Function),'process') 
         % Call from the process, find the right options
-        clear global MEMglobal            
+        caller      =   'process';
         OPTIONS     =   OPTIONS.options.mem.Value; 
 
         if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
             OPTIONS = OPTIONS.MEMpaneloptions;
+            firstCall   =   0;
+            caller      =   'internal';  
+        else
+            clear global MEMglobal            
         end
 
-        caller      =   'process';
     elseif numel(varargin)==0
         % Call from the GUI, do nothing
         clear global MEMglobal  
