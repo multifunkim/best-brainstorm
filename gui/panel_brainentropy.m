@@ -44,10 +44,15 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         % Internal call, nothing to do
         firstCall   =   0;
         caller      =   'internal';           
-    elseif isfield(OPTIONS, 'Comment') & strcmp(OPTIONS.Comment,'Compute sources: BEst')
+    elseif isfield(OPTIONS, 'Function') && contains( func2str(OPTIONS.Function),'process')
         % Call from the process, find the right options
         clear global MEMglobal            
         OPTIONS     =   OPTIONS.options.mem.Value; 
+
+        if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
+            OPTIONS = OPTIONS.MEMpaneloptions;
+        end
+
         caller      =   'process';
     elseif numel(varargin)==0
         % Call from the GUI, do nothing
@@ -59,17 +64,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         return
     end       
 
-    % ====      CHECK INSTALLATION      ==== %
-%     if firstCall        
-%        [bug,warn,version,last_update]     =   be_install;
-%       if ~isempty(bug)
-%            fprintf('\n\n***\tError installing BEst\t***\n\t%s\n\n', bug)
-%            return
-%         end
-%         if ~isempty(warn)
-%            fprintf('\n\n***\tWarning: BEst\t***\n\t%s\n\tToolbox can still be used\n\n', warn)        
-%         end 
-%     end
     
 	global MEMglobal
     % Java initializations
