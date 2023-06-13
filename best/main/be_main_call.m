@@ -110,13 +110,13 @@ end
 [HeadModel, MEMoptions, FLAG] = be_checkio( HeadModel, MEMoptions, verbose );
 
 % Patch work [to be revisited]... Baseline no longer preloaded...
-if ~isempty(MEMoptions.optional.Baseline)
+if ~isempty(MEMoptions.optional.Baseline) && ischar(MEMoptions.optional.Baseline)
     MEMoptions.optional.BaselineTime = getfield(load(...
         MEMoptions.optional.Baseline, 'Time'), 'Time');
     MEMoptions.optional.Baseline = getfield(load(...
         MEMoptions.optional.Baseline, 'F'), 'F');
 end
-if ~isempty(MEMoptions.optional.BaselineChannels)
+if ~isempty(MEMoptions.optional.BaselineChannels) && ischar(MEMoptions.optional.BaselineChannels)
     MEMoptions.optional.BaselineChannels = load(...
         MEMoptions.optional.BaselineChannels);
 end
