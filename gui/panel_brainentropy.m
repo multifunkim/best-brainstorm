@@ -1021,6 +1021,7 @@ function UpdatePanel(hObject, event)
     if ctrl.jMEMdef.isSelected()
         ctrl.jCLSf.setEnabled(0);
         ctrl.jMEMdef.setSelected(1)
+        ctrl.jCheckDepthWeighting.setEnabled(1)
         if ctrl.jCLSf.isSelected()
             ctrl.jCLSd.setSelected(1);
             ctrl.jCLSd.setEnabled(1);
@@ -1028,6 +1029,7 @@ function UpdatePanel(hObject, event)
     else
         ctrl.jCLSf.setEnabled(1);
         ctrl.jCLSs.setEnabled(0);   
+        ctrl.jCheckDepthWeighting.setEnabled(0)
     end
 
     if ctrl.jMEMw.isSelected()
@@ -1196,7 +1198,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.model.alpha_threshold      	=   str2double( ctrl.jAlphaThresh.getText() );
     MEMpaneloptions.model.initial_lambda        =   str2double( ctrl.jLambda.getText() );
 
-    if ctrl.jCheckDepthWeighting.isSelected()
+    if ctrl.jCheckDepthWeighting.isSelected() && any( strcmp(MEMpaneloptions.mandatory.pipeline, {'cMEM'}) )
         MEMpaneloptions.model.depth_weigth_MNE  = str2double( ctrl.jTxtDepthMNE.getText() );
         MEMpaneloptions.model.depth_weigth_MEM  = str2double( ctrl.jTxtDepthMEM.getText() );
     else
