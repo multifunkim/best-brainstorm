@@ -1362,7 +1362,17 @@ end
 % (why not giving precedence to the studies currently selected for analyses?)
 S = getfield(bst_get('ProtocolStudies'), 'Study');
 S = [S.Data];
-S(~strcmp({S.DataType}, 'recordings')) = [];
+
+tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
+subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
+conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
+
+S   = S( strcmp({S.DataType}, 'recordings') & ... 
+         strcmp(subjectNames, MEMglobal.SubjToProcess));
+
+tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
+subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
+conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
 
 % This should never happen
 if isempty(S)
@@ -1385,11 +1395,8 @@ success = true;
 % Warning if multiple recordings are valid
 if (nnz(K) > 1)
     potentials_baseline = S(K);
-    tmp = cellfun(@(x) strsplit(x,'/'), {potentials_baseline.FileName}, 'UniformOutput', false);
-    subjectName = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
-    conditionName = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
 
-    names = strcat(subjectName', {' /  '},conditionName' ,{' /  '} , {potentials_baseline.Comment}');
+    names = strcat(subjectNames(K)', {' /  '},conditionNames(K)' ,{' /  '} , {potentials_baseline.Comment}');
     try
         ChanSelected = java_dialog('radio', 'Select baseline to use:', 'Baseline selection', [], names);
     catch 
@@ -1401,9 +1408,8 @@ if (nnz(K) > 1)
         return
     end
     K = K(ChanSelected);
-else
-
 end
+
 disp('BEst> Selecting the baseline file:')
 disp(['BEst>    ''', S(K(1)).FileName, ''''])
 
