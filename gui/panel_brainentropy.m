@@ -1386,9 +1386,10 @@ success = true;
 if (nnz(K) > 1)
     potentials_baseline = S(K);
     tmp = cellfun(@(x) strsplit(x,'/'), {potentials_baseline.FileName}, 'UniformOutput', false);
-    tmp = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
-    
-    names = strcat(tmp', {' /  '} , {potentials_baseline.Comment}');
+    subjectName = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
+    conditionName = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
+
+    names = strcat(subjectName', {' /  '},conditionName' ,{' /  '} , {potentials_baseline.Comment}');
     try
         ChanSelected = java_dialog('radio', 'Select baseline to use:', 'Baseline selection', [], names);
     catch 
