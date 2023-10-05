@@ -1363,22 +1363,26 @@ end
 S = getfield(bst_get('ProtocolStudies'), 'Study');
 S = [S.Data];
 
-tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
-subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
-conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
-
-S   = S( strcmp({S.DataType}, 'recordings') & ... 
-         strcmp(subjectNames, MEMglobal.SubjToProcess));
-
-tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
-subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
-conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
-
 % This should never happen
 if isempty(S)
     disp('BEst> No study with recordings found in the current protocol.')
     return
 end
+
+
+tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
+subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
+conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
+
+idx = false(size(subjectNames));
+for iSubject = 1:length(MEMglobal.SubjToProcess)
+    idx = idx | strcmp(subjectNames,MEMglobal.SubjToProcess{iSubject});
+end
+idx = idx & strcmp({S.DataType}, 'recordings');
+
+S               = S(idx);
+subjectNames    = subjectNames(idx);
+conditionNames  =  conditionNames(idx);
 
 K = find(cellfun(@(k) ~isempty(k), strfind({S.Comment}, bsl_name)));
 
