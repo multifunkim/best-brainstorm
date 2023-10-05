@@ -1384,8 +1384,24 @@ success = true;
 
 % Warning if multiple recordings are valid
 if (nnz(K) > 1)
-    disp(['BEst> Multiple recordings in the current protocol have ''', ...
-        bsl_name, ''' in their name'])
+    potentials_baseline = S(K);
+    tmp = cellfun(@(x) strsplit(x,'/'), {potentials_baseline.FileName}, 'UniformOutput', false);
+    tmp = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
+    
+    names = strcat(tmp', {' /  '} , {potentials_baseline.Comment}');
+    try
+        ChanSelected = java_dialog('radio', 'Select baseline to use:', 'Baseline selection', [], names);
+    catch 
+        disp(['BEst> No baseline selected'])
+        return
+    end
+    if isempty(ChanSelected)
+        disp(['BEst> No baseline selected'])
+        return
+    end
+    K = K(ChanSelected);
+else
+
 end
 disp('BEst> Selecting the baseline file:')
 disp(['BEst>    ''', S(K(1)).FileName, ''''])
