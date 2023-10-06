@@ -1362,13 +1362,27 @@ end
 % (why not giving precedence to the studies currently selected for analyses?)
 S = getfield(bst_get('ProtocolStudies'), 'Study');
 S = [S.Data];
-S(~strcmp({S.DataType}, 'recordings')) = [];
 
 % This should never happen
 if isempty(S)
     disp('BEst> No study with recordings found in the current protocol.')
     return
 end
+
+
+tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
+subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
+conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
+
+idx = false(size(subjectNames));
+for iSubject = 1:length(MEMglobal.SubjToProcess)
+    idx = idx | strcmp(subjectNames,MEMglobal.SubjToProcess{iSubject});
+end
+idx = idx & strcmp({S.DataType}, 'recordings');
+
+S               = S(idx);
+subjectNames    = subjectNames(idx);
+conditionNames  =  conditionNames(idx);
 
 K = find(cellfun(@(k) ~isempty(k), strfind({S.Comment}, bsl_name)));
 
@@ -1384,9 +1398,22 @@ success = true;
 
 % Warning if multiple recordings are valid
 if (nnz(K) > 1)
-    disp(['BEst> Multiple recordings in the current protocol have ''', ...
-        bsl_name, ''' in their name'])
+    potentials_baseline = S(K);
+
+    names = strcat(subjectNames(K)', {' /  '},conditionNames(K)' ,{' /  '} , {potentials_baseline.Comment}');
+    try
+        ChanSelected = java_dialog('radio', 'Select baseline to use:', 'Baseline selection', [], names);
+    catch 
+        disp(['BEst> No baseline selected'])
+        return
+    end
+    if isempty(ChanSelected)
+        disp(['BEst> No baseline selected'])
+        return
+    end
+    K = K(ChanSelected);
 end
+
 disp('BEst> Selecting the baseline file:')
 disp(['BEst>    ''', S(K(1)).FileName, ''''])
 
