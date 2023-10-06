@@ -118,16 +118,18 @@ end
 
 %% ===== DC offset ===== %% 
 % we remove the DC offset the data
-[OPTIONS]       = be_remove_dc(OPTIONS);
-
+if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+    [OPTIONS]       = be_remove_dc(OPTIONS);
+end
 %% ===== Channels ===== %% 
 % we retrieve the channels name and the data
 [OPTIONS, obj]  = be_main_channel(HeadModel, obj, OPTIONS);
 
 %% ===== AVG reference ===== %% 
 % we average reference the data
-[OPTIONS]       = be_avg_reference(OPTIONS);
-
+if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+    [OPTIONS]       = be_avg_reference(OPTIONS);
+end
 %% ===== Sources ===== %% 
 % we verify that all sources in the model have good leadfields
 [OPTIONS, obj]  = be_main_sources(obj, OPTIONS);
@@ -189,7 +191,9 @@ OPTIONS.automatic    = struct(  'entropy_drops', OPTIONS.automatic.entropy_drops
                                 'final_alpha', {OPTIONS.automatic.final_alpha}, ...
                                 'Comment', OPTIONS.automatic.Comment, ...
                                 'initial_alpha', obj.ALPHA, ...
-                                'clusters', obj.CLS);      
+                                'clusters', obj.CLS, ...
+                                'minimum_norm',OPTIONS.automatic.Modality(1).Jmne, ...
+                                'MSP',obj.SCR);     
                    
 % Results (full temporal sequence)                  
 Results = struct(...

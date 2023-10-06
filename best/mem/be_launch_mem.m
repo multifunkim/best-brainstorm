@@ -32,7 +32,10 @@ function [ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-
+if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+    % normalize alpha for each coloum
+    obj.ALPHA = bsxfun(@rdivide,obj.ALPHA,max(obj.ALPHA,[],1)); % Normalize M
+end
 
 % All samples or a selection?
 Data  = [];
@@ -136,8 +139,12 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
     obj.data   = Data(:,ii);
     %obj.scores = obj.SCR(:,ii);
     
-    if strcmp(OPTIONS.optional.normalization, 'adaptive')       
+    if strcmp(OPTIONS.optional.normalization, 'adaptive')  
         obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii);
+
+        if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+            obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
+        end
     end
     
     % check if there's a noise cov for each scale
@@ -181,7 +188,7 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
             J(isnan(J)) = 0;
         else
              if OPTIONS.optional.verbose, fprintf('\n\t\t%3d clusters,\n\t\t%3d iter.\n\t\tEntropy drop:%4.1f\n',nclus,niter,entropy_drop); end
-        end;
+        end
         
     end
     R = J;

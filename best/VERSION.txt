@@ -1,4 +1,4 @@
-2.7.3
+2.7.4
 
 April 22, 2021
 Minor changes:

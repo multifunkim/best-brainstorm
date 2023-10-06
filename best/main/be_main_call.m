@@ -252,6 +252,8 @@ Def_OPTIONS.model.active_mean_method            = [];
 Def_OPTIONS.model.alpha_method                  = []; 
 Def_OPTIONS.model.alpha_threshold               = [];
 Def_OPTIONS.model.initial_lambda                = 1;
+Def_OPTIONS.model.depth_weigth_MNE              = 0;
+Def_OPTIONS.model.depth_weigth_MEM              = 0;
 
 % MEM solver
 Def_OPTIONS.solver.NoiseCov                     = [];

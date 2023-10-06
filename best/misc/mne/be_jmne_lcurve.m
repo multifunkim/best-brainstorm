@@ -1,4 +1,4 @@
-function [J,varargout] = be_jmne_NIRS(G,M,OPTIONS)
+function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS)
 % Compute the regularisation parameter based on what brainstorm already
 % do. Note that this function replace be_solve_l_curve:
 % BAYESEST2 solves the inverse problem by estimating the maximal posterior probability (MAP estimator).
@@ -46,17 +46,19 @@ M = M(:,sample(1):sample(2));
 param1 = [0.1:0.1:1 1:5:100 100:100:1000]; 
 
 display('cMEM, solving MNE by L-curve ... ');
-p = OPTIONS.model.depth_weigth_MNE;
+p       = OPTIONS.model.depth_weigth_MNE;
 Sigma_s = diag(power(diag(G'*G),p)); 
-W = sqrt(Sigma_s);
-scale = trace(G*G')./trace(W'*W);       % Scale alpha using trace(G*G')./trace(W'*W)
-alpha = param1.*scale;
-Fit = [];
-Prior = [];
+W       = sqrt(Sigma_s);
+scale   = trace(G*G')./trace(W'*W);       % Scale alpha using trace(G*G')./trace(W'*W)
+alpha   = param1.*scale;
+
+Fit     = [];
+Prior   = [];
 
 [U,S,V] = svd(G,'econ');
 G2 = U*S;
 Sigma_s2 = V'*Sigma_s*V;
+
 for i = 1:length(param1)
     J = ((G2'*G2+alpha(i).*Sigma_s2)^-1)*G2'*M; % Weighted MNE solution
     Fit = [Fit,norm(M-G2*J)];       % Define Fit as a function of alpha
@@ -64,15 +66,21 @@ for i = 1:length(param1)
 end
 [~,Index] = min(Fit/max(Fit)+Prior/max(Prior));  % Find the optimal alpha
 J = ((G'*G+alpha(Index).*Sigma_s)^-1)*G'*M;
+
 if nargout > 1
-    varargout{1} = param1;
+    varargout{1} = alpha(Index);
 end
+
 disp('cMEM, solving MNE by L-curve ... done');
-figure()
-plot(Prior, Fit,'b.');
-hold on;plot(Prior(Index), Fit(Index),'ro');
-hold off
-xlabel('Norm |WJ|');
-ylabel('Residual |M-GJ|');
-title('L-curve');
-return
+
+if OPTIONS.optional.display 
+    figure()
+    plot(Prior, Fit,'b.');
+    hold on;plot(Prior(Index), Fit(Index),'ro');
+    hold off
+    xlabel('Norm |WJ|');
+    ylabel('Residual |M-GJ|');
+    title('L-curve');
+end
+
+end

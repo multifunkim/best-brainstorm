@@ -74,7 +74,12 @@ switch OPTIONS.optional.normalization
             G   =   OPTIONS.automatic.Modality(1).gain;
         end
         
-        J   =   be_jmne(G,M,OPTIONS);
+        % % Add option OPTIONS.model.depth_weigth_MNE
+        if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp( OPTIONS.mandatory.DataTypes,'NIRS')) 
+            J   =   be_jmne_lcurve(G,M,OPTIONS); % use depth weighting MNE for NIRS MEM 
+        else
+            J   =   be_jmne(G,M,OPTIONS);
+        end
         ratioAmp = 1 / max(max(abs(J))); %Same for both modalities
         
         for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)
