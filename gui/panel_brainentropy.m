@@ -1393,6 +1393,13 @@ success = false;
 % This global variable should be removed, kept here for compatibility with
 % previous code
 global MEMglobal
+
+if isfield(MEMglobal,'BSLinfo')  &&  isfield(MEMglobal.BSLinfo,'comment') && ~isempty(MEMglobal.BSLinfo.comment)
+    success = true;
+    return;
+end
+
+
 MEMglobal.BSLinfo.comment = '';
 MEMglobal.BSLinfo.file = '';
 
