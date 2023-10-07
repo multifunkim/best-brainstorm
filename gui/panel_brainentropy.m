@@ -58,7 +58,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         fprintf('\n\n***\tError in call to panel_brainentropy\t***\n\tPlease report this bug to: latis@gmail.com\n\n')
         return
     end       
-
+    
+    if ~isfield(OPTIONS.model,'depth_weigth_MNE') 
+        OPTIONS.model.depth_weigth_MNE = 0;
+        OPTIONS.model.depth_weigth_MEM = 0;
+    end
     % ====      CHECK INSTALLATION      ==== %
 %     if firstCall        
 %        [bug,warn,version,last_update]     =   be_install;
