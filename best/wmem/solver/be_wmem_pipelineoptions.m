@@ -9,6 +9,8 @@ function DEF = be_wmem_pipelineoptions()
         DEF.model.alpha_threshold       = 0.10;
         DEF.model.active_mean_method    = 2;
         DEF.model.alpha_method          = 3;
+        DEF.model.depth_weigth_MNE      = 0;
+        DEF.model.depth_weigth_MEM      = 0;
         
         % wavelet processing
         DEF.wavelet.type                = 'rdw';
