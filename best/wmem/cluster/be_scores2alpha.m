@@ -6,18 +6,19 @@ function [alpha, CLS, OPTIONS] = be_scores2alpha(SCR, CLS, OPTIONS, varargin)
 %       -   SCR     : vector of MSP scores with dimension Nsources
 %       -   CLS     : vector of parcel labels for each source (1xNsources)
 %       -   OPTIONS : 
-%               model.alpha_method  :   method of intialization of the active           
+%               model.alpha_method  :   method of initialization of the active           
 %                   initial parcel active probabilities. (1=mean of MSP scores
 %                   of sources within  parcel, 2=max, 3=median, 4=all 
 %                   probabilities set to 0.5, 5=all prob. set to 1)
 %
-%               model.alpha_threshold:  threshold on the active probabilites. 
+%               model.alpha_threshold:  threshold on the active probabilities. 
 %                   All prob. < threshold are set to 0 (parcel not part of the 
 %                   MEM solution
 %
 %   OUTPUTS:
+%       - OPTIONS   : Keep track of parameters
 %       -   ALPHA   : vector of probabilities (1xNparcels)
-%       -   CLS     : cell array (1xNparcels). Each cel contains the indices of        
+%       -   CLS     : cell array (1xNparcels). Each cell contains the indices of        
 %                     the sources within that parcel
 %
 %% ==============================================
@@ -66,7 +67,15 @@ for jj=1:size(SCR,2)
         switch ALPHA_METHOD
                 
             case 1  % Method 1 (alpha = mean in the parcel)
-                alpha(idCLS,jj) = mean((scores(idCLS)));
+                % we check the existence of NEW:
+                if isfield(OPTIONS.clustering,'NEW')
+                    WS = OPTIONS.clustering.NEW.weight_alpha;
+                    WSjj = WS(:,jj).^2;
+                    WSjj_ii = WSjj(idCLS); 
+                    alpha(idCLS,jj) = sqrt((sum(WSjj_ii) / sum(WSjj)));
+                else            
+                    alpha(idCLS,jj) = mean((scores(idCLS)));
+                end
                 
             case 2  % Method 2 (alpha = max in the parcel)
                  alpha(idCLS,jj) = max((scores(idCLS)));
@@ -77,8 +86,13 @@ for jj=1:size(SCR,2)
             case 4  % Method 4 (alpha = 1/2)
                  alpha(idCLS,jj) = 0.5;
                  
-            case 5  % Method 4 (alpha = 1/2)
-                 alpha(idCLS,jj) = 1;
+            case 5  % Method 4 (alpha = MSP single-wmem)
+                if isfield(OPTIONS.clustering,'NEW')
+                 inside_scores = OPTIONS.clustering.NEW.score_alpha(jj,idCLS);
+                 alpha(idCLS,jj) = median(inside_scores);
+                else
+                    alpha(idCLS,jj) = 1;
+                end
                 
             otherwise
                 error('Wrong ALPHA Method')
@@ -103,7 +117,7 @@ for jj=1:size(SCR,2)
 end
 
 % REMOVING CLUSTERS WITH ALPHA < APLHA_THRESHOLD
-alpha(alpha > 0.8) = 1;
+ alpha(alpha > 0.8) = 1;
 
 
 return
