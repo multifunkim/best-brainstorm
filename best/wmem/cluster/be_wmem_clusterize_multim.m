@@ -77,9 +77,9 @@ if strcmp(OPTIONS.clustering.clusters_type,'static')
     if OPTIONS.optional.verbose
         fprintf('%s, stable clustering ...\n', OPTIONS.mandatory.pipeline);
     end
-    [SCR, CLS, OPTIONS] = be_wstable_clustering_multim(obj, OPTIONS);
-elseif strcmp(OPTIONS.clustering.clusters_type,'fdr')
-    [CLS, SCR, OPTIONS] = be_wfdr_clustering_multim(obj, OPTIONS);
+    [CLS, SCR, OPTIONS]  = be_wstable_clustering_multim(obj, OPTIONS);
+elseif strcmp(OPTIONS.clustering.clusters_type,'wfdr')
+    [CLS, SCR, OPTIONS]  = be_wfdr_clustering_multim(obj, OPTIONS);
 else
     error([OPTIONS.mandatory.pipeline ' : wrong specification of the clustering technique (should be stable or blockwise)']);
 end
