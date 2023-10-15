@@ -55,7 +55,7 @@ elseif ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
         case 'cMEM'
             [CLS, SCR, OPTIONS] = be_cmem_clusterize_multim(obj, OPTIONS); %TO DO: CHECK IF DATA SHOULD BE MINUS BSL OR NOT
         case 'wMEM'
-            [CLS, SCR, OPTIONS] = be_wfdr_clustering_multim(obj, OPTIONS);
+            [CLS, SCR, OPTIONS] = be_wmem_clusterize_multim(obj, OPTIONS);
         case 'rMEM'
             [CLS, SCR, OPTIONS] = be_rmem_clusterize_multim(obj, OPTIONS);
     end    

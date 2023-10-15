@@ -1038,7 +1038,9 @@ function UpdatePanel(hObject, event)
 
     if ctrl.jMEMw.isSelected()
         ctrl.jCLSd.setEnabled(0);
-        ctrl.jCLSf.setSelected(1);
+        ctrl.jCLSs.setEnabled(1); 
+        
+        %ctrl.jCLSf.setSelected(1);
         %ctrl.jRadioSCRarb.setEnabled(0);
     end 
 
