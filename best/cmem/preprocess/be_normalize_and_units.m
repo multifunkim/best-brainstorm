@@ -52,16 +52,19 @@ end
 switch OPTIONS.optional.normalization
     
     case 'fixed'
-        units_dipoles = 1e-9; % nAm
+        if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+            units_dipoles = 1; 
+        else
+            units_dipoles = 1e-9; % nAm
+        end
+
         for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
             ratioG  =   1/max( max(OPTIONS.automatic.Modality(ii).gain) );
             OPTIONS.automatic.Modality(ii).units.Gain_units     =   ratioG;
             OPTIONS.automatic.Modality(ii).units.Data_units     =   ratioG/(units_dipoles);
             OPTIONS.automatic.Modality(ii).units.Cov_units      =   (ratioG/(units_dipoles))^2;
             OPTIONS.automatic.Modality(ii).units_dipoles             =   units_dipoles;
-
         end
-        
     case 'adaptive'
         
         %Local fusion of data and gain matrix to compute the
