@@ -102,12 +102,6 @@ eigen = diag(S);
 I = find(cumsum(eigen.^2)./ sum(eigen.^2) > 0.9,1,'first');
 GpGptinv_M = V(:,1:I) * diag(1./eigen(1:I)) * U(:,1:I)' * obj.data;
 
-% perform leadfield normalization
-%normG       =   (sqrt( sum(obj.gain.^2) )).^(-%OPTIONS.solver.rho_depthweighting);
-%normG       =   normG ./ max(abs(normG));
-%obj.gain    =   obj.gain ./ ( ones(nb_sensors,1)*normG );      
-%MNS         =   MNS ./normG';
-%obj.Jmne    =   obj.Jmne./( normG'*ones(1,size(obj.Jmne,2)) );
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the following loop goes though each of the clusters (non null clusters)
@@ -165,9 +159,11 @@ for ii = 1:nb_clusters
             active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2 );
         end
     elseif strcmp(OPTIONS.optional.normalization, 'fixed')  
-        active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( (cluster_G{ii}'*GpGptinv_M).^2 );    
-%     else
-%         active_var{ii} = eye(length(cID{ii})) * OPTIONS.solver.active_var_mult * mean( (cluster_G{ii}'*GpGptinv_M).^2 );    
+        if OPTIONS.model.depth_weigth_MEM > 0 
+            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( OPTIONS.Jmne(cID{ii}).^2 )* Sigma_s(cID{ii},cID{ii});
+        else
+            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( (cluster_G{ii}'*GpGptinv_M).^2 );    
+        end
     end
 
     active_var_out(cID{ii}) = diag( active_var{ii} );
