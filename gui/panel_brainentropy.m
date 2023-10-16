@@ -1040,6 +1040,8 @@ function UpdatePanel(hObject, event)
         ctrl.jCLSd.setEnabled(0);
         ctrl.jCLSs.setEnabled(1); 
         
+        ctrl.jCheckDepthWeighting.setEnabled(1)
+
         %ctrl.jCLSf.setSelected(1);
         %ctrl.jRadioSCRarb.setEnabled(0);
     end 
@@ -1204,7 +1206,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.model.alpha_threshold      	=   str2double( ctrl.jAlphaThresh.getText() );
     MEMpaneloptions.model.initial_lambda        =   str2double( ctrl.jLambda.getText() );
 
-    if ctrl.jCheckDepthWeighting.isSelected() && any( strcmp(MEMpaneloptions.mandatory.pipeline, {'cMEM'}) )
+    if ctrl.jCheckDepthWeighting.isSelected() && any( strcmp(MEMpaneloptions.mandatory.pipeline, {'cMEM','wMEM'}) )
         MEMpaneloptions.model.depth_weigth_MNE  = str2double( ctrl.jTxtDepthMNE.getText() );
         MEMpaneloptions.model.depth_weigth_MEM  = str2double( ctrl.jTxtDepthMEM.getText() );
     else

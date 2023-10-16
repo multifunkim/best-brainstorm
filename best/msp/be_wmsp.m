@@ -100,18 +100,18 @@ end
 
 % new weights/scores for wMEM inital alpha's                
 % We look each boxes separately (nbb = number of boxes)  
-Pi_box = cell(1,size(Mn,2));
-for i=1:size(Mn,2)                                             
-    Wi        = Mn(:,i);                                       
-    Ps3       = Wi*(Wi'*Wi)^(-1)*Wi';                          
-    Pi_box{i} = Ps3*Gstruct.Gn;    
-    
-    % Scores for alphas (one per box)                   
-    for j = 1:size(Mn,2)                                
-        OPTIONS.clustering.NEW.score_alpha(i,j) = ...       
-            Gstruct.Gn(:,j)'*Pi_box{i}(:,j);                
-    end       
-end  
+% Pi_box = cell(1,size(Mn,2));
+% for i=1:size(Mn,2)                                             
+%     Wi        = Mn(:,i);                                       
+%     Ps3       = Wi*(Wi'*Wi)^(-1)*Wi';                          
+%     Pi_box{i} = Ps3*Gstruct.Gn;    
+%     
+%     % Scores for alphas (one per box)                   
+%     for j = 1:size(Mn,2)                                
+%         OPTIONS.clustering.NEW.score_alpha(i,j) = ...       
+%             Gstruct.Gn(:,j)'*Pi_box{i}(:,j);                
+%     end       
+% end  
 
 % New alpha scores 
 Op = Gstruct.Gn'*pinv(Gstruct.Gn*Gstruct.Gn');
