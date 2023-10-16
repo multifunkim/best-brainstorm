@@ -45,7 +45,9 @@ M = M(:,sample(1):sample(2));
 
 param1 = [0.1:0.1:1 1:5:100 100:100:1000]; 
 
-display('cMEM, solving MNE by L-curve ... ');
+fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
+
+
 p       = OPTIONS.model.depth_weigth_MNE;
 Sigma_s = diag(power(diag(G'*G),p)); 
 W       = sqrt(Sigma_s);
@@ -71,7 +73,7 @@ if nargout > 1
     varargout{1} = alpha(Index);
 end
 
-disp('cMEM, solving MNE by L-curve ... done');
+fprintf('done. \n');
 
 if OPTIONS.optional.display 
     figure()
