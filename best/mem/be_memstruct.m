@@ -160,7 +160,7 @@ for ii = 1:nb_clusters
         end
     elseif strcmp(OPTIONS.optional.normalization, 'fixed')  
         if OPTIONS.model.depth_weigth_MEM > 0 
-            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( OPTIONS.Jmne(cID{ii}).^2 )* Sigma_s(cID{ii},cID{ii});
+            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2 )* Sigma_s(cID{ii},cID{ii});
         else
             active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( (cluster_G{ii}'*GpGptinv_M).^2 );    
         end
