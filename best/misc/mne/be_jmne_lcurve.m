@@ -39,9 +39,13 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS)
 [n_capt, n_sour] = size(G);
 
 % selection of the data:
-sample = be_closest(OPTIONS.optional.TimeSegment([1 end]), OPTIONS.mandatory.DataTime);
+% sample = be_closest(OPTIONS.optional.TimeSegment([1 end]), OPTIONS.mandatory.DataTime);
+% M = M(:,sample);
 
-M = M(:,sample(1):sample(2));
+if ~isempty(OPTIONS.automatic.selected_samples)   
+    selected_samples = OPTIONS.automatic.selected_samples(1,:);
+    M = M(:,selected_samples);
+end
 
 param1 = [0.1:0.1:1 1:5:100 100:100:1000]; 
 

@@ -15,7 +15,7 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS)
 %Local fusion of data and gain matrix to compute the
 %regularisation parameter (J)
 
-    if numel(OPTIONS.mandatory.DataTypes)>1
+    if numel(OPTIONS.mandatory.DataTypes)>1 
         M = [OPTIONS.automatic.Modality(1).data;OPTIONS.automatic.Modality(2).data];
         G = [OPTIONS.automatic.Modality(1).gain;OPTIONS.automatic.Modality(2).gain];
     else
@@ -32,7 +32,7 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS)
     ratioAmp = 1 / max(max(abs(J))); %Same for both modalities
     for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)
         OPTIONS.automatic.Modality(ii).Jmne = J * ratioAmp;
-        OPTIONS.automatic.Modality(ii).ratioAmp = ratioAmp;
+        %OPTIONS.automatic.Modality(ii).ratioAmp = ratioAmp;
     end
     
 end
