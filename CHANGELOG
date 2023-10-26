@@ -1,3 +1,9 @@
+% 26 - 10 - 2023
+- MEM : Merge pipeline for EEG/MEG and fNIRS
+- cMEM: Include option for depth-weighting
+- MEM: add progress bar
+- Baseline: better select baseline when selecting external baseline
+ 
 % 22 - 04 - 2021
 - All addpath were removed
 - process_inverse_mem:
