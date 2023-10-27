@@ -1321,8 +1321,8 @@ iS  = MEMglobal.DataToProcess;
 ctrl    = bst_get('PanelControls', 'InverseOptionsMEM');
 Tm = {};
 for ii = 1 : numel(iS)
-    load( fullfile(iP.STUDIES, iS{ii}), 'Time' );
-    Tm{ii} = Time;
+    data = in_bst(fullfile(iP.STUDIES, iS{ii})); % load( fullfile(iP.STUDIES, iS{ii}), 'Time' );
+    Tm{ii} = data.Time;
 end
 sf = cellfun(@(a) round(1/diff(a([1 2]))), Tm, 'uni', false);
 St = cellfun(@(a,b) round(a(1)*b), Tm, sf, 'uni', false); St = max( [St{:}] );

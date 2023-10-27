@@ -1,5 +1,1 @@
 2.7.4
-
-April 22, 2021
-Minor changes:
-- Better handle for baseline file specification

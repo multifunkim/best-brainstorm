@@ -67,8 +67,14 @@ entropy_drop    = zeros(1,nbSmp);
 final_alpha     = cell(1,nbSmp);
 final_sigma     = cell(1,nbSmp);
 
+bst_progress('start', 'Solving MEM', 'Solving MEM', 0, nbSmp);
+
 if OPTIONS.solver.parallel_matlab == 1
     warning off
+
+    q = parallel.pool.DataQueue;
+    afterEach(q, @(x) bst_progress('inc', 1));
+    
     time_it_starts = tic;
     parfor ii = 1 : nbSmp
         [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS);
@@ -78,6 +84,7 @@ if OPTIONS.solver.parallel_matlab == 1
         
         %Store in a matrix
         ImageSourceAmp = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS );
+        send(q, 1); 
     end
     time_it_ends = toc(time_it_starts);
     if OPTIONS.optional.verbose
@@ -98,14 +105,15 @@ else
         final_sigma{ii}     = S;
         
         % Store in matrix
-        ImageSourceAmp      = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS);        
+        ImageSourceAmp      = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS);
+        bst_progress('inc', 1)
     end
     time_it_ends = toc(time_it_starts);
     if OPTIONS.optional.verbose
         fprintf('%s, Elapsed CPU time is %5.2f seconds.\nBye.\n', OPTIONS.mandatory.pipeline, time_it_ends);
     end
 end
-
+bst_progress('stop');
 
 if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
     ImageGridAmp = [];
