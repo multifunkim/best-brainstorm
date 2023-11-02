@@ -68,12 +68,13 @@ switch OPTIONS.optional.normalization
     case 'adaptive'
                 
         for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)
-            ratioAmp    = OPTIONS.automatic.Modality(ii).ratioAmp; %Same for every modalities
+            ratioAmp    = OPTIONS.automatic.Modality(ii).MNEAmp; %Same for every modalities
             ratioG      = 1 / max(max(OPTIONS.automatic.Modality(ii).gain));
 
             OPTIONS.automatic.Modality(ii).units.Data_units = ratioAmp*ratioG;
             OPTIONS.automatic.Modality(ii).units.Cov_units = (ratioAmp*ratioG)^2;
             OPTIONS.automatic.Modality(ii).units.Gain_units = ratioG;
+            OPTIONS.automatic.Modality(ii).ratioAmp = ratioAmp;
             
         end
 end

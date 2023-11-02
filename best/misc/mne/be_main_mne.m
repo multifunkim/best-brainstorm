@@ -29,10 +29,10 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS)
         J   =   be_jmne(G,M,OPTIONS);
     end
     
-    ratioAmp = 1 / max(max(abs(J))); %Same for both modalities
+    MNEAmp =  max(max(abs(J))); %Same for both modalities
     for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)
-        OPTIONS.automatic.Modality(ii).Jmne = J * ratioAmp;
-        %OPTIONS.automatic.Modality(ii).ratioAmp = ratioAmp;
+        OPTIONS.automatic.Modality(ii).Jmne = J / MNEAmp;
+        OPTIONS.automatic.Modality(ii).MNEAmp = MNEAmp;
     end
     
 end
