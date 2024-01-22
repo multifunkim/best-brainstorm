@@ -106,7 +106,7 @@ else
         
         % Store in matrix
         ImageSourceAmp      = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS);
-        bst_progress('inc', 1)
+        bst_progress('inc', 1);
     end
     time_it_ends = toc(time_it_starts);
     if OPTIONS.optional.verbose
