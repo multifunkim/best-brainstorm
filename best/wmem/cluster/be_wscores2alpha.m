@@ -1,4 +1,4 @@
-function [alpha, CLS, OPTIONS] = be_scores2alpha(SCR, CLS, OPTIONS, varargin)
+function [alpha, CLS, OPTIONS] = be_wscores2alpha(SCR, CLS, OPTIONS, varargin)
 %BE_SCORES2ALPHA computes the initial probability of a parcel being active in 
 %   the MEM model using the MSP scores of the sources within each patch
 %
