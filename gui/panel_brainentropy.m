@@ -1152,15 +1152,15 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.clustering.clusters_type = choices{ selected };
     
     % Get MSP thresholding method
-    MEMpaneloptions.clustering.MSP_scores_threshold = 'fdr';
     if ctrl.jRadioSCRarb.isSelected()
         MEMpaneloptions.clustering.MSP_scores_threshold = str2double(char(ctrl.jTextMspThresh.getText()));
+
         if isnan(MEMpaneloptions.clustering.MSP_scores_threshold)
-            %fprintf('panel_brainentropy:\tWrong value for MSP scores threshold. Set to 0\n')
             ctrl.jTextMspThresh.setText('0');
-            %ctrl.jRadioSCRarb.setSelected(0)
-            %ctrl.jRadioSCRfdr.setSelected(1)
+            MEMpaneloptions.clustering.MSP_scores_threshold = 0;
         end
+    else
+        MEMpaneloptions.clustering.MSP_scores_threshold = 'fdr';
     end
     
     % Get baseline
