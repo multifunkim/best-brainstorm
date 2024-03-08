@@ -126,6 +126,9 @@ end
 % it uses empty-room data if available
 % if PlOS one : nothing is done here
 % [OPTIONS] = be_prewhite(OPTIONS);
+% We propose here to detrend the channels:                    %
+OPTIONS.mandatory.Data = detrend(OPTIONS.mandatory.Data')';   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
