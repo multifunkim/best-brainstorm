@@ -213,7 +213,8 @@ function [SOL] = store_solution( vec, ii, obj, OPTIONS )
         transl  =   OPTIONS.automatic.selected_samples(3,ii);
         wav     =   zeros( 1, nbSmp );
         wav( nbSmp/2^scale + transl ) = 1;
-        wav     =   sparse(be_wavelet_inverse( wav, OPTIONS ));
+        %wav     =   sparse(be_wavelet_inverse( wav, OPTIONS ));
+        wav     =   sparse(BEst_Wave850synthesis( wav, OPTIONS.automatic.Winfo ));
         SOL     =   sparse(vec) * wav;
         
     else

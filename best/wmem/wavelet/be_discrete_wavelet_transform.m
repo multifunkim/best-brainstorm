@@ -69,9 +69,14 @@ switch (OPTIONS.wavelet.type)
         Njs   = max(Nj-3,1);
         SData = zeros(size(Data));
         WData = zeros(size(Data));
-        [WData, info ] = be_dwanalysis( Data, Njs, filter );
-        WData(:,1:No/2^Njs) = 0.0;
+
+        %[WData, Winfo ] = be_dwanalysis( Data, Njs, filter );
+
+        [WData, Winfo ] = BEst_Wave850analysis(Data,Nj,Njs,3);
         SData(:,1:No/2^Njs) = WData(:,1:No/2^Njs);
+        WData(:,1:No/2^Njs) = 0.0;
+
+        OPTIONS.automatic.Winfo = Winfo;
         OPTIONS.automatic.scales(1,:) = 1:Njs;
         OPTIONS.automatic.scales(2,:) = 3./2.^(1:Njs)/4;
         
