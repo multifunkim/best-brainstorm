@@ -644,7 +644,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     jTxtVCOV  = JTextField( num2str(OPTIONS.solver.NoiseCov_method) );
         jTxtVCOV.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTxtVCOV.setHorizontalAlignment(JTextField.RIGHT);
-        jTxtVCOV.setToolTipText('<HTML><B>Sensors noise covariance matrix</B>:<BR>0 = identity matrix<BR>1 = diagonal (same variance along diagonal)<BR>2 = diagonal<BR>3 = full<BR>4 = wavelet-based estimation<BR>(scale j=1 of the discrete wavelet transform)<BR>5 = wavelet-based + scale-adaptvive<BR>(different mat. for each scale of the signal)</HTML>');        
+        jTxtVCOV.setToolTipText('<HTML><B>Sensors noise covariance matrix</B>:<BR>0 = identity matrix<BR>1 = diagonal (same variance along diagonal)<BR>2 = diagonal<BR>3 = full<BR>4 = wavelet-based estimation<BR>(scale j=1 of the discrete wavelet transform)<BR>5 = wavelet-based + scale-adaptvive<BR>(different mat. for each scale of the signal, same for each sensors)5 = wavelet-based + scale-adaptvive (NEW) <BR> </HTML>');        
         java_setcb(jTxtVCOV, 'FocusLostCallback', @(h,ev)adjust_range('jVarCovar', {[1 4], [4 5], [1 5]}));
         jTxtVCOV.setEnabled(0);
     jTxtOptFn  = JTextField(OPTIONS.solver.Optim_method);
