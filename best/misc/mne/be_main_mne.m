@@ -14,13 +14,15 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS)
 
 %Local fusion of data and gain matrix to compute the
 %regularisation parameter (J)
+    
+    % Load head model
+    G = vertcat(OPTIONS.automatic.Modality.gain);
 
-    if numel(OPTIONS.mandatory.DataTypes)>1 
-        M = [OPTIONS.automatic.Modality(1).data;OPTIONS.automatic.Modality(2).data];
-        G = [OPTIONS.automatic.Modality(1).gain;OPTIONS.automatic.Modality(2).gain];
-    else
-        M   =   OPTIONS.automatic.Modality(1).data;
-        G   =   OPTIONS.automatic.Modality(1).gain;
+    % Load data
+    if isfield(obj, 'data') % wavelet
+        M = vertcat(obj.data{:});
+    else % Time-series
+        M = vertcat(OPTIONS.automatic.Modality.data);
     end
     
     if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp( OPTIONS.mandatory.DataTypes,'NIRS')) 

@@ -147,11 +147,10 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
     obj.data   = Data(:,ii);
     %obj.scores = obj.SCR(:,ii);
     
-    obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii);
-    if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-        obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
-    end
-    
+    obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii) ;
+    obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
+
+
     % check if there's a noise cov for each scale
     if (size(obj.noise_var,3)>1)
         if OPTIONS.optional.verbose
