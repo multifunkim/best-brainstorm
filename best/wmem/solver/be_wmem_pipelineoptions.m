@@ -15,6 +15,8 @@ function DEF = be_wmem_pipelineoptions()
         % wavelet processing
         DEF.wavelet.type                = 'rdw';
         DEF.wavelet.vanish_moments      = 4;
+        DEF.wavelet.order               = 10;
+        DEF.wavelet.nb_levels   = 128;
         DEF.wavelet.shrinkage           = 1;
         DEF.wavelet.selected_scales     = 0;
         DEF.wavelet.verbose             = 0;
