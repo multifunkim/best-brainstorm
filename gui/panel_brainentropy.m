@@ -347,98 +347,107 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         % ===== BASELINE =====
         jPanel.add('br', JLabel('Baseline'));
         jPanel.add('br', JLabel(''));
+
         jButtonGroupBslType = ButtonGroup();
-              
-        % - Baseline extracted within data
-        % -- Radio button
-        jRadioWithinBsl = JRadioButton('within data', 0);
-        java_setcb(jRadioWithinBsl, 'ActionPerformedCallback', @(h, ev) ...
-            check_time('bsl', 'within', 'true', 'checkOK'));
-        jRadioWithinBsl.setToolTipText(['<HTML><B>Within data</B>:', ...
+
+    
+        jRadioWithinData = gui_component('radio', jPanel, [], 'Within data', jButtonGroupBslType, [], @(h,ev)SwitchBaseline(), []);
+        jRadioWithinData.setToolTipText(['<HTML><B>Within data</B>:', ...
             '<BR>Extracts baseline from within the recording data ', ...
             'used for source estimation.</HTML>']);
-        jButtonGroupBslType.add(jRadioWithinBsl);
-        jPanel.add(jRadioWithinBsl);
-        
-        % -- Separator
+
+        jRadioWithinBrainstorm = gui_component('radio', jPanel, [], 'Within Brainstorm', jButtonGroupBslType, [], @(h,ev)SwitchBaseline(), []);
+        jRadioWithinBrainstorm.setToolTipText(['<HTML><B>Within Brainstorm</B>:', ...
+            '<BR>Extracts baseline from a recording within your brainstorm database </HTML>']);
+
+        jRadioExternal = gui_component('radio', jPanel, [], 'External', jButtonGroupBslType, [], @(h,ev)SwitchBaseline(), []);
+        jRadioExternal.setToolTipText(['<HTML><B>External</B>:', ...
+            '<BR>Extracts baseline from a recording external to your brainstorm database </HTML>']);
+
+
         jPanel.add('br', JLabel(''));
-                
-                
-        % - Loads automatically a baseline file
-        % -- Radio button
-        jRadioLoadAutoBsl = JRadioButton('find', 0);
-        java_setcb(jRadioLoadAutoBsl, 'ActionPerformedCallback', ...
-            @(h, ev) UpdatePanel);
-        jRadioLoadAutoBsl.setToolTipText(['<HTML><B>Find baseline</B>:', ...
-            '<BR>Automatically loads a recording from the current ', ...
-            'protocol using the given substring.</HTML>']);
-        jButtonGroupBslType.add(jRadioLoadAutoBsl);
-        jPanel.add(jRadioLoadAutoBsl);
-                
-        % -- Text field
+
+               
+        % -- Import Baseline from Brainstorm 
+
+        jBaselineWithinBst = gui_river( '');
+
         jTextLoadAutoBsl = JTextField('baseline name...');
         jTextLoadAutoBsl.setToolTipText(['<HTML>Type in a substring ', ...
             'contained in the name of the baseline file to load and ', ...
-            'tick the "find" button.</HTML>']);
-        jPanel.add('hfill', jTextLoadAutoBsl);
+            'click on the "find" button.</HTML>']);
+        jBaselineWithinBst.add('hfill', jTextLoadAutoBsl);
         h = handle(jTextLoadAutoBsl, 'callbackproperties');
         set(h, 'FocusLostCallback', @(src, ev) UpdatePanel);
-        
+        jRadioLoadAutoBsl = gui_component('button', jBaselineWithinBst, 'br center', 'find', [], ['<HTML><B>Find baseline</B>:', ...
+                                                                                    '<BR>Automatically loads a recording from the current protocol using the given substring.</HTML>'], ...
+                                                                                    @(h, ev) UpdatePanel, []);
+
+        jBaselineWithinBst.add(jRadioLoadAutoBsl);
+
+        jPanel.add('hfill',jBaselineWithinBst);
+        jBaselineWithinBst.hide();
+
         % -- Separator
+                
         jPanel.add('br', JLabel(''));
-                
-                
-        % - Import baseline from file path
-        % -- Radio button
-        jRadioImportBsl = JRadioButton('import', 0);
-        java_setcb(jRadioImportBsl, 'ActionPerformedCallback', @(h, ev) ...
-            import_baseline);
-        jRadioImportBsl.setToolTipText(['<HTML><B>Baseline file</B>:', ...
-            '<BR>Import baseline from a file.</HTML>']);
-        jButtonGroupBslType.add(jRadioImportBsl);
-        jPanel.add(jRadioImportBsl);
-                
+       
+        % -- Import External Baseline
+
+        jBaselineExternal = gui_river( '');
         % -- Text field
         jTextPathBsl = JTextField('');
-        jTextPathBsl.setToolTipText(['<HTML>Tick the "import" button ', ...
-            'to open a GUI.</HTML>']);
         jTextPathBsl.setEditable(0);
-        jPanel.add('hfill', jTextPathBsl);
-        
+        jBaselineExternal.add('hfill', jTextPathBsl);
+        jButtonImport = gui_component('button', jBaselineExternal, 'br center', 'Select file', [], ['<HTML><B>Baseline file</B>:', ...
+                                                                                                        '<BR>Import baseline from a file.</HTML>'], @(h, ev) import_baseline, []);
+
+        jBaselineExternal.add(jButtonImport);
+        jPanel.add('hfill',jBaselineExternal);
+        jBaselineExternal.hide();
+
         % -- Separator
         jPanel.add('br', JLabel(''));
                 
                 
-        % - Baseline time window
-        jPanel.add(JLabel('Time window: '));
     
-        % Baseline START
+        % - Baseline time window
+        jBaselineTimeSelect = gui_river( '');
+        jBaselineTimeSelect.add(JLabel('Time window: '));
         jTextBSLStart = JTextField( num2str(OPTIONS.optional.BaselineSegment(1)) );
         jTextBSLStart.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTextBSLStart.setHorizontalAlignment(JTextField.RIGHT);
         hndl    =   handle(jTextBSLStart, 'callbackproperties');
         set(hndl, 'FocusLostCallback', @(src,ev)check_time('bsl', '', ''));
         %set(jTextBSLStart, 'FocusLostCallback', @(src,ev)check_time('bsl', '', ''));
-        jPanel.add(jTextBSLStart);
+        jBaselineTimeSelect.add(jTextBSLStart);
         % Baseline STOP
-        jPanel.add(JLabel('-'));
+        jBaselineTimeSelect.add(JLabel('-'));
         jTextBSLStop = JTextField( num2str(OPTIONS.optional.BaselineSegment(2)) );
         jTextBSLStop.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTextBSLStop.setHorizontalAlignment(JTextField.RIGHT);
         hndl    =   handle(jTextBSLStop, 'callbackproperties');
         set(hndl, 'FocusLostCallback', @(src,ev)check_time('bsl', '', ''));
         %set(jTextBSLStop, 'FocusLostCallback', @(src,ev)check_time('bsl', '', ''));
-        jPanel.add(jTextBSLStop);
-        jPanel.add('tab', JLabel('s'));
+        jBaselineTimeSelect.add(jTextBSLStop);
+        jBaselineTimeSelect.add('tab', JLabel('s'));
+
+        jBaselineTimeSelect.hide();
+        jPanel.add(jBaselineTimeSelect);
         
 
         ctrl = struct( ...
             'jTextTimeStart',   jTextTimeStart, ...
             'jTextTimeStop',    jTextTimeStop,...
-            'jradwit',          jRadioWithinBsl, ...
+            'jRadioWithinData',jRadioWithinData, ...
+            'jRadioWithinBrainstorm', jRadioWithinBrainstorm, ...
+            'jRadioExternal', jRadioExternal, ...
             'jRadioLoadAutoBsl',jRadioLoadAutoBsl, ...
             'jTextLoadAutoBsl', jTextLoadAutoBsl, ...
-            'jradimp',          jRadioImportBsl, ...
+            'jradimp',          jRadioExternal, ...
+            'jBaselineWithinBst', jBaselineWithinBst, ...
+            'jBaselineExternal',jBaselineExternal, ...
+            'jBaselineTimeSelect', jBaselineTimeSelect, ...
             'jTextBSLStart',    jTextBSLStart, ...
             'jTextBSLStop',     jTextBSLStop, ...
             'jTextBSL',         jTextPathBsl, ...
@@ -985,6 +994,31 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         UpdatePanel()
     end
 
+    function SwitchBaseline(varargin)
+        choices = {'within-data', 'within-brainstorm', 'external'};
+        selected = [ctrl.jRadioWithinData.isSelected() ctrl.jRadioWithinBrainstorm.isSelected() ctrl.jRadioExternal.isSelected()];
+        
+        if ~any(selected)
+            return;
+        end
+
+       if strcmp( choices(selected), 'within-data') 
+           ctrl.jBaselineTimeSelect.setVisible(1);
+           ctrl.jBaselineWithinBst.setVisible(0);
+           ctrl.jBaselineExternal.setVisible(0);
+
+           
+       elseif strcmp( choices(selected), 'within-brainstorm') 
+            ctrl.jBaselineTimeSelect.setVisible(0);
+            ctrl.jBaselineWithinBst.setVisible(1);
+            ctrl.jBaselineExternal.setVisible(0);
+
+       elseif strcmp( choices(selected), 'external') 
+            ctrl.jBaselineTimeSelect.setVisible(0);
+            ctrl.jBaselineWithinBst.setVisible(0);
+            ctrl.jBaselineExternal.setVisible(1);
+       end
+    end
     function switchDepth(varargin)
          ctrl.jTxtDepthMNE.setEnabled( ctrl.jCheckDepthWeighting.isSelected());
          ctrl.jTxtDepthMEM.setEnabled( ctrl.jCheckDepthWeighting.isSelected());
@@ -1231,6 +1265,180 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
 end
 
+    function import_baseline(hObject, event)
+    
+    
+    ctrl = bst_get('PanelControls', 'InverseOptionsMEM');
+    
+    DefaultFormats = bst_get('DefaultFormats');
+    iP  = bst_get('ProtocolInfo');  
+    [Lst, Frmt]   = java_getfile( 'open', ...
+            'Import EEG/MEG recordings...', ...       % Window title
+            iP.STUDIES, ...                           % default directory
+            'single', 'files_and_dirs', ...           % Selection mode
+            {{'.*'},                 'MEG/EEG: 4D-Neuroimaging/BTi (*.*)',   '4D'; ...
+             {'_data'},              'MEG/EEG: Brainstorm (*data*.mat)',     'BST-MAT'; ...
+             {'.meg4','.res4'},      'MEG/EEG: CTF (*.ds;*.meg4;*.res4)',    'CTF'; ...
+             {'.fif'},               'MEG/EEG: Elekta-Neuromag (*.fif)',     'FIF'; ...
+             {'*'},                  'EEG: ASCII text (*.*)',                'EEG-ASCII'; ...
+             {'.avr','.mux','.mul'}, 'EEG: BESA exports (*.avr;*.mul;*.mux)','EEG-BESA'; ...
+             {'.eeg','.dat'},        'EEG: BrainAmp (*.eeg;*.dat)',          'EEG-BRAINAMP'; ...
+             {'.txt'},               'EEG: BrainVision Analyzer (*.txt)',    'EEG-BRAINVISION'; ...
+             {'.sef','.ep','.eph'},  'EEG: Cartool (*.sef;*.ep;*.eph)',      'EEG-CARTOOL'; ...
+             {'.edf','.rec'},        'EEG: EDF / EDF+ (*.rec;*.edf)',        'EEG-EDF'; ...
+             {'.set'},               'EEG: EEGLAB (*.set)',                  'EEG-EEGLAB'; ...
+             {'.raw'},               'EEG: EGI Netstation RAW (*.raw)',      'EEG-EGI-RAW'; ...
+             {'.erp','.hdr'},        'EEG: ERPCenter (*.hdr;*.erp)',         'EEG-ERPCENTER'; ...
+             {'.mat'},               'EEG: Matlab matrix (*.mat)',           'EEG-MAT'; ...
+             {'.cnt','.avg','.eeg','.dat'}, 'EEG: Neuroscan (*.cnt;*.eeg;*.avg;*.dat)', 'EEG-NEUROSCAN'; ...
+             {'.mat'},               'NIRS: MFIP (*.mat)',                   'NIRS-MFIP'; ...
+            }, DefaultFormats.DataIn);
+        
+    if isempty(Lst) 
+        ctrl.jradwit.setSelected(1);
+        check_time('bsl', '', '');
+        return
+    end
+    
+    ctrl.jTextBSL.setText(Lst);
+    MEMglobal.BSLinfo.file    = Lst;
+    MEMglobal.BSLinfo.format  = Frmt; 
+    
+    if strcmp(Frmt, 'BST-MAT')
+        BSL = Lst;
+        BSLc = fullfile(iP.STUDIES, bst_get('ChannelFileForStudy', Lst));
+    else
+        try
+            % This code block should not be correct as it is not consistent with the
+            % signature of in_data()...
+            [BSL, BSLc] = in_data( Lst, Frmt, [], []);
+            if numel(BSL)>1
+                ctrl.jTextBSL.setText('loading only trial 1');
+                pause(2)
+                ctrl.jTextBSL.setText(Lst);
+            end    
+            BSL = BSL(1).FileName;
+        catch
+            ctrl.jTextBSL.setText('File cannot be used. Select new file');
+            pause(2)
+            ctrl.jTextBSL.setText('');
+            ctrl.jradimp.setSelected(0);
+            ctrl.jradwit.setSelected(1);        
+        end
+    end
+    
+    MEMglobal.Baseline              = BSL;
+    MEMglobal.BaselineChannels      = BSLc;
+    MEMglobal.BaselineHistory{1}    = 'import';
+    MEMglobal.BaselineHistory{2}    = '';
+    MEMglobal.BaselineHistory{3}    = Lst;
+    
+    check_time('bsl', 'import', 'true', 'checkOK');
+    ctrl.jBaselineTimeSelect.setVisible(1);
+
+    end
+
+
+    function success = load_auto_bsl(bsl_name)
+    % Look in the database for a recording with a given substring
+    success = false;
+    
+    % This global variable should be removed, kept here for compatibility with
+    % previous code
+    
+    if isfield(MEMglobal,'BSLinfo')  &&  isfield(MEMglobal.BSLinfo,'comment') && ~isempty(MEMglobal.BSLinfo.comment)
+        success = true;
+        return;
+    end
+    
+    
+    MEMglobal.BSLinfo.comment = '';
+    MEMglobal.BSLinfo.file = '';
+    
+    % Nothing to do
+    if isempty(bsl_name)
+        disp('BEst> No baseline to find')
+        disp(['BEst> Type in a substring contained in the name of the ', ...
+            'baseline file to load and tick the "find" button.'])
+        return
+    end
+    
+    % Look through the studies of the current protocol
+    % (why not giving precedence to the studies currently selected for analyses?)
+    S = getfield(bst_get('ProtocolStudies'), 'Study');
+    S = [S.Data];
+    
+    % This should never happen
+    if isempty(S)
+        disp('BEst> No study with recordings found in the current protocol.')
+        return
+    end
+    
+    
+    tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
+    subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
+    conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
+    
+    idx = false(size(subjectNames));
+    for iSubject = 1:length(MEMglobal.SubjToProcess)
+        idx = idx | strcmp(subjectNames,MEMglobal.SubjToProcess{iSubject});
+    end
+    idx = idx & strcmp({S.DataType}, 'recordings');
+    
+    S               = S(idx);
+    subjectNames    = subjectNames(idx);
+    conditionNames  =  conditionNames(idx);
+    
+    K = find(cellfun(@(k) ~isempty(k), strfind({S.Comment}, bsl_name)));
+    
+    % User should check the baseline name, beware case sensitivity
+    if isempty(K)
+        disp(['BEst> No recording with ''', bsl_name, ''' in their name was ', ...
+            'found in the current protocol.'])
+        return
+    end
+    
+    % A baseline has been found
+    success = true;
+    
+    % Warning if multiple recordings are valid
+    if (nnz(K) > 1)
+        potentials_baseline = S(K);
+    
+        names = strcat(subjectNames(K)', {' /  '},conditionNames(K)' ,{' /  '} , {potentials_baseline.Comment}');
+        try
+            ChanSelected = java_dialog('radio', 'Select baseline to use:', 'Baseline selection', [], names);
+        catch 
+            disp(['BEst> No baseline selected'])
+            return
+        end
+        if isempty(ChanSelected)
+            disp(['BEst> No baseline selected'])
+            return
+        end
+        K = K(ChanSelected);
+    end
+    
+    disp('BEst> Selecting the baseline file:')
+    disp(['BEst>    ''', S(K(1)).FileName, ''''])
+    
+    % This should be revisited, only file paths should be returned, not the file
+    % contents. 'be_main_call.m' should be able to load files.
+    MEMglobal.BSLinfo.comment = S(K(1)).Comment;
+    MEMglobal.BSLinfo.file = S(K(1)).FileName;
+    if ~isfield(MEMglobal, 'BaselineHistory') || ~strcmp(MEMglobal.BSLinfo.file, ...
+            MEMglobal.BaselineHistory{3})
+        MEMglobal.Baseline = file_fullpath(MEMglobal.BSLinfo.file);
+        MEMglobal.BaselineChannels = file_fullpath(bst_get(...
+            'ChannelFileForStudy', MEMglobal.BSLinfo.file));
+        MEMglobal.BaselineHistory{1} = 'auto';
+        MEMglobal.BaselineHistory{2} = MEMglobal.BSLinfo.comment;
+        MEMglobal.BaselineHistory{3} = MEMglobal.BSLinfo.file;
+    end
+    check_time('bsl', 'auto', 'true', 'checkOK');
+    end
+
+
 end
 
 
@@ -1422,178 +1630,6 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     
 end
 
-function success = load_auto_bsl(bsl_name)
-% Look in the database for a recording with a given substring
-success = false;
-
-% This global variable should be removed, kept here for compatibility with
-% previous code
-global MEMglobal
-
-if isfield(MEMglobal,'BSLinfo')  &&  isfield(MEMglobal.BSLinfo,'comment') && ~isempty(MEMglobal.BSLinfo.comment)
-    success = true;
-    return;
-end
-
-
-MEMglobal.BSLinfo.comment = '';
-MEMglobal.BSLinfo.file = '';
-
-% Nothing to do
-if isempty(bsl_name)
-    disp('BEst> No baseline to find')
-    disp(['BEst> Type in a substring contained in the name of the ', ...
-        'baseline file to load and tick the "find" button.'])
-    return
-end
-
-% Look through the studies of the current protocol
-% (why not giving precedence to the studies currently selected for analyses?)
-S = getfield(bst_get('ProtocolStudies'), 'Study');
-S = [S.Data];
-
-% This should never happen
-if isempty(S)
-    disp('BEst> No study with recordings found in the current protocol.')
-    return
-end
-
-
-tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
-subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
-conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
-
-idx = false(size(subjectNames));
-for iSubject = 1:length(MEMglobal.SubjToProcess)
-    idx = idx | strcmp(subjectNames,MEMglobal.SubjToProcess{iSubject});
-end
-idx = idx & strcmp({S.DataType}, 'recordings');
-
-S               = S(idx);
-subjectNames    = subjectNames(idx);
-conditionNames  =  conditionNames(idx);
-
-K = find(cellfun(@(k) ~isempty(k), strfind({S.Comment}, bsl_name)));
-
-% User should check the baseline name, beware case sensitivity
-if isempty(K)
-    disp(['BEst> No recording with ''', bsl_name, ''' in their name was ', ...
-        'found in the current protocol.'])
-    return
-end
-
-% A baseline has been found
-success = true;
-
-% Warning if multiple recordings are valid
-if (nnz(K) > 1)
-    potentials_baseline = S(K);
-
-    names = strcat(subjectNames(K)', {' /  '},conditionNames(K)' ,{' /  '} , {potentials_baseline.Comment}');
-    try
-        ChanSelected = java_dialog('radio', 'Select baseline to use:', 'Baseline selection', [], names);
-    catch 
-        disp(['BEst> No baseline selected'])
-        return
-    end
-    if isempty(ChanSelected)
-        disp(['BEst> No baseline selected'])
-        return
-    end
-    K = K(ChanSelected);
-end
-
-disp('BEst> Selecting the baseline file:')
-disp(['BEst>    ''', S(K(1)).FileName, ''''])
-
-% This should be revisited, only file paths should be returned, not the file
-% contents. 'be_main_call.m' should be able to load files.
-MEMglobal.BSLinfo.comment = S(K(1)).Comment;
-MEMglobal.BSLinfo.file = S(K(1)).FileName;
-if ~isfield(MEMglobal, 'BaselineHistory') || ~strcmp(MEMglobal.BSLinfo.file, ...
-        MEMglobal.BaselineHistory{3})
-    MEMglobal.Baseline = file_fullpath(MEMglobal.BSLinfo.file);
-    MEMglobal.BaselineChannels = file_fullpath(bst_get(...
-        'ChannelFileForStudy', MEMglobal.BSLinfo.file));
-    MEMglobal.BaselineHistory{1} = 'auto';
-    MEMglobal.BaselineHistory{2} = MEMglobal.BSLinfo.comment;
-    MEMglobal.BaselineHistory{3} = MEMglobal.BSLinfo.file;
-end
-check_time('bsl', 'auto', 'true', 'checkOK');
-end
-
-function import_baseline(hObject, event)
-
-global MEMglobal
-
-ctrl = bst_get('PanelControls', 'InverseOptionsMEM');
-
-DefaultFormats = bst_get('DefaultFormats');
-iP  = bst_get('ProtocolInfo');  
-[Lst, Frmt]   = java_getfile( 'open', ...
-        'Import EEG/MEG recordings...', ...       % Window title
-        iP.STUDIES, ...                           % default directory
-        'single', 'files_and_dirs', ...           % Selection mode
-        {{'.*'},                 'MEG/EEG: 4D-Neuroimaging/BTi (*.*)',   '4D'; ...
-         {'_data'},              'MEG/EEG: Brainstorm (*data*.mat)',     'BST-MAT'; ...
-         {'.meg4','.res4'},      'MEG/EEG: CTF (*.ds;*.meg4;*.res4)',    'CTF'; ...
-         {'.fif'},               'MEG/EEG: Elekta-Neuromag (*.fif)',     'FIF'; ...
-         {'*'},                  'EEG: ASCII text (*.*)',                'EEG-ASCII'; ...
-         {'.avr','.mux','.mul'}, 'EEG: BESA exports (*.avr;*.mul;*.mux)','EEG-BESA'; ...
-         {'.eeg','.dat'},        'EEG: BrainAmp (*.eeg;*.dat)',          'EEG-BRAINAMP'; ...
-         {'.txt'},               'EEG: BrainVision Analyzer (*.txt)',    'EEG-BRAINVISION'; ...
-         {'.sef','.ep','.eph'},  'EEG: Cartool (*.sef;*.ep;*.eph)',      'EEG-CARTOOL'; ...
-         {'.edf','.rec'},        'EEG: EDF / EDF+ (*.rec;*.edf)',        'EEG-EDF'; ...
-         {'.set'},               'EEG: EEGLAB (*.set)',                  'EEG-EEGLAB'; ...
-         {'.raw'},               'EEG: EGI Netstation RAW (*.raw)',      'EEG-EGI-RAW'; ...
-         {'.erp','.hdr'},        'EEG: ERPCenter (*.hdr;*.erp)',         'EEG-ERPCENTER'; ...
-         {'.mat'},               'EEG: Matlab matrix (*.mat)',           'EEG-MAT'; ...
-         {'.cnt','.avg','.eeg','.dat'}, 'EEG: Neuroscan (*.cnt;*.eeg;*.avg;*.dat)', 'EEG-NEUROSCAN'; ...
-         {'.mat'},               'NIRS: MFIP (*.mat)',                   'NIRS-MFIP'; ...
-        }, DefaultFormats.DataIn);
-    
-if isempty(Lst) 
-    ctrl.jradwit.setSelected(1);
-    check_time('bsl', '', '');
-    return
-end
-
-ctrl.jTextBSL.setText(Lst);
-MEMglobal.BSLinfo.file    = Lst;
-MEMglobal.BSLinfo.format  = Frmt; 
-
-if strcmp(Frmt, 'BST-MAT')
-    BSL = Lst;
-    BSLc = fullfile(iP.STUDIES, bst_get('ChannelFileForStudy', Lst));
-else
-    try
-        % This code block should not be correct as it is not consistent with the
-        % signature of in_data()...
-        [BSL, BSLc] = in_data( Lst, Frmt, [], []);
-        if numel(BSL)>1
-            ctrl.jTextBSL.setText('loading only trial 1');
-            pause(2)
-            ctrl.jTextBSL.setText(Lst);
-        end    
-        BSL = BSL(1).FileName;
-    catch
-        ctrl.jTextBSL.setText('File cannot be used. Select new file');
-        pause(2)
-        ctrl.jTextBSL.setText('');
-        ctrl.jradimp.setSelected(0);
-        ctrl.jradwit.setSelected(1);        
-    end
-end
-
-MEMglobal.Baseline              = BSL;
-MEMglobal.BaselineChannels      = BSLc;
-MEMglobal.BaselineHistory{1}    = 'import';
-MEMglobal.BaselineHistory{2}    = '';
-MEMglobal.BaselineHistory{3}    = Lst;
-
-check_time('bsl', 'import', 'true', 'checkOK');
-
-end
 
 function adjust_range(WTA, rng)
 
