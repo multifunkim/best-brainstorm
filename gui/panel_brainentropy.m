@@ -37,6 +37,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     global MEMglobal
 
+    clear global MEMglobal  
+
     panelName       =   'InverseOptionsMEM';
     bstPanelNew     =   [];
     
@@ -57,7 +59,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         STD         =   cell2mat( STD );
     elseif numel(varargin)==0
         % Call from the GUI, do nothing
-        clear global MEMglobal  
         caller      =   'gui';
 
         % Call from the GUI
@@ -195,6 +196,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     % ===== PANEL CREATION =====
     bst_mutex('create', panelName);
     bstPanelNew = BstPanel(panelName, jPanelMain, ctrl);
+    setOptions(OPTIONS);
     UpdatePanel()
     SwitchExpertMEM();
 
@@ -450,7 +452,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanel.add('tab hfill', jBoxWAVsc);
 
         ctrl = struct('JPanelnwav',jPanel,...
-                     'jBoxWAVsc', jBoxWAVsc);
+                     'jBoxWAVsc', jBoxWAVsc, ...
+                     'jWavScales', jBoxWAVsc);
     end
 
     function [jPanel, ctrl] = CreatePanelSynchrony()
@@ -764,7 +767,12 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanel.add('p left', JLabel('Decomposition levels') );
         jPanel.add('tab', jTxtWAVlv);
 
-        ctrl = struct('jPanelWAV',jPanel );
+        ctrl = struct('jPanelWAV',      jPanel, ...
+                      'jWavType',       jTxtWAVtp, ...
+                      'jWavVanish',     jTxtWAVvm,...
+                      'jWavShrinkage',  jTxtWAVsh, ...
+                      'jWavOrder',      jTxtWAVor,...
+                      'jWavLevels',     jTxtWAVlv);
     end
 
     function [jPanel, ctrl] = CreatePanelRidge()
@@ -803,7 +811,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanel.add('p left', JLabel('Ridge minimum cycles') );
         jPanel.add('tab', jTxtRmc);
 
-        ctrl = struct('jPanelRDG',jPanel );
+        ctrl = struct('jPanelRDG',      jPanel, ...
+                       'jRDGscaloth',   jTxtRsct, ...
+                       'jRDGnrjth',     jTxtRbct,...
+                       'jRDGstrength',  jTxtRst, ...
+                       'jRDGmincycles',	jTxtRmc);
     end
 
     function [jPanel, ctrl] = CreatePanelSolver()
@@ -868,6 +880,50 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                       'jVarCovar',   jTxtVCOV);
 
     end
+    
+    function setOptions(OPTIONS)
+
+        choices = {'cMEM', 'wMEM', 'rMEM'};
+        selected = strcmp(OPTIONS.mandatory.pipeline , choices);
+        MEM_button  = [ctrl.jMEMdef ctrl.jMEMw ctrl.jMEMr ];
+
+        if any(selected)
+            MEM_button(selected).setSelected(1);
+        end
+        
+        ctrl.jTextTimeStart.setText(num2str(OPTIONS.optional.TimeSegment(1)))
+        ctrl.jTextTimeStop.setText(num2str(OPTIONS.optional.TimeSegment(2)))
+        check_time('time', '', '');
+
+        ctrl.jTextBSLStart.setText(num2str(OPTIONS.optional.BaselineSegment(1)))
+        ctrl.jTextBSLStop.setText(num2str(OPTIONS.optional.BaselineSegment(2)))
+        check_time('bsl', '', '');
+
+        check_time('set_scales', '', '');
+        check_time('set_freqs', '', '');
+
+        ctrl.jMuMethod.setText(num2str(OPTIONS.model.active_mean_method));
+        ctrl.jAlphaMethod.setText(num2str(OPTIONS.model.alpha_method));
+        ctrl.jAlphaThresh.setText(num2str(OPTIONS.model.alpha_threshold));
+        ctrl.jLambda.setText(num2str(OPTIONS.model.initial_lambda));
+        ctrl.jActiveVar.setText(num2str(OPTIONS.solver.active_var_mult));
+        ctrl.jInactiveVar.setText(num2str(OPTIONS.solver.inactive_var_mult));
+
+        ctrl.jOptimFN.setText(OPTIONS.solver.Optim_method);
+
+
+        ctrl.jBoxShow.setSelected(OPTIONS.optional.display);
+
+        ctrl.jParallel.setSelected(OPTIONS.solver.parallel_matlab);
+
+        ctrl.jNewCOV.setSelected(OPTIONS.solver.NoiseCov_recompute);
+
+        ctrl.jVarCovar.setText(num2str(OPTIONS.solver.NoiseCov_method) );
+
+
+    end
+
+
     %% ===== CANCEL BUTTON =====
     function ButtonCancel_Callback()
         gui_hide(panelName);
@@ -900,6 +956,24 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     %% ===== SWITCH PIPELINE =====
     function SwitchPipeline(varargin)
+        
+
+        choices = {'cMEM', 'wMEM', 'rMEM'};
+        selected = [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
+
+        if any(selected)
+            
+            if strcmp(choices(selected), 'cMEM')
+                OPTIONS = struct_copy_fields(OPTIONS,be_cmem_pipelineoptions,1);
+            elseif strcmp(choices(selected), 'wMEM')
+                OPTIONS = struct_copy_fields(OPTIONS,be_wmem_pipelineoptions,1);
+            elseif strcmp(choices(selected), 'rMEM')
+                OPTIONS = struct_copy_fields(be_rmem_pipelineoptions,1);
+            end
+
+            setOptions(OPTIONS)
+        end
+
         UpdatePanel()
     end
 
@@ -953,6 +1027,201 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     
         end            
     end
+
+    function set_scales(time)
+        
+        if numel(time)>127 && ~ (isfield(MEMglobal, 'selected_scale_index') && MEMglobal.selected_scale_index > 0)
+    
+            if ~isfield(MEMglobal, 'available_scales')
+                Nj      = fix( log2(numel(time)) );
+                sf      = 1/diff(time([1 2]));
+                Noff    = min(Nj-1, 3);
+    
+                scalesU = 1./2.^(1:Nj-Noff) * sf;
+                scalesD = 1./2.^(1:Nj-Noff)/2 * sf;
+    
+                MEMglobal.available_scales  = [scalesU; scalesD];
+            end
+                
+            % Fill fields
+            ctrl.jWavScales.insertItemAt( '', 0)
+            ctrl.jWavScales.insertItemAt( 'all', 1)
+            for ii = 1 : size(MEMglobal.available_scales,2)
+                IT = [num2str(ii) ' (' num2str(MEMglobal.available_scales(2,ii)) ':' num2str(MEMglobal.available_scales(1,ii)) ' Hz)'];
+                ctrl.jWavScales.insertItemAt(IT, ii+1);
+            end
+            ctrl.jWavScales.setSelectedIndex(0); 
+            
+        elseif numel(time)<128
+            ctrl.jWavScales.insertItemAt( 'NOT ENOUGH SAMPLES', 0)
+            ctrl.jWavScales.insertItemAt( 'NOT ENOUGH SAMPLES', 1)
+            ctrl.jWavScales.setSelectedIndex(0); 
+            ctrl.jWavScales.setEnabled(0);
+            
+        else
+            ctrl.jWavScales.setSelectedIndex(MEMglobal.selected_scale_index);
+            
+        end
+                 
+    end
+
+    function [freqs] = set_freqs(time)
+        
+        if ~isfield(MEMglobal, 'selected_freqs_index') && numel(time)>127
+            
+            if ~isfield(MEMglobal, 'freqs_available')
+                O.wavelet.vanish_moments=   str2double( ctrl.jWavVanish.getText() );
+                O.wavelet.order     	=   str2double( ctrl.jWavOrder.getText() );
+                O.wavelet.nb_levels  	=   str2double( ctrl.jWavLevels.getText() );
+                O.wavelet.verbose       =   0;  
+                O.mandatory.DataTime    =   time;
+    
+                [dum, O] = be_cwavelet( time, O, 1);
+                FRQ = O.wavelet.freqs_analyzed;
+    
+                freqs = {'','all'};
+                if max(FRQ)>100    
+                    if min( abs(FRQ-30) ) < 1
+                        freqs = [freqs {'gamma'}];        
+                        if min( abs(FRQ-13) ) < 1
+                            freqs = [freqs {'beta'}];            
+                            if min( abs(FRQ-8) ) < 1
+                                freqs = [freqs {'alpha'}];                
+                                if min( abs(FRQ-4) ) < 1
+                                    freqs = [freqs {'theta'}];                   
+                                    if min( abs(FRQ-1) ) < 1
+                                        freqs = [freqs {'delta'}];
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+                MEMglobal.freqs_available = freqs;
+                MEMglobal.freqs_analyzed  = FRQ;
+            end
+            
+            % Fill fields
+            for ii = 1 : numel(MEMglobal.freqs_available)
+                ctrl.jRDGrangeS.insertItemAt(MEMglobal.freqs_available{ii}, ii-1);
+            end        
+            ctrl.jRDGrangeS.setSelectedIndex(0);   
+        
+        elseif numel(time)<128
+            ctrl.jRDGrangeS.insertItemAt( 'NOT ENOUGH SAMPLES', 0)
+            ctrl.jRDGrangeS.insertItemAt( 'NOT ENOUGH SAMPLES', 1)
+            ctrl.jRDGrangeS.setSelectedIndex(0); 
+            ctrl.jRDGrangeS.setEnabled(0); 
+            
+        else
+            ctrl.jRDGrangeS.setSelectedIndex(MEMglobal.selected_freqs_index);
+         
+        end
+        
+    end
+    
+    function check_time(varargin)
+        % Check time limits
+        iP  = bst_get('ProtocolInfo');
+        iS  = MEMglobal.DataToProcess;
+        
+        % Checks input 
+        Tm = {};
+        for ii = 1 : numel(iS)
+            data = in_bst(fullfile(iP.STUDIES, iS{ii})); % load( fullfile(iP.STUDIES, iS{ii}), 'Time' );
+            Tm{ii} = data.Time;
+        end
+        sf = cellfun(@(a) round(1/diff(a([1 2]))), Tm, 'uni', false);
+        St = cellfun(@(a,b) round(a(1)*b), Tm, sf, 'uni', false); St = max( [St{:}] );
+        Nd = cellfun(@(a,b) round(a(end)*b), Tm, sf, 'uni', false); Nd = min( [Nd{:}] );
+        
+        if St > Nd
+            ctrl.jTextTimeStart.setEnabled(0);
+            ctrl.jTextTimeStop.setEnabled(0);
+        
+        else
+            Time = (St : Nd)/max([sf{:}]);
+        
+            % process input arguments
+            switch varargin{1}
+                case 'time',
+                    hndlst = ctrl.jTextTimeStart;
+                    hndlnd = ctrl.jTextTimeStop;
+        
+                case 'bsl'
+                    hndlst = ctrl.jTextBSLStart;
+                    hndlnd = ctrl.jTextBSLStop;
+                    
+                    switch varargin{2}
+                        case ''
+                            if isfield(MEMglobal, 'Baseline') && ~isempty(MEMglobal.Baseline) 
+                                Time = getfield(load(MEMglobal.Baseline, 'Time'), 'Time');
+                            end
+                        case {'auto', 'import'}
+                            Time = getfield(load(MEMglobal.Baseline, 'Time'), 'Time');   
+                    end
+
+                case 'set_scales'
+                    set_scales(Time);
+                    return;
+                case 'set_freqs'
+                    set_freqs(Time);
+                    return;
+            end
+        
+            switch varargin{3}
+                case 'true'
+                    hndlst.setText('-9999')
+                    hndlnd.setText('9999')
+            end
+        
+            ST  = str2double( char( hndlst.getText()) ); 
+            ND  = str2double( char( hndlnd.getText()) ); 
+        
+            if isnan(ST), ST = Time(1); else ST = Time( be_closest(ST,Time) ); end
+            if isnan(ND), ND = Time(end); else ND = Time( be_closest(ND,Time) ); end
+        
+            if ST> min([ND Time(end)]) 
+                ST=min([ND Time(end)]);
+            end
+            if ND< max([ST Time(1)])
+                ND=max([ST Time(1)]);
+            end
+        
+            hndlst.setText( num2str( max( ST, Time(1) ) ) );
+            hndlnd.setText( num2str( min( ND, Time(end) ) ) );
+        
+            if numel(varargin)==4 
+                if strcmp(varargin{4}, 'checkOK')
+                    ctrl.jButOk.setEnabled(1);
+                elseif strcmp(varargin{4}, 'set_TF')
+                    if ctrl.jMEMw.isSelected()
+                        set_scales(Time);
+                    elseif ctrl.jMEMr.isSelected()
+                        set_freqs(Time);
+                    end           
+                end
+            end
+        end
+        
+        
+    end
+
+    function rememberTFindex(type)
+        
+        switch type
+            case 'scales'
+                MEMglobal.selected_scale_index = ctrl.jWavScales.getSelectedIndex;
+                ctrl.jWavScales.removeItemAt( 0 );
+                ctrl.jWavScales.insertItemAt( ctrl.jWavScales.getSelectedItem(),0 );
+                
+            case 'freqs'
+                MEMglobal.selected_freqs_index = ctrl.jRDGrangeS.getSelectedIndex;
+                ctrl.jRDGrangeS.removeItemAt( 0 );
+                ctrl.jRDGrangeS.insertItemAt( ctrl.jRDGrangeS.getSelectedItem(),0 );
+        end
+
+end
 
 end
 
@@ -1143,90 +1412,6 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     clear global BSLinfo
     s.MEMpaneloptions = MEMpaneloptions;
     
-end
-
-function check_time(varargin)
-
-% Check time limits
-global MEMglobal
-iP  = bst_get('ProtocolInfo');
-iS  = MEMglobal.DataToProcess;
-
-% Checks input 
-ctrl    = bst_get('PanelControls', 'InverseOptionsMEM');
-Tm = {};
-for ii = 1 : numel(iS)
-    data = in_bst(fullfile(iP.STUDIES, iS{ii})); % load( fullfile(iP.STUDIES, iS{ii}), 'Time' );
-    Tm{ii} = data.Time;
-end
-sf = cellfun(@(a) round(1/diff(a([1 2]))), Tm, 'uni', false);
-St = cellfun(@(a,b) round(a(1)*b), Tm, sf, 'uni', false); St = max( [St{:}] );
-Nd = cellfun(@(a,b) round(a(end)*b), Tm, sf, 'uni', false); Nd = min( [Nd{:}] );
-
-if St > Nd
-    ctrl.jTextTimeStart.setEnabled(0);
-    ctrl.jTextTimeStop.setEnabled(0);
-
-else
-    Time = (St : Nd)/max([sf{:}]);
-
-    % process input arguments
-    switch varargin{1}
-        case 'time'
-            hndlst = ctrl.jTextTimeStart;
-            hndlnd = ctrl.jTextTimeStop;
-
-        case 'bsl'
-            hndlst = ctrl.jTextBSLStart;
-            hndlnd = ctrl.jTextBSLStop;
-            
-            switch varargin{2}
-                case ''
-                    if isfield(MEMglobal, 'Baseline') && ~isempty(MEMglobal.Baseline) 
-                        Time = getfield(load(MEMglobal.Baseline, 'Time'), 'Time');
-                    end
-                case {'auto', 'import'}
-                    Time = getfield(load(MEMglobal.Baseline, 'Time'), 'Time');   
-            end
-    
-    end
-
-    switch varargin{3}
-        case 'true'
-            hndlst.setText('-9999')
-            hndlnd.setText('9999')
-    end
-
-    ST  = str2double( char( hndlst.getText()) ); 
-    ND  = str2double( char( hndlnd.getText()) ); 
-
-    if isnan(ST), ST = Time(1); else ST = Time( be_closest(ST,Time) ); end
-    if isnan(ND), ND = Time(end); else ND = Time( be_closest(ND,Time) ); end
-
-    if ST> min([ND Time(end)]) 
-        ST=min([ND Time(end)]);
-    end
-    if ND< max([ST Time(1)])
-        ND=max([ST Time(1)]);
-    end
-
-    hndlst.setText( num2str( max( ST, Time(1) ) ) );
-    hndlnd.setText( num2str( min( ND, Time(end) ) ) );
-
-    if numel(varargin)==4 
-        if strcmp(varargin{4}, 'checkOK')
-            ctrl.jButOk.setEnabled(1);
-        elseif strcmp(varargin{4}, 'set_TF')
-            if ctrl.jMEMw.isSelected()
-                set_scales(Time);
-            elseif ctrl.jMEMr.isSelected()
-                set_freqs(Time);
-            end           
-        end
-    end
-end
-
-
 end
 
 function success = load_auto_bsl(bsl_name)
@@ -1420,120 +1605,5 @@ VAL  =  min( VAL, rng(2) );
 
 % set value
 ctrl.(WTA).setText( num2str(VAL) );
-
-end
-
-function set_scales(time)
-    
-    global MEMglobal
-    ctrl =  bst_get('PanelControls', 'InverseOptionsMEM');   
-    if numel(time)>127 && ~isfield(MEMglobal, 'selected_scale_index')
-
-        if ~isfield(MEMglobal, 'available_scales')
-            Nj      = fix( log2(numel(time)) );
-            sf      = 1/diff(time([1 2]));
-            Noff    = min(Nj-1, 3);
-
-            scalesU = 1./2.^(1:Nj-Noff) * sf;
-            scalesD = 1./2.^(1:Nj-Noff)/2 * sf;
-
-            MEMglobal.available_scales  = [scalesU; scalesD];
-        end
-            
-        % Fill fields
-        ctrl.jWavScales.insertItemAt( '', 0)
-        ctrl.jWavScales.insertItemAt( 'all', 1)
-        for ii = 1 : size(MEMglobal.available_scales,2)
-            IT = [num2str(ii) ' (' num2str(MEMglobal.available_scales(2,ii)) ':' num2str(MEMglobal.available_scales(1,ii)) ' Hz)'];
-            ctrl.jWavScales.insertItemAt(IT, ii+1);
-        end
-        ctrl.jWavScales.setSelectedIndex(0); 
-        
-    elseif numel(time)<128
-        ctrl.jWavScales.insertItemAt( 'NOT ENOUGH SAMPLES', 0)
-        ctrl.jWavScales.insertItemAt( 'NOT ENOUGH SAMPLES', 1)
-        ctrl.jWavScales.setSelectedIndex(0); 
-        ctrl.jWavScales.setEnabled(0);
-        
-    else
-        ctrl.jWavScales.setSelectedIndex(MEMglobal.selected_scale_index);
-        
-    end
-             
-end
-
-function [freqs] = set_freqs(time)
-
-    global MEMglobal
-    ctrl = bst_get('PanelControls', 'InverseOptionsMEM');
-
-    if ~isfield(MEMglobal, 'selected_freqs_index') && numel(time)>127
-        
-        if ~isfield(MEMglobal, 'freqs_available')
-            O.wavelet.vanish_moments=   str2double( ctrl.jWavVanish.getText() );
-            O.wavelet.order     	=   str2double( ctrl.jWavOrder.getText() );
-            O.wavelet.nb_levels  	=   str2double( ctrl.jWavLevels.getText() );
-            O.wavelet.verbose       =   0;  
-            O.mandatory.DataTime    =   time;
-
-            [dum, O] = be_cwavelet( time, O, 1);
-            FRQ = O.wavelet.freqs_analyzed;
-
-            freqs = {'','all'};
-            if max(FRQ)>100    
-                if min( abs(FRQ-30) ) < 1
-                    freqs = [freqs {'gamma'}];        
-                    if min( abs(FRQ-13) ) < 1
-                        freqs = [freqs {'beta'}];            
-                        if min( abs(FRQ-8) ) < 1
-                            freqs = [freqs {'alpha'}];                
-                            if min( abs(FRQ-4) ) < 1
-                                freqs = [freqs {'theta'}];                   
-                                if min( abs(FRQ-1) ) < 1
-                                    freqs = [freqs {'delta'}];
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            MEMglobal.freqs_available = freqs;
-            MEMglobal.freqs_analyzed  = FRQ;
-        end
-        
-        % Fill fields
-        for ii = 1 : numel(MEMglobal.freqs_available)
-            ctrl.jRDGrangeS.insertItemAt(MEMglobal.freqs_available{ii}, ii-1);
-        end        
-        ctrl.jRDGrangeS.setSelectedIndex(0);   
-    
-    elseif numel(time)<128
-        ctrl.jRDGrangeS.insertItemAt( 'NOT ENOUGH SAMPLES', 0)
-        ctrl.jRDGrangeS.insertItemAt( 'NOT ENOUGH SAMPLES', 1)
-        ctrl.jRDGrangeS.setSelectedIndex(0); 
-        ctrl.jRDGrangeS.setEnabled(0); 
-        
-    else
-        ctrl.jRDGrangeS.setSelectedIndex(MEMglobal.selected_freqs_index);
-     
-    end
-    
-end
-
-function rememberTFindex(type)
-    
-    global MEMglobal
-    ctrl =  bst_get('PanelControls', 'InverseOptionsMEM');
-    switch type
-        case 'scales'
-            MEMglobal.selected_scale_index = ctrl.jWavScales.getSelectedIndex;
-            ctrl.jWavScales.removeItemAt( 0 );
-            ctrl.jWavScales.insertItemAt( ctrl.jWavScales.getSelectedItem(),0 );
-            
-        case 'freqs'
-            MEMglobal.selected_freqs_index = ctrl.jRDGrangeS.getSelectedIndex;
-            ctrl.jRDGrangeS.removeItemAt( 0 );
-            ctrl.jRDGrangeS.insertItemAt( ctrl.jRDGrangeS.getSelectedItem(),0 );
-    end
 
 end
