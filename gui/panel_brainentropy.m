@@ -49,6 +49,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     elseif isfield(OPTIONS, 'Comment') & strcmp(OPTIONS.Comment,'Compute sources: BEst')
         % Call from the process, find the right options
         OPTIONS     =   OPTIONS.options.mem.Value; 
+        
+        if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
+            OPTIONS = OPTIONS.MEMpaneloptions;
+        end
+
         caller      =   'process';
 
         % Call from the process
@@ -74,15 +79,18 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             [st,is] = bst_get('Study', fullfile( bst_fileparts(DTS{ii}), 'brainstormstudy.mat' ) );
             STD     = [STD is];
         end
+        
+        OPTIONS = be_main();
+
     else
         % Unexpected call
         fprintf('\n\n***\tError in call to panel_brainentropy\t***\n\tPlease report this bug to: latis@gmail.com\n\n')
         return
     end       
 
-    OPTIONS = struct_copy_fields(be_cmem_pipelineoptions,OPTIONS,1);
-    OPTIONS = struct_copy_fields(be_wmem_pipelineoptions,OPTIONS,1);
-    OPTIONS = struct_copy_fields(be_rmem_pipelineoptions,OPTIONS,1);
+    OPTIONS = struct_copy_fields(OPTIONS,be_cmem_pipelineoptions,0,1);
+    OPTIONS = struct_copy_fields(OPTIONS,be_wmem_pipelineoptions,0,1);
+    OPTIONS = struct_copy_fields(OPTIONS, be_rmem_pipelineoptions,0,1);
         
     % Version
     OPTIONS.automatic.version       =   '2.7.3';
@@ -964,11 +972,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if any(selected)
             
             if strcmp(choices(selected), 'cMEM')
-                OPTIONS = struct_copy_fields(OPTIONS,be_cmem_pipelineoptions,1);
+                OPTIONS = struct_copy_fields(OPTIONS,be_cmem_pipelineoptions,1,1);
             elseif strcmp(choices(selected), 'wMEM')
-                OPTIONS = struct_copy_fields(OPTIONS,be_wmem_pipelineoptions,1);
+                OPTIONS = struct_copy_fields(OPTIONS,be_wmem_pipelineoptions,1,1);
             elseif strcmp(choices(selected), 'rMEM')
-                OPTIONS = struct_copy_fields(be_rmem_pipelineoptions,1);
+                OPTIONS = struct_copy_fields(OPTIONS,be_rmem_pipelineoptions,1,1);
             end
 
             setOptions(OPTIONS)
