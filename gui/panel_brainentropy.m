@@ -36,36 +36,27 @@ end
 function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU> 
 
     global MEMglobal
-
     clear global MEMglobal  
 
     panelName       =   'InverseOptionsMEM';
     bstPanelNew     =   [];
     
     % Check caller and Load data
-    if numel(varargin)>0 & ischar(varargin{1}) & strcmp(varargin{1},'internal')
-        % Internal call, nothing to do
-        caller      =   'internal';           
-    elseif isfield(OPTIONS, 'Comment') & strcmp(OPTIONS.Comment,'Compute sources: BEst')
-        % Call from the process, find the right options
-        OPTIONS     =   OPTIONS.options.mem.Value; 
-        
-        if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
-            OPTIONS = OPTIONS.MEMpaneloptions;
-        end
-
-        caller      =   'process';
-
+    if isfield(OPTIONS, 'Comment') & strcmp(OPTIONS.Comment,'Compute sources: BEst')
         % Call from the process
         inputData   =   varargin{1};
         DTS         =   {inputData.FileName};
         SUBJ        =   cellfun( @(a) strrep( bst_fileparts( bst_fileparts( a ) ), filesep, '' ), DTS, 'uni', 0 );
         [dum,STD]   =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), DTS, 'uni', 0 );
         STD         =   cell2mat( STD );
-    elseif numel(varargin)==0
-        % Call from the GUI, do nothing
-        caller      =   'gui';
 
+        OPTIONS     =   OPTIONS.options.mem.Value; 
+        
+        if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
+            OPTIONS = OPTIONS.MEMpaneloptions;
+        end
+        OPTIONS = struct_copy_fields(OPTIONS,be_main,0,1);
+    elseif numel(varargin)==0
         % Call from the GUI
         bstPanel        = bst_get('Panel', 'Protocols');
         jTree           = get(bstPanel,'sControls');
@@ -81,7 +72,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         end
         
         OPTIONS = be_main();
-
     else
         % Unexpected call
         fprintf('\n\n***\tError in call to panel_brainentropy\t***\n\tPlease report this bug to: latis@gmail.com\n\n')
@@ -110,8 +100,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     import javax.swing.*;
 
     % Constants
-    TEXT_WIDTH  = 60;
-    DEFAULT_HEIGHT = 20;
+    TEXT_WIDTH      = 60;
+    DEFAULT_HEIGHT  = 20;
+
     % Create main main panel
     jPanelMain = gui_component('Panel');
 
@@ -379,11 +370,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jBaselineWithinBst.add('hfill', jTextLoadAutoBsl);
         h = handle(jTextLoadAutoBsl, 'callbackproperties');
         set(h, 'FocusLostCallback', @(src, ev) UpdatePanel);
-        jRadioLoadAutoBsl = gui_component('button', jBaselineWithinBst, 'br center', 'find', [], ['<HTML><B>Find baseline</B>:', ...
-                                                                                    '<BR>Automatically loads a recording from the current protocol using the given substring.</HTML>'], ...
-                                                                                    @(h, ev) UpdatePanel, []);
 
-        jBaselineWithinBst.add(jRadioLoadAutoBsl);
+        jBaselineWithinBst.add( gui_component('button', jBaselineWithinBst, 'br center', 'find', [], ['<HTML><B>Find baseline</B>:', ...
+                                                                                    '<BR>Automatically loads a recording from the current protocol using the given substring.</HTML>'], ...
+                                                                                    @(h, ev)  load_auto_bsl, []));
 
         jPanel.add('hfill',jBaselineWithinBst);
         jBaselineWithinBst.hide();
@@ -442,7 +432,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             'jRadioWithinData',jRadioWithinData, ...
             'jRadioWithinBrainstorm', jRadioWithinBrainstorm, ...
             'jRadioExternal', jRadioExternal, ...
-            'jRadioLoadAutoBsl',jRadioLoadAutoBsl, ...
             'jTextLoadAutoBsl', jTextLoadAutoBsl, ...
             'jradimp',          jRadioExternal, ...
             'jBaselineWithinBst', jBaselineWithinBst, ...
@@ -912,12 +901,28 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ctrl.jTextTimeStop.setText(num2str(OPTIONS.optional.TimeSegment(2)))
         check_time('time', '', '');
 
+        choices = {'within-data', 'within-brainstorm', 'external'};
+        baseline_control = [ctrl.jRadioWithinData ctrl.jRadioWithinBrainstorm ctrl.jRadioExternal];
+    
+        if any(strcmp(OPTIONS.optional.BaselineType, choices ))
+            baseline_control(strcmp(OPTIONS.optional.BaselineType, choices )).setSelected(1);
+            ctrl.jBaselineTimeSelect.setVisible(1);
+            check_time('bsl', '', '', 'checkOK');
+        end
+
         ctrl.jTextBSLStart.setText(num2str(OPTIONS.optional.BaselineSegment(1)))
         ctrl.jTextBSLStop.setText(num2str(OPTIONS.optional.BaselineSegment(2)))
-        check_time('bsl', '', '');
+
 
         check_time('set_scales', '', '');
         check_time('set_freqs', '', '');
+
+
+        if  (OPTIONS.model.depth_weigth_MNE > 0 || OPTIONS.model.depth_weigth_MEM > 0)
+            ctrl.jCheckDepthWeighting.setSelected(1);
+            ctrl.jTxtDepthMNE.setText(num2str(OPTIONS.model.depth_weigth_MNE));
+            ctrl.jTxtDepthMEM.setText(num2str(OPTIONS.model.depth_weigth_MEM));
+        end
 
         ctrl.jMuMethod.setText(num2str(OPTIONS.model.active_mean_method));
         ctrl.jAlphaMethod.setText(num2str(OPTIONS.model.alpha_method));
@@ -937,6 +942,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
         ctrl.jVarCovar.setText(num2str(OPTIONS.solver.NoiseCov_method) );
 
+        if strcmp( char(ctrl.jButEXP.getText()),'Expert' ) && OPTIONS.automatic.MEMexpert
+            SwitchExpertMEM();
+        elseif strcmp( char(ctrl.jButEXP.getText()),'Normal' ) && ~OPTIONS.automatic.MEMexpert
+            SwitchExpertMEM();
+        end
 
     end
 
@@ -1007,7 +1017,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
            ctrl.jBaselineWithinBst.setVisible(0);
            ctrl.jBaselineExternal.setVisible(0);
 
-           
+          check_time('bsl', '', '', 'checkOK');
        elseif strcmp( choices(selected), 'within-brainstorm') 
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(1);
@@ -1019,6 +1029,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.jBaselineExternal.setVisible(1);
        end
     end
+
     function switchDepth(varargin)
          ctrl.jTxtDepthMNE.setEnabled( ctrl.jCheckDepthWeighting.isSelected());
          ctrl.jTxtDepthMEM.setEnabled( ctrl.jCheckDepthWeighting.isSelected());
@@ -1047,6 +1058,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.JPanelCLSType.setVisible(1);
             if nsub > 1 
                 ctrl.JPanelGRP.setVisible(1);
+            else
+                ctrl.JPanelGRP.setVisible(0);
             end
             ctrl.jPanelModP.setVisible(1);
             ctrl.jPanelSensC.setVisible(1);
@@ -1220,8 +1233,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ST  = str2double( char( hndlst.getText()) ); 
             ND  = str2double( char( hndlnd.getText()) ); 
         
-            if isnan(ST), ST = Time(1); else ST = Time( be_closest(ST,Time) ); end
-            if isnan(ND), ND = Time(end); else ND = Time( be_closest(ND,Time) ); end
+            if isnan(ST), ST = Time(1);   else, ST = Time( be_closest(ST,Time) ); end
+            if isnan(ND), ND = Time(end); else, ND = Time( be_closest(ND,Time) ); end
         
             if ST> min([ND Time(end)]) 
                 ST=min([ND Time(end)]);
@@ -1339,10 +1352,10 @@ end
     end
 
 
-    function success = load_auto_bsl(bsl_name)
+    function success = load_auto_bsl()
     % Look in the database for a recording with a given substring
     success = false;
-    
+    bsl_name = char(ctrl.jTextLoadAutoBsl.getText());
     % This global variable should be removed, kept here for compatibility with
     % previous code
     
@@ -1387,7 +1400,7 @@ end
     
     S               = S(idx);
     subjectNames    = subjectNames(idx);
-    conditionNames  =  conditionNames(idx);
+    conditionNames  = conditionNames(idx);
     
     K = find(cellfun(@(k) ~isempty(k), strfind({S.Comment}, bsl_name)));
     
@@ -1436,8 +1449,8 @@ end
         MEMglobal.BaselineHistory{3} = MEMglobal.BSLinfo.file;
     end
     check_time('bsl', 'auto', 'true', 'checkOK');
+    ctrl.jBaselineTimeSelect.setVisible(1);
     end
-
 
 end
 
@@ -1448,53 +1461,35 @@ end
 
 % ===== GET PANEL CONTENTS =====
 function s = GetPanelContents(varargin) %#ok<DEFNU>
+
     % Get panel controls
     ctrl = bst_get('PanelControls', 'InverseOptionsMEM');
-    MEMpaneloptions.InverseMethod = 'MEM';
-    MEMpaneloptions.automatic.MEMexpert  =   strcmp( char(ctrl.jButEXP.getText()),'Normal' );                    
-    
-    % Get all the text options
-    MEMpaneloptions.clustering.neighborhood_order     = str2double(char(ctrl.jTextNeighbor.getText()));
-    MEMpaneloptions.clustering.MSP_window             = str2double(char(ctrl.jTextMspWindow.getText()));
-    MEMpaneloptions.optional.TimeSegment              = [str2double(char(ctrl.jTextTimeStart.getText())) ...
-                                                        str2double(char(ctrl.jTextTimeStop.getText()))];
-    MEMpaneloptions.optional.groupAnalysis            = ctrl.jCheckGRP.isSelected(); 
-    MEMpaneloptions.optional.TimeSegment(isnan(MEMpaneloptions.optional.TimeSegment) ) = [];
-    
+    global MEMglobal
+
+    MEMpaneloptions.InverseMethod           = 'MEM';
+    MEMpaneloptions.automatic.MEMexpert     =   strcmp( char(ctrl.jButEXP.getText()),'Expert' );                    
+    MEMpaneloptions.automatic.version       =   char( ctrl.jTXTver.getText() ); 
+    MEMpaneloptions.automatic.last_update   =   char( ctrl.jTXTupd.getText() ); 
+
     % Get MEM method
     choices = {'cMEM', 'wMEM', 'rMEM'};
     selected = [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
-    if ~any(selected)
-        MEMpaneloptions.mandatory.pipeline      = '';
-    else
-        MEMpaneloptions.mandatory.pipeline      =   choices{ selected };
-    end
-    MEMpaneloptions.automatic.version       =   char( ctrl.jTXTver.getText() ); 
-    MEMpaneloptions.automatic.last_update   =   char( ctrl.jTXTupd.getText() ); 
+    MEMpaneloptions.mandatory.pipeline      =   choices{ selected };
     
-    % Get clustering method
-    choices = {'blockwise', 'static', 'wfdr'};
-    selected = [ctrl.jCLSd.isSelected() ctrl.jCLSs.isSelected() ctrl.jCLSf.isSelected()];
-    MEMpaneloptions.clustering.clusters_type = choices{ selected };
+    % Get Data
+    MEMpaneloptions.optional.TimeSegment              = [str2double(char(ctrl.jTextTimeStart.getText())) ...
+                                                         str2double(char(ctrl.jTextTimeStop.getText()))];
+    MEMpaneloptions.optional.TimeSegment(isnan(MEMpaneloptions.optional.TimeSegment) ) = [];
+
+    % Get Baseline
+    choices = {'within-data', 'within-brainstorm', 'external'};
+    selected = [ctrl.jRadioWithinData.isSelected() ctrl.jRadioWithinBrainstorm.isSelected() ctrl.jRadioExternal.isSelected()];
     
-    % Get MSP thresholding method
-    if ctrl.jRadioSCRarb.isSelected()
-        MEMpaneloptions.clustering.MSP_scores_threshold = str2double(char(ctrl.jTextMspThresh.getText()));
-        if isnan(MEMpaneloptions.clustering.MSP_scores_threshold)
-            MEMpaneloptions.clustering.MSP_scores_threshold = 0;       
-        end
-    else
-        MEMpaneloptions.clustering.MSP_scores_threshold = 'fdr';
-    end
-    
-    % Get baseline
-    global MEMglobal
-								   
-																				
-    if ctrl.jradwit.isSelected()
+    MEMpaneloptions.optional.BaselineType = choices(selected);
+    if strcmp(choices(selected), 'within-data') 
         MEMpaneloptions.optional.Baseline = [];
         MEMpaneloptions.optional.BaselineHistory{1} = 'within';
-    elseif ctrl.jRadioLoadAutoBsl.isSelected() || ctrl.jradimp.isSelected()
+    elseif strcmp(choices(selected), 'within-brainstorm')  || strcmp(choices(selected), 'external')
         if isfield(MEMglobal, 'Baseline')
             MEMpaneloptions.optional.Baseline = MEMglobal.Baseline;
         else
@@ -1511,21 +1506,38 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
             MEMpaneloptions.optional.BaselineHistory = [];
         end
     end
-    MEMpaneloptions.optional.display            = ctrl.jBoxShow.isSelected();
-    MEMpaneloptions.optional.BaselineSegment    = [str2double(char(ctrl.jTextBSLStart.getText())) ...
-        str2double(char(ctrl.jTextBSLStop.getText()))];
+    MEMpaneloptions.optional.BaselineSegment    = [str2double(char(ctrl.jTextBSLStart.getText())), ...
+                                                   str2double(char(ctrl.jTextBSLStop.getText()))];
+
     if any(isnan( MEMpaneloptions.optional.BaselineSegment ) )
         MEMpaneloptions.optional.BaselineSegment = [];
     end
-    tmpDir = bst_get('BrainstormTmpDir');
-    delete( fullfile(tmpDir, '*.*') );
-    
-    % Advanced options
-    MEMpaneloptions.model.active_mean_method    =   str2double( ctrl.jMuMethod.getText() );
-    MEMpaneloptions.model.alpha_method          =   str2double( ctrl.jAlphaMethod.getText() );
-    MEMpaneloptions.model.alpha_threshold      	=   str2double( ctrl.jAlphaThresh.getText() );
-    MEMpaneloptions.model.initial_lambda        =   str2double( ctrl.jLambda.getText() );
 
+
+    % Get clustering options
+
+    MEMpaneloptions.clustering.neighborhood_order     = str2double(char(ctrl.jTextNeighbor.getText()));
+    MEMpaneloptions.clustering.MSP_window             = str2double(char(ctrl.jTextMspWindow.getText()));
+
+    choices = {'blockwise', 'static', 'wfdr'};
+    selected = [ctrl.jCLSd.isSelected() ctrl.jCLSs.isSelected() ctrl.jCLSf.isSelected()];
+    MEMpaneloptions.clustering.clusters_type = choices{ selected };
+    
+    % Get MSP thresholding method
+    if ctrl.jRadioSCRarb.isSelected()
+        MEMpaneloptions.clustering.MSP_scores_threshold = str2double(char(ctrl.jTextMspThresh.getText()));
+        if isnan(MEMpaneloptions.clustering.MSP_scores_threshold)
+            MEMpaneloptions.clustering.MSP_scores_threshold = 0;       
+        end
+    else
+        MEMpaneloptions.clustering.MSP_scores_threshold = 'fdr';
+    end
+   
+   % Group analysis
+   MEMpaneloptions.optional.groupAnalysis            = ctrl.jCheckGRP.isSelected(); 
+
+
+    % Depth-weighting options
     if ctrl.jCheckDepthWeighting.isSelected() && any( strcmp(MEMpaneloptions.mandatory.pipeline, {'cMEM'}) )
         MEMpaneloptions.model.depth_weigth_MNE  = str2double( ctrl.jTxtDepthMNE.getText() );
         MEMpaneloptions.model.depth_weigth_MEM  = str2double( ctrl.jTxtDepthMEM.getText() );
@@ -1534,120 +1546,129 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
         MEMpaneloptions.model.depth_weigth_MEM  =  0;
     end
     
-    MEMpaneloptions.solver.spatial_smoothing    =   str2double(char(ctrl.jTextSmooth.getText()));
-    MEMpaneloptions.solver.active_var_mult      =   str2double( ctrl.jActiveVar.getText() );
-    MEMpaneloptions.solver.inactive_var_mult  	=   str2double( ctrl.jInactiveVar.getText() );
-    MEMpaneloptions.solver.NoiseCov_method    	=   str2double( ctrl.jVarCovar.getText() );
-    MEMpaneloptions.solver.Optim_method       	=   char( ctrl.jOptimFN.getText() );
-    MEMpaneloptions.solver.parallel_matlab      =   double( ctrl.jParallel.isSelected() );
-    MEMpaneloptions.solver.NoiseCov_recompute   =   double( ctrl.jNewCOV.isSelected() );
-    
-    if any( strcmp(MEMpaneloptions.mandatory.pipeline, {'wMEM','rMEM'}) ) && isfield(ctrl, 'jWavType')
-        MEMpaneloptions.wavelet.type            =   char( ctrl.jWavType.getText() );
-        MEMpaneloptions.wavelet.vanish_moments 	=   str2double( ctrl.jWavVanish.getText() );
-    
-        if strcmp(MEMpaneloptions.mandatory.pipeline, 'wMEM') && isfield(ctrl, 'jWavShrinkage')
-            MEMpaneloptions.wavelet.shrinkage   =   str2double( ctrl.jWavShrinkage.getText() );
-            
-            % process scales
-            SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
-            if any( strcmpi( SCL, {'all','0'} ) )||isempty(SCL)
-                nSC = ctrl.jWavScales.getItemCount();
-                MEMpaneloptions.wavelet.selected_scales = 1 : nSC-2;                
-            
-            elseif strcmpi( SCL, 'not enough samples' )
-                MEMpaneloptions.wavelet.selected_scales = []; 
-                
-            else                
-                id1 = find(SCL=='(');
-                id2 = find(SCL==')');
-                for ii = 1: numel(id1)
-                    SCL(id1(ii):id2(ii)) = '';
-                end
-                MEMpaneloptions.wavelet.selected_scales = eval(['[' SCL ']']);
-            end
-            
-        elseif isfield(ctrl, 'jWavOrder')
-            MEMpaneloptions.wavelet.order     	=   str2double( ctrl.jWavOrder.getText() );
-            MEMpaneloptions.wavelet.nb_levels  	=   str2double( ctrl.jWavLevels.getText() );
-    
-            MEMpaneloptions.ridges.scalo_threshold       =   str2double( ctrl.jRDGscaloth.getText() );
-            MEMpaneloptions.ridges.energy_threshold      =   str2double( ctrl.jRDGnrjth.getText() );
-            MEMpaneloptions.ridges.strength_threshold    =   str2double( ctrl.jRDGstrength.getText() );
-            MEMpaneloptions.ridges.min_duration          =   str2double( ctrl.jRDGmindur.getText() );
-            MEMpaneloptions.ridges.cycles_in_window    	 =   str2double( ctrl.jRDGmincycles.getText() );
-            
-            % process frq range
-            rng.gamma = [30 100];
-            rng.beta  = [13 29];
-            rng.alpha = [8 12];
-            rng.delta = [4 7];
-            rng.theta = [1 3];
-            RNG = strrep( lower(strtrim( char( ctrl.jRDGrangeS.getSelectedItem() ) ) ), '-', ' ' );
-            
-            if strcmpi( RNG, 'all') || isempty(RNG)
-                MEMpaneloptions.ridges.frequency_range      =   [1 99999];
-                
-            elseif strcmpi( RNG, 'not enough samples')
-                MEMpaneloptions.ridges.frequency_range      =   [];
-                
-            else
-                RNG = strrep(RNG, ' ', ''';''');
-                RNG = eval(['{''' RNG '''}']);
-                miF = [];maF = [];
-                for ii = 1 : numel(RNG)
-                    if ~isnan( str2double(RNG{ii}) )
-                        miF = [miF str2double(RNG{ii})];
-                        maF = [maF str2double(RNG{ii})];
-                    elseif any( strcmp(RNG{ii}, {'gamma', 'beta', 'alpha', 'theta', 'delta'}) )
-                        miF = [miF rng.(RNG{ii})(1)];
-                        maF = [maF rng.(RNG{ii})(2)];
-                    end
-                end
-                MEMpaneloptions.ridges.frequency_range      =   [min(miF) max(maF)];
-                
-                if MEMpaneloptions.ridges.frequency_range(1)<MEMglobal.freqs_analyzed(1)
-                    MEMpaneloptions.ridges.frequency_range(1)   =   MEMglobal.freqs_analyzed(1);
-                    fprintf('panel_brainentropy:\tmin. ridge frequency was out of range\n\t\t\tset to: %f\n', MEMglobal.freqs_analyzed(1));
-                elseif MEMpaneloptions.ridges.frequency_range(1)>MEMglobal.freqs_analyzed(end)
-                    MEMpaneloptions.ridges.frequency_range(1)   =   MEMglobal.freqs_analyzed(1);
-                    fprintf('panel_brainentropy:\tmin. ridge frequency was out of range\n\t\t\tset to: %f\n', MEMglobal.freqs_analyzed(1));
-                end
-                if MEMpaneloptions.ridges.frequency_range(2)>MEMglobal.freqs_analyzed(end)
-                    MEMpaneloptions.ridges.frequency_range(2)   =   MEMglobal.freqs_analyzed(end);
-                    fprintf('panel_brainentropy:\tmin. ridge frequency was out of range\n\t\tset to: %f\n', MEMglobal.freqs_analyzed(end));
-                elseif MEMpaneloptions.ridges.frequency_range(2)<MEMpaneloptions.ridges.frequency_range(1)
-                    MEMpaneloptions.ridges.frequency_range(2)   =   MEMglobal.freqs_analyzed(end);
-                    fprintf('panel_brainentropy:\tmin. ridge frequency was invalid\n\t\tset to: %f\n', MEMglobal.freqs_analyzed(end));
-                end
+    % Advanced options
+    MEMpaneloptions.model.active_mean_method    = str2double( ctrl.jMuMethod.getText() );
+    MEMpaneloptions.model.alpha_method          = str2double( ctrl.jAlphaMethod.getText() );
+    MEMpaneloptions.model.alpha_threshold      	= str2double( ctrl.jAlphaThresh.getText() );
+    MEMpaneloptions.model.initial_lambda        = str2double( ctrl.jLambda.getText() );
+    MEMpaneloptions.solver.spatial_smoothing    = str2double(char(ctrl.jTextSmooth.getText()));
+    MEMpaneloptions.solver.active_var_mult      = str2double( ctrl.jActiveVar.getText() );
+    MEMpaneloptions.solver.inactive_var_mult  	= str2double( ctrl.jInactiveVar.getText() );
 
+    
+    MEMpaneloptions.solver.Optim_method       	= char( ctrl.jOptimFN.getText() );
+    MEMpaneloptions.solver.parallel_matlab      = double( ctrl.jParallel.isSelected() );
+    MEMpaneloptions.optional.display            = ctrl.jBoxShow.isSelected();
+    MEMpaneloptions.solver.NoiseCov_recompute   = double( ctrl.jNewCOV.isSelected() );
+    MEMpaneloptions.solver.NoiseCov_method    	= str2double( ctrl.jVarCovar.getText() );
+
+    if any( strcmp(MEMpaneloptions.mandatory.pipeline, {'wMEM','rMEM'}) )
+        MEMpaneloptions.wavelet.type            = char( ctrl.jWavType.getText() );
+        MEMpaneloptions.wavelet.vanish_moments 	= str2double( ctrl.jWavVanish.getText() );
+        MEMpaneloptions.wavelet.order     	=   str2double( ctrl.jWavOrder.getText() );
+        MEMpaneloptions.wavelet.nb_levels  	=   str2double( ctrl.jWavLevels.getText() );
+
+    end
+
+    if strcmp(MEMpaneloptions.mandatory.pipeline, 'wMEM') 
+        MEMpaneloptions.wavelet.shrinkage   =  str2double( ctrl.jWavShrinkage.getText() );
+        
+        % process scales
+        SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
+        if any( strcmpi( SCL, {'all','0'} ) )||isempty(SCL)
+            nSC = ctrl.jWavScales.getItemCount();
+            MEMpaneloptions.wavelet.selected_scales = 1 : nSC-2;                
+        
+        elseif strcmpi( SCL, 'not enough samples' )
+            MEMpaneloptions.wavelet.selected_scales = []; 
+            
+        else                
+            id1 = find(SCL=='(');
+            id2 = find(SCL==')');
+            for ii = 1: numel(id1)
+                SCL(id1(ii):id2(ii)) = '';
             end
+            MEMpaneloptions.wavelet.selected_scales = eval(['[' SCL ']']);
+        end
+        
+    elseif strcmp(MEMpaneloptions.mandatory.pipeline, 'rMEM')
+
+
+        MEMpaneloptions.ridges.scalo_threshold       =   str2double( ctrl.jRDGscaloth.getText() );
+        MEMpaneloptions.ridges.energy_threshold      =   str2double( ctrl.jRDGnrjth.getText() );
+        MEMpaneloptions.ridges.strength_threshold    =   str2double( ctrl.jRDGstrength.getText() );
+        MEMpaneloptions.ridges.min_duration          =   str2double( ctrl.jRDGmindur.getText() );
+        MEMpaneloptions.ridges.cycles_in_window    	 =   str2double( ctrl.jRDGmincycles.getText() );
+        
+        % process frq range
+        rng.gamma = [30 100];
+        rng.beta  = [13 29];
+        rng.alpha = [8 12];
+        rng.delta = [4 7];
+        rng.theta = [1 3];
+        RNG = strrep( lower(strtrim( char( ctrl.jRDGrangeS.getSelectedItem() ) ) ), '-', ' ' );
+        
+        if strcmpi( RNG, 'all') || isempty(RNG)
+            MEMpaneloptions.ridges.frequency_range      =   [1 99999];
+            
+        elseif strcmpi( RNG, 'not enough samples')
+            MEMpaneloptions.ridges.frequency_range      =   [];
+            
+        else
+            RNG = strrep(RNG, ' ', ''';''');
+            RNG = eval(['{''' RNG '''}']);
+            miF = [];maF = [];
+            for ii = 1 : numel(RNG)
+                if ~isnan( str2double(RNG{ii}) )
+                    miF = [miF str2double(RNG{ii})];
+                    maF = [maF str2double(RNG{ii})];
+                elseif any( strcmp(RNG{ii}, {'gamma', 'beta', 'alpha', 'theta', 'delta'}) )
+                    miF = [miF rng.(RNG{ii})(1)];
+                    maF = [maF rng.(RNG{ii})(2)];
+                end
+            end
+            MEMpaneloptions.ridges.frequency_range      =   [min(miF) max(maF)];
+            
+            if MEMpaneloptions.ridges.frequency_range(1)<MEMglobal.freqs_analyzed(1)
+                MEMpaneloptions.ridges.frequency_range(1)   =   MEMglobal.freqs_analyzed(1);
+                fprintf('panel_brainentropy:\tmin. ridge frequency was out of range\n\t\t\tset to: %f\n', MEMglobal.freqs_analyzed(1));
+            elseif MEMpaneloptions.ridges.frequency_range(1)>MEMglobal.freqs_analyzed(end)
+                MEMpaneloptions.ridges.frequency_range(1)   =   MEMglobal.freqs_analyzed(1);
+                fprintf('panel_brainentropy:\tmin. ridge frequency was out of range\n\t\t\tset to: %f\n', MEMglobal.freqs_analyzed(1));
+            end
+            if MEMpaneloptions.ridges.frequency_range(2)>MEMglobal.freqs_analyzed(end)
+                MEMpaneloptions.ridges.frequency_range(2)   =   MEMglobal.freqs_analyzed(end);
+                fprintf('panel_brainentropy:\tmin. ridge frequency was out of range\n\t\tset to: %f\n', MEMglobal.freqs_analyzed(end));
+            elseif MEMpaneloptions.ridges.frequency_range(2)<MEMpaneloptions.ridges.frequency_range(1)
+                MEMpaneloptions.ridges.frequency_range(2)   =   MEMglobal.freqs_analyzed(end);
+                fprintf('panel_brainentropy:\tmin. ridge frequency was invalid\n\t\tset to: %f\n', MEMglobal.freqs_analyzed(end));
+            end
+
         end
     end
     
+    
     clear global BSLinfo
     s.MEMpaneloptions = MEMpaneloptions;
-    
+
 end
 
 
 function adjust_range(WTA, rng)
-
-% Get info
-ctrl =  bst_get('PanelControls', 'InverseOptionsMEM');
-VAL  =  str2double( char(ctrl.(WTA).getText()) ); 
-
-% custom range
-if strcmp(WTA, 'jVarCovar')
-    idX     =   [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
-    rng     =   rng{idX};
-end
-
-% adjust value
-VAL  =  max( VAL, rng(1) );
-VAL  =  min( VAL, rng(2) );
-
-% set value
-ctrl.(WTA).setText( num2str(VAL) );
-
+    % Get info
+    ctrl =  bst_get('PanelControls', 'InverseOptionsMEM');
+    VAL  =  str2double( char(ctrl.(WTA).getText()) ); 
+    
+    % custom range
+    if strcmp(WTA, 'jVarCovar')
+        idX     =   [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
+        rng     =   rng{idX};
+    end
+    
+    % adjust value
+    VAL  =  max( VAL, rng(1) );
+    VAL  =  min( VAL, rng(2) );
+    
+    % set value
+    ctrl.(WTA).setText( num2str(VAL) );
 end

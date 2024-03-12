@@ -85,6 +85,7 @@ Def_OPTIONS.optional.verbose                    = 1;
 Def_OPTIONS.optional.display                    = 0;  
 Def_OPTIONS.optional.iData                      = [];
 Def_OPTIONS.optional.Baseline                   = [];
+Def_OPTIONS.optional.BaselineType               = '';
 Def_OPTIONS.optional.BaselineTime               = [];
 Def_OPTIONS.optional.BaselineChannels           = [];
 Def_OPTIONS.optional.BaselineHistory            = [];
