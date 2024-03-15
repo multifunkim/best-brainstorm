@@ -46,8 +46,9 @@ switch (OPTIONS.wavelet.type)
         for i = 1:Ns;
             WData(i,:) = FWT_PO(Data(i,:),Noff,filtre);
         end
-        WData(:,1:No/2^(Nj-Noff)) = 0.0;
         SData(:,1:No/2^(Nj-Noff)) = WData(:,1:No/2^(Nj-Noff));
+        WData(:,1:No/2^(Nj-Noff)) = 0.0;
+
         OPTIONS.automatic.scales(1,:) = 1:Nj-Noff;
         OPTIONS.automatic.scales(2,:) = 3./2.^(1:Nj-Noff)/4;
         
@@ -60,18 +61,20 @@ switch (OPTIONS.wavelet.type)
 
     case 'rdw'                  
         if OPTIONS.wavelet.vanish_moments > 7
-        filter = 'rdw0';
+            filter = 'rdw0';
         else
-        filter = ['rdw' num2str(OPTIONS.wavelet.vanish_moments)];
+            filter = ['rdw' num2str(OPTIONS.wavelet.vanish_moments)];
         end
         [Ns,No] = size(Data);
         Nj    = fix(log2(No));
         Njs   = max(Nj-3,1);
         SData = zeros(size(Data));
-        WData = zeros(size(Data));
-        [WData, info ] = be_dwanalysis( Data, Njs, filter );
-        WData(:,1:No/2^Njs) = 0.0;
+
+        [WData, Winfo ] = be_dwanalysis( Data, Njs, filter );
         SData(:,1:No/2^Njs) = WData(:,1:No/2^Njs);
+        WData(:,1:No/2^Njs) = 0.0;
+        
+        OPTIONS.automatic.Winfo = Winfo;
         OPTIONS.automatic.scales(1,:) = 1:Njs;
         OPTIONS.automatic.scales(2,:) = 3./2.^(1:Njs)/4;
         
