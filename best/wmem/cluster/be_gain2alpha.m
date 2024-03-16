@@ -1,6 +1,6 @@
-function [alpha, CLS, OPTIONS] = be_wscores2alpha(SCR, CLS, OPTIONS, varargin)
-%BE_SCORES2ALPHA computes the initial probability of a parcel being active in 
-%   the MEM model using the MSP scores of the sources within each patch
+function [alpha, CLS, OPTIONS] = be_gain2alpha(M, CLS, OPTIONS, varargin)
+% BE_GAIN2ALPHA computes the initial probability of a parcel being active in 
+%   the MEM model without using the MSP scores.
 %
 %   INPUTS:
 %       -   SCR     : vector of MSP scores with dimension Nsources
@@ -44,9 +44,28 @@ function [alpha, CLS, OPTIONS] = be_wscores2alpha(SCR, CLS, OPTIONS, varargin)
 % -------------------------------------------------------------------------
 
                                                         
-alpha = zeros(size(SCR));
+alpha = zeros(size(CLS));
 ALPHA_METHOD = OPTIONS.model.alpha_method;
 alpha_threshold = OPTIONS.model.alpha_threshold;
+verb = OPTIONS.optional.verbose;
+
+
+if verb
+    fprintf('       Gain to Alpha in be_gain2alpha\n');
+    fprintf('       WE CONSIDER A UNIQUE MODALITY\n');
+end
+
+
+% Normalize the data matrix. Eliminate any resulting NaN.
+Mn = bsxfun(@rdivide, M, sqrt(sum(M.^2, 1)));
+Mn(isnan(Mn)) = 0;
+
+
+% New alpha scores 
+Gstruct = OPTIONS.automatic.Modality(1).gain_struct;
+
+Op = Gstruct.Gn'*pinv(Gstruct.Gn*Gstruct.Gn');
+weight_alpha = Op * Mn;
 
 
 % Progress bar
@@ -57,9 +76,8 @@ if numel(varargin)
     dr      = varargin{1}(3);
 end
 
-for jj=1:size(SCR,2)
+for jj=1:size(CLS,2)
     clusters = CLS(:,jj);
-    scores = SCR(:,jj);
     nb_clusters = max(clusters);
     curr_cls = 1;
     for ii = 1:nb_clusters
@@ -67,19 +85,20 @@ for jj=1:size(SCR,2)
         switch ALPHA_METHOD
                 
             case 1  % Method 1 (alpha = mean in the parcel)
-                alpha(idCLS,jj) = mean((scores(idCLS)));                
-            case 2  % Method 2 (alpha = max in the parcel)
-                 alpha(idCLS,jj) = max((scores(idCLS)));
+                % we check the existence of NEW:
+                WSjj = weight_alpha(:,jj).^2;
+                WSjj_ii = WSjj(idCLS); 
+                alpha(idCLS,jj) = sqrt((sum(WSjj_ii) / sum(WSjj)));
                 
             case 3  % Method 3 (alpha = median in the parcel)
-                 alpha(idCLS,jj) = median((scores(idCLS)));
+                 inside_scores = weight_alpha(idCLS, jj);
+                 alpha(idCLS,jj) = median(inside_scores);
                 
             case 4  % Method 4 (alpha = 1/2)
                  alpha(idCLS,jj) = 0.5;
                  
             case 5  % Method 4 (alpha = 1)
-                alpha(idCLS,jj) = 1;  
-                
+                alpha(idCLS,jj) = 1;                
             otherwise
                 error('Wrong ALPHA Method')
         end
@@ -95,7 +114,7 @@ for jj=1:size(SCR,2)
         
         % update progress bar
          if hmem
-             prg = round( (st + dr * (jj - 1 + ii/nb_clusters) / (size(SCR,2))) * 100 );
+             prg = round( (st + dr * (jj - 1 + ii/nb_clusters) / (size(CLS,2))) * 100 );
              waitbar(prg/100, hmem, {[OPTIONS.automatic.InverseMethod, 'Step 1/2 : Running cortex parcellization ... ' num2str(prg) ' % done']});
          end
     end
@@ -104,9 +123,4 @@ end
 
 % REMOVING CLUSTERS WITH ALPHA < APLHA_THRESHOLD
  alpha(alpha > 0.8) = 1;
-
-
-return
-
-
-
+end
