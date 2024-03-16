@@ -42,7 +42,7 @@ initTHR = OPTIONS.clustering.MSP_scores_threshold;                    %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if verb
-    fprintf('       MSP-based clustering in BEst_wfdr_multim\n');
+    fprintf('       MSP-based clustering in be_wstable_clustering_multim\n');
     fprintf('       WE CONSIDER A UNIQUE MODALITY\n');
     fprintf('       -> threshold and nb. clusters: '); 
 end
@@ -64,8 +64,7 @@ end
     % List of TF-boxes of interest:
     BOX = OPautomatic.selected_samples(1,:); % box of interest
     % we compute Wavelet MSP over the full set of wavelet coeff:
-    if verb, fprintf(' (from Wmsp function) '); end
-    [scores, OPTIONS] = be_wmsp(obj.data{jj}(:,BOX), ...
+    [scores, OPTIONS] = be_msp(obj.data{jj}(:,BOX), ...
                         OPautomatic.Modality(jj).gain_struct, ...
                         OPTIONS);
 
