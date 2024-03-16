@@ -95,13 +95,14 @@ active_var = cell(1,nb_clusters);
 active_var_out = zeros(obj.nb_sources,1);
 
 % Preliminar computation (used in the minimum norm solution)
-GpGpt = obj.gain(:,obj.clusters~=0)*obj.gain(:,obj.clusters~=0)';
-regul = trace(GpGpt)/sum(obj.clusters~=0);
-[U,S,V] = svd(GpGpt + regul*eye(nb_sensors));
-eigen = diag(S);
-I = find(cumsum(eigen.^2)./ sum(eigen.^2) > 0.9,1,'first');
-GpGptinv_M = V(:,1:I) * diag(1./eigen(1:I)) * U(:,1:I)' * obj.data;
-
+if OPTIONS.model.active_mean_method == 3
+    GpGpt = obj.gain(:,obj.clusters~=0)*obj.gain(:,obj.clusters~=0)';
+    regul = trace(GpGpt)/sum(obj.clusters~=0);
+    [U,S,V] = svd(GpGpt + regul*eye(nb_sensors));
+    eigen = diag(S);
+    I = find(cumsum(eigen.^2)./ sum(eigen.^2) > 0.9,1,'first');
+    GpGptinv_M = V(:,1:I) * diag(1./eigen(1:I)) * U(:,1:I)' * obj.data;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the following loop goes though each of the clusters (non null clusters)
