@@ -26,7 +26,8 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS)
     end
     
     if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp( OPTIONS.mandatory.DataTypes,'NIRS')) 
-        J   =   be_jmne_lcurve(G,M,OPTIONS); 
+        
+        J   =   be_jmne_lcurve(G,M,OPTIONS, struct('hfig',obj.hfig, 'hfigtab',obj.hfigtab)); 
     else
         J   =   be_jmne(G,M,OPTIONS);
     end
