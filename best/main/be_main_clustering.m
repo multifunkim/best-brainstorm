@@ -54,12 +54,22 @@ elseif ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
     switch OPTIONS.mandatory.pipeline
         case 'cMEM'
             [CLS, SCR, OPTIONS] = be_cmem_clusterize_multim(obj, OPTIONS); %TO DO: CHECK IF DATA SHOULD BE MINUS BSL OR NOT
+            [ALPHA, CLS, OPTIONS]   = be_scores2alpha(SCR, CLS, OPTIONS);
         case 'wMEM'
-            [CLS, SCR, OPTIONS] = be_wfdr_clustering_multim(obj, OPTIONS);
+            [CLS, SCR, OPTIONS] = be_wmem_clusterize_multim(obj, OPTIONS);
+            isUsingMSP = ~strcmp(OPTIONS.clustering.clusters_type,'static'); 
+
+            if isUsingMSP
+                [ALPHA, CLS, OPTIONS] = be_wscores2alpha(SCR, CLS, OPTIONS);
+            else
+                BOX = OPTIONS.automatic.selected_samples(1,:); % box of interest
+                [ALPHA, CLS, OPTIONS] = be_gain2alpha(obj.data{1}(:,BOX), CLS, OPTIONS);
+            end
         case 'rMEM'
             [CLS, SCR, OPTIONS] = be_rmem_clusterize_multim(obj, OPTIONS);
+            [ALPHA, CLS, OPTIONS]   = be_scores2alpha(SCR, CLS, OPTIONS);
+
     end    
-    [ALPHA, CLS, OPTIONS]   = be_scores2alpha(SCR, CLS, OPTIONS);
     
 elseif strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
     ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1,size(OPTIONS.automatic.Modality(1).selected_jk, 2));
@@ -77,7 +87,7 @@ obj.SCR   = SCR;
 obj.CLS   = CLS;
 obj.ALPHA = ALPHA;
 
-
+end
 
 
 

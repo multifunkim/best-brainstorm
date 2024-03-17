@@ -126,10 +126,15 @@ end
 % it uses empty-room data if available
 % if PlOS one : nothing is done here
 % [OPTIONS] = be_prewhite(OPTIONS);
+% We propose here to detrend the channels:                    %
+OPTIONS.mandatory.Data = detrend(OPTIONS.mandatory.Data')';   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
+
+
 
 %% ===== Normalization ==== %% 
 % we absorb units (pT, nA) in the data, leadfields; we normalize the data
@@ -147,6 +152,10 @@ OPTIONS = be_model_of_null_hypothesis(OPTIONS);
 if OPTIONS.optional.display
     [obj.hfig obj.hfigtab] = be_display_time_scale_boxes(obj,OPTIONS);
 end
+
+%% ===== Compute Minimum Norm Solution ==== %% 
+% we compute MNE (using l-curve for nirs or depth-weighted version)
+[obj, OPTIONS] = be_main_mne(obj, OPTIONS);
 
 %% ===== Double to single precision  ===== %%
 [OPTIONS] = be_switch_precision(OPTIONS, 'single');

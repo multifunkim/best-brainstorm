@@ -62,7 +62,7 @@ end
                     OPTIONS.automatic.Modality(ii).channels, isc );
             end
         end
-return
+end
 
 % =========================================================================
 
@@ -114,7 +114,7 @@ else
     
 end
     
-return
+end
 
 % ====
 
@@ -146,6 +146,7 @@ function [noise_var] = estimate_noise_var(OPTIONS)
         % Make transform
         obj.t0              =   OPTIONS.mandatory.DataTime(1);
         wavelet_obj         =   be_discrete_wavelet_preprocessing(obj, O);
+
         % If the empty room is available the cov mat is scale dependent
         if ~isempty( OPTIONS.automatic.Modality(ii).emptyroom )
             for isc=1:size(OPTIONS.automatic.scales,2)
@@ -172,11 +173,27 @@ function [noise_var] = estimate_noise_var(OPTIONS)
                 % Diagonale averaged    
                 case 5
                     noise_var(iD, iD) = diag(ones(1,length(variance))*mean(variance));
+
+                case 6
+                    isc = 2; % Scale one which the noise covariance is calculated ?
+
+                    w1 = wavelet_obj.data{1}(:,end/2^(isc)+6:end/2^(isc-1)-5)';
+                    a = max(1,round(wavelet_obj.info_extension.start / 2^(isc)));
+                    b = min(size(w1,1),round(wavelet_obj.info_extension.end / 2^(isc)));
+                    MADest = Wmad(w1(a:b,:)) / 0.6745;
+                    noise_var(iD, iD) =  diag(MADest.^2);
+                
+                    noise_var(1)
+
                % If the NoiseCov_method is not 4 neither 5 we force 5
                 otherwise
                     noise_var(iD, iD) = diag(ones(1,length(variance))*mean(variance)); 
             end
         end
     end
+end
 
-return
+
+function m = Wmad(x)
+    m = median( abs ( x - median(x) ) ) ./ .6745;
+end

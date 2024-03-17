@@ -1,4 +1,4 @@
-function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS)
+function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
 % Compute the regularisation parameter based on what brainstorm already
 % do. Note that this function replace be_solve_l_curve:
 % BAYESEST2 solves the inverse problem by estimating the maximal posterior probability (MAP estimator).
@@ -36,16 +36,21 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-[n_capt, n_sour] = size(G);
+if nargin < 4 
+    sfig = struct('hfig', [], 'hfigtab', []);
+end
 
 % selection of the data:
-sample = be_closest(OPTIONS.optional.TimeSegment([1 end]), OPTIONS.mandatory.DataTime);
-
-M = M(:,sample(1):sample(2));
+if ~isempty(OPTIONS.automatic.selected_samples)   
+    selected_samples = OPTIONS.automatic.selected_samples(1,:);
+    M = M(:,selected_samples);
+end
 
 param1 = [0.1:0.1:1 1:5:100 100:100:1000]; 
 
-display('cMEM, solving MNE by L-curve ... ');
+fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
+
+
 p       = OPTIONS.model.depth_weigth_MNE;
 Sigma_s = diag(power(diag(G'*G),p)); 
 W       = sqrt(Sigma_s);
@@ -71,16 +76,31 @@ if nargout > 1
     varargout{1} = alpha(Index);
 end
 
-disp('cMEM, solving MNE by L-curve ... done');
+fprintf('done. \n');
 
-if OPTIONS.optional.display 
-    figure()
-    plot(Prior, Fit,'b.');
-    hold on;plot(Prior(Index), Fit(Index),'ro');
-    hold off
+if OPTIONS.optional.display
+    if isempty(sfig.hfig)
+        sfig.hfig =  figure();
+        sfig.hfigtab = uitabgroup;
+    end
+
+    onglet = uitab(sfig.hfigtab,'title','L-curve');
+
+    hpc = uipanel('Parent', onglet, ...
+              'Units', 'Normalized', ...
+              'Position', [0.01 0.01 0.98 0.98], ...
+              'FontWeight','demi');
+    set(hpc,'Title',[' L-curve '],'FontSize',8);
+
+    ax = axes('parent',hpc, ...
+              'outerPosition',[0.01 0.01 0.98 0.98]);
+
+    hold on; 
+    plot(ax, Prior, Fit,'b.');
+    plot(ax, Prior(Index), Fit(Index),'ro');
+    hold off;
     xlabel('Norm |WJ|');
     ylabel('Residual |M-GJ|');
-    title('L-curve');
 end
 
 end

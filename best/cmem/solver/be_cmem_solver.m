@@ -143,14 +143,20 @@ end
 % we keep leadfields of interest; we compute svd of normalized leadfields
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
 
+%% ===== Apply temporal data window  ===== %%
+% check for a time segment to be localized
+[OPTIONS] = be_apply_window( OPTIONS, [] );
+
+%% ===== Compute Minimum Norm Solution ==== %% 
+% we compute MNE (using l-curve for nirs or depth-weighted version)
+[obj, OPTIONS] = be_main_mne(obj, OPTIONS);
+
 %% ===== Normalization ==== %% 
 % we absorb units (pT, nA) in the data, leadfields; we normalize the data
 % and the leadfields
 [OPTIONS] = be_normalize_and_units(OPTIONS);
 
-%% ===== Apply temporal data window  ===== %%
-% check for a time segment to be localized
-[OPTIONS] = be_apply_window( OPTIONS, [] );
+
 
 %% ===== Double precision to single  ===== %%
 % relax the double precision for the msp (leadfield and data)

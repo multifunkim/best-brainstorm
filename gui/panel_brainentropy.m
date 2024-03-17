@@ -644,8 +644,15 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     jTxtVCOV  = JTextField( num2str(OPTIONS.solver.NoiseCov_method) );
         jTxtVCOV.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTxtVCOV.setHorizontalAlignment(JTextField.RIGHT);
-        jTxtVCOV.setToolTipText('<HTML><B>Sensors noise covariance matrix</B>:<BR>0 = identity matrix<BR>1 = diagonal (same variance along diagonal)<BR>2 = diagonal<BR>3 = full<BR>4 = wavelet-based estimation<BR>(scale j=1 of the discrete wavelet transform)<BR>5 = wavelet-based + scale-adaptvive<BR>(different mat. for each scale of the signal)</HTML>');        
-        java_setcb(jTxtVCOV, 'FocusLostCallback', @(h,ev)adjust_range('jVarCovar', {[1 4], [4 5], [1 5]}));
+        jTxtVCOV.setToolTipText(['<HTML><B>Sensors noise covariance matrix</B>:<BR>' ...
+             '0 = identity matrix<BR>' ...
+             '1 = diagonal (same variance along diagonal)<BR>' ...
+             '2 = diagonal<BR>' ...
+             '3 = full<BR>' ...
+             '4 = wavelet-based estimation (scale j=1 of the discrete wavelet transform)<BR>' ...
+             '5 = wavelet-based + scale-adaptvive (different mat. for each scale of the signal)<BR>'...
+             '6 = wavelet-based (diagonal, scale j=1) <BR> </HTML>']);        
+        java_setcb(jTxtVCOV, 'FocusLostCallback', @(h,ev)adjust_range('jVarCovar', {[1 4], [4 6], [1 6]}));
         jTxtVCOV.setEnabled(0);
     jTxtOptFn  = JTextField(OPTIONS.solver.Optim_method);
         jTxtOptFn.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
@@ -1038,7 +1045,11 @@ function UpdatePanel(hObject, event)
 
     if ctrl.jMEMw.isSelected()
         ctrl.jCLSd.setEnabled(0);
-        ctrl.jCLSf.setSelected(1);
+        ctrl.jCLSs.setEnabled(1); 
+        
+        ctrl.jCheckDepthWeighting.setEnabled(1)
+
+        %ctrl.jCLSf.setSelected(1);
         %ctrl.jRadioSCRarb.setEnabled(0);
     end 
 
@@ -1202,7 +1213,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.model.alpha_threshold      	=   str2double( ctrl.jAlphaThresh.getText() );
     MEMpaneloptions.model.initial_lambda        =   str2double( ctrl.jLambda.getText() );
 
-    if ctrl.jCheckDepthWeighting.isSelected() && any( strcmp(MEMpaneloptions.mandatory.pipeline, {'cMEM'}) )
+    if ctrl.jCheckDepthWeighting.isSelected() && any( strcmp(MEMpaneloptions.mandatory.pipeline, {'cMEM','wMEM'}) )
         MEMpaneloptions.model.depth_weigth_MNE  = str2double( ctrl.jTxtDepthMNE.getText() );
         MEMpaneloptions.model.depth_weigth_MEM  = str2double( ctrl.jTxtDepthMEM.getText() );
     else
