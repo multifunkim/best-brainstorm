@@ -195,5 +195,5 @@ end
 
 
 function m = Wmad(x)
-    m = median( abs ( x - median(x) ) ) ./ .6745;
+    m = median( abs ( x - median(x) ) );
 end
