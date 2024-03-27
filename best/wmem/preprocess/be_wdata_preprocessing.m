@@ -48,7 +48,10 @@ end
         % normalization/wavelet/denoise
         [obj, OPTIONS] = be_discrete_wavelet_preprocessing(obj, OPTIONS);
 
-        [noise_var] = covariance_processing(OPTIONS);
+        for iii=1:size(OPTIONS.automatic.Modality.baseline,3)
+            noise_var(:,:,iii) = covariance_processing(OPTIONS,iii);
+        end
+        %[noise_var] = covariance_processing(OPTIONS);
 
         % The number of j decomposition in the noise_var
         % noise_var:[NbSensors x NbSensors x Nbj]
@@ -66,7 +69,7 @@ end
 
 % =========================================================================
 
-function [noise_var] = covariance_processing(OPTIONS)
+function [noise_var] = covariance_processing(OPTIONS,iii)
 % Noise estimation from the baseline if any. Used in MEM and rMEM
 % OPTIONS is locally modified, it is not an output of the function
 
@@ -89,10 +92,10 @@ else
             OPTIONS.mandatory.DataTime                       	= OPTIONS.automatic.Emptyroom_time;
             fprintf('%s, New noise covariance is computed using empty room data\n',OPTIONS.mandatory.pipeline);
             
-        elseif ~isempty( OPTIONS.automatic.Modality(ii).baseline )
-            idNb = any(isnan(OPTIONS.automatic.Modality(ii).baseline));
-            OPTIONS.automatic.Modality(ii).baseline(:,idNb)     = 0;
-            OPTIONS.automatic.Modality(ii).data                 = OPTIONS.automatic.Modality(ii).baseline;
+        elseif ~isempty( OPTIONS.automatic.Modality(ii).baseline(:,:,iii) )
+            idNb = any(isnan(OPTIONS.automatic.Modality(ii).baseline(:,:,iii)));
+            OPTIONS.automatic.Modality(ii).baseline(:,idNb,iii)     = 0;
+            OPTIONS.automatic.Modality(ii).data                 = OPTIONS.automatic.Modality(ii).baseline(:,:,iii);
             if ~isempty( OPTIONS.optional.BaselineTime )
                 OPTIONS.mandatory.DataTime                      = OPTIONS.optional.BaselineTime;
             else

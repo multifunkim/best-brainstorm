@@ -184,7 +184,12 @@ end
 
 % Creation of the structure to solve the MEM
 mem.clusters                         = clusters_struct;
-mem.noise_var                        = obj.noise_var;
+%mem.noise_var                        = obj.noise_var;
+if OPTIONS.baseline_shuffle ==1
+    mem.noise_var                        = obj.noise_var(:,:,obj.TFtime);
+else
+    mem.noise_var                        = obj.noise_var;
+end
 mem.M                                = obj.data;
 mem.nb_sources                       = nb_sources;
 mem.nb_clusters                      = nb_clusters;

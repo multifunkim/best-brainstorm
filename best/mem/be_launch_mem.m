@@ -146,6 +146,12 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
     %obj.data   = Data(obj.iModall,ii); %.*Dunits;
     obj.data   = Data(:,ii);
     %obj.scores = obj.SCR(:,ii);
+    obj.TFtime = ceil(obj.time(ii));
+    if obj.TFtime > size(OPTIONS.automatic.Modality.baseline,2)
+        obj.TFtime = size(OPTIONS.automatic.Modality.baseline,2) ;
+    elseif obj.TFtime == 0
+        obj.TFtime = 1 ;
+    end
     
     obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii) ;
     obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
