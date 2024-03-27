@@ -147,8 +147,8 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
     obj.data   = Data(:,ii);
     %obj.scores = obj.SCR(:,ii);
     obj.TFtime = ceil(obj.time(ii));
-    if obj.TFtime > size(OPTIONS.automatic.Modality.baseline,2)
-        obj.TFtime = size(OPTIONS.automatic.Modality.baseline,2) ;
+    if obj.TFtime > size(OPTIONS.automatic.Modality.baseline,3)
+        obj.TFtime = size(OPTIONS.automatic.Modality.baseline,3) ;
     elseif obj.TFtime == 0
         obj.TFtime = 1 ;
     end
@@ -158,7 +158,7 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
 
 
     % check if there's a noise cov for each scale
-    if (size(obj.noise_var,3)>1)
+    if (size(obj.noise_var,3)>1)&& OPTIONS.baseline_shuffle ~= 1
         if OPTIONS.optional.verbose
             fprintf('%s, Noise variance at scale %i is selected\n',...
                 OPTIONS.mandatory.pipeline,OPTIONS.automatic.selected_samples(2,ii));
