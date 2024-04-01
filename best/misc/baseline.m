@@ -4,15 +4,23 @@ function OPTIONS = baseline(OPTIONS)
     no_of_baseline  = round(length(OPTIONS.optional.Baseline)/baseline_length_sample);
     if no_of_baseline > 1
         Baseline = zeros(size(OPTIONS.optional.Baseline,1), baseline_length_sample, no_of_baseline);
+        BaselineTime = zeros(baseline_length_sample, no_of_baseline);
+
         for k=0:(no_of_baseline-1)
-            base = OPTIONS.optional.Baseline(:,(1+ k*baseline_length_sample):(baseline_length_sample*(k+1)));
-            Baseline(:,:,k+1) = BEst_baseline_from_signal(base);
+            idx = (1+ k*baseline_length_sample):(baseline_length_sample*(k+1));
+            base = OPTIONS.optional.Baseline(:,idx);
+            Baseline(:,:,k+1)   = BEst_baseline_from_signal(base);
+            BaselineTime(:,k+1) =  OPTIONS.optional.BaselineTime(idx);
         end
     else
-        Baseline = BEst_baseline_from_signal(OPTIONS.optional.Baseline);
+        Baseline        = BEst_baseline_from_signal(OPTIONS.optional.Baseline);
+        BaselineTime    = OPTIONS.optional.BaselineTime;
     end
+
     OPTIONS.optional.Baseline = Baseline;
+    OPTIONS.optional.BaselineTime = BaselineTime;
     OPTIONS.automatic.Modality.baseline = Baseline;
+    OPTIONS.automatic.Modality.BaselineTime = BaselineTime;
 end
 
 function baseline = BEst_baseline_from_signal(signal)
@@ -24,8 +32,6 @@ function baseline = BEst_baseline_from_signal(signal)
     % transform of the signal. The baseline
     % thus preserves the spectrum of the signal but
     % destroys the temporal coherence.
-
-    % fs: sampling frequency of the signal
 
 
     [Ns,No] = size(signal);
