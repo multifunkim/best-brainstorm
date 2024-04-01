@@ -186,8 +186,6 @@ function [noise_var] = estimate_noise_var(OPTIONS)
                     MADest = Wmad(w1(a:b,:)) / 0.6745;
                     noise_var(iD, iD) =  diag(MADest.^2);
                 
-                    noise_var(1)
-
                % If the NoiseCov_method is not 4 neither 5 we force 5
                 otherwise
                     noise_var(iD, iD) = diag(ones(1,length(variance))*mean(variance)); 
