@@ -143,27 +143,30 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
 
     % MEM parameters structure
     obj.ind    = ii;
-    %obj.data   = Data(obj.iModall,ii); %.*Dunits;
+
     obj.data   = Data(:,ii);
-    %obj.scores = obj.SCR(:,ii);
-    obj.TFtime = ceil(obj.time(ii));
-    if obj.TFtime > size(OPTIONS.automatic.Modality.baseline,3)
-        obj.TFtime = size(OPTIONS.automatic.Modality.baseline,3) ;
-    elseif obj.TFtime == 0
-        obj.TFtime = 1 ;
-    end
     
     obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii) ;
     obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
 
 
     % check if there's a noise cov for each scale
-    if (size(obj.noise_var,3)>1)&& OPTIONS.baseline_shuffle ~= 1
+    if (size(obj.noise_var,3)>1) && OPTIONS.baseline_shuffle ~= 1
         if OPTIONS.optional.verbose
             fprintf('%s, Noise variance at scale %i is selected\n',...
                 OPTIONS.mandatory.pipeline,OPTIONS.automatic.selected_samples(2,ii));
         end
         obj.noise_var = squeeze(obj.noise_var(:,:,OPTIONS.automatic.selected_samples(2,ii)) );
+    
+    elseif (size(obj.noise_var,3)>1) && OPTIONS.baseline_shuffle == 1
+        idx_baseline = find(obj.time(ii) >= min(OPTIONS.automatic.Modality.BaselineTime) & ...
+                            obj.time(ii) <= max(OPTIONS.automatic.Modality.BaselineTime));
+
+         if OPTIONS.optional.verbose
+            fprintf('%s, Noise variance from baseline %i is selected\n',...
+                OPTIONS.mandatory.pipeline, idx_baseline);
+        end
+        obj.noise_var = squeeze(obj.noise_var(:,:, idx_baseline) );
     end
 
     if ~sum(obj.CLS(:,ii))
