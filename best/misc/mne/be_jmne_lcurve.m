@@ -76,7 +76,10 @@ for i = 1:length(alpha)
 end
 
 [~,Index] = min(Fit/max(Fit)+Prior/max(Prior));  % Find the optimal alpha
-J = ((G'*G + alpha(Index).*Sigma_s)^-1)*G'*M;
+
+Kernel = ((G2tG2 + alpha(Index).*Sigma_s2)^-1)*G2';
+J = WV*Kernel*M;
+
 
 if nargout > 1
     varargout{1} = alpha(Index);
@@ -96,7 +99,7 @@ if OPTIONS.optional.display
               'Units', 'Normalized', ...
               'Position', [0.01 0.01 0.98 0.98], ...
               'FontWeight','demi');
-    set(hpc,'Title',[' L-curve '],'FontSize',8);
+    set(hpc,'Title',' L-curve ','FontSize',8);
 
     ax = axes('parent',hpc, ...
               'outerPosition',[0.01 0.01 0.98 0.98]);
