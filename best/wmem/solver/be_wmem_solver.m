@@ -135,7 +135,7 @@ OPTIONS.mandatory.Data = detrend(OPTIONS.mandatory.Data')';   %
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
 
 OPTIONS.baseline_shuffle = 1;
-OPTIONS.baseline_shuffle_windows = 10; % seconds
+OPTIONS.baseline_shuffle_windows = 20; % seconds
 
 if OPTIONS.baseline_shuffle
     OPTIONS = baseline(OPTIONS);
