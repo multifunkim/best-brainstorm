@@ -808,7 +808,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
         
     if ~firstCall
-        jPanelNew.add('right', jPanelNewR);
+        if OPTIONS.automatic.MEMexpert
+            jPanelNew.add('right', jPanelNewR);
+        end
     end
 
     %% ----------------------------------------------------------------- %%
@@ -935,7 +937,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ExpertMEM   = OPTIONS.automatic.MEMexpert;
         ctrl.jButEXP.setText( choices{ExpertMEM+1} );
         
-        UpdatePanel;        
+        % To show / hide the expert panel, simulate a pipeline switch.
+        % UpdatePanel;      
+        SwitchPipeline;
     end   
 
     %% ===== SWITCH PIPELINE =====
