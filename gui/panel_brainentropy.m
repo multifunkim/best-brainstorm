@@ -807,10 +807,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanelNewR.add('br hfill', jPanelRDG);
     end
         
-    if ~firstCall
-        if OPTIONS.automatic.MEMexpert
-            jPanelNew.add('right', jPanelNewR);
-        end
+    if (~firstCall) & OPTIONS.automatic.MEMexpert
+        jPanelNew.add('right', jPanelNewR);
     end
 
     %% ----------------------------------------------------------------- %%
