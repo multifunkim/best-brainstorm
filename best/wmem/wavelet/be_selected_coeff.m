@@ -83,7 +83,7 @@ for jj = 1 : length(OPTIONS.mandatory.DataTypes)
     
     % === selection (based on the power)
         [Wgfp_sorted, I] = sort(Wgfp,'descend');
-        Ic = find(cumsum(Wgfp_sorted)>=pc_power*sum(Wgfp_sorted),1,'first');
+        Ic = find(cumsum(Wgfp_sorted)/sum(Wgfp_sorted) <= pc_power,1,'last');
         i_kept = i_kept(I(1:Ic));
         j_kept = j_kept(I(1:Ic));
         k_kept = k_kept(I(1:Ic));
