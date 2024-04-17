@@ -134,10 +134,8 @@ OPTIONS.mandatory.Data = detrend(OPTIONS.mandatory.Data')';   %
 % we keep leadfields of interest; we compute svd of normalized leadfields
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
 
-OPTIONS.baseline_shuffle = 1;
-OPTIONS.baseline_shuffle_windows = 20; % seconds
 
-if OPTIONS.baseline_shuffle
+if OPTIONS.optional.baseline_shuffle
     OPTIONS = baseline(OPTIONS);
 end
 

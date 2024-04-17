@@ -35,7 +35,7 @@ function [OPTIONS] = be_normalize_and_units(OPTIONS)
 for ii = 1 : numel(OPTIONS.mandatory.DataTypes) %For every Modality (Data Type)
     
     % Std deviation for every channels on a modality
-    if OPTIONS.baseline_shuffle ==1
+    if OPTIONS.optional.baseline_shuffle ==1
         SD = std(OPTIONS.automatic.Modality(ii).baseline(:,:,1)');
     else
         SD = std(OPTIONS.automatic.Modality(ii).baseline');

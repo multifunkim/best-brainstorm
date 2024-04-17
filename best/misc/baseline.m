@@ -1,7 +1,7 @@
 function OPTIONS = baseline(OPTIONS)
     fs = round( 1 / diff( OPTIONS.mandatory.DataTime([1 2]) ) );
-    baseline_length_sample = OPTIONS.baseline_shuffle_windows*fs; % in sample
-    no_of_baseline  = round(length(OPTIONS.optional.Baseline)/baseline_length_sample);
+    baseline_length_sample = OPTIONS.optional.baseline_shuffle_windows*fs; % in sample
+    no_of_baseline  = floor(length(OPTIONS.optional.Baseline)/baseline_length_sample);
     if no_of_baseline > 1
         Baseline = zeros(size(OPTIONS.optional.Baseline,1), baseline_length_sample, no_of_baseline);
         BaselineTime = zeros(baseline_length_sample, no_of_baseline);
