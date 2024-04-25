@@ -95,7 +95,8 @@ if OPTIONS.optional.verbose
 end        
         
 %% Useful variables
-obj.ImageGridAmp = []; 
+ obj = struct('hfig', [] , 'hfigtab', [],  'ImageGridAmp', []);
+
 if ~isfield(HeadModel, 'vertex_connectivity')
     [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 else
@@ -135,6 +136,9 @@ OPTIONS.mandatory.Data = detrend(OPTIONS.mandatory.Data')';   %
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
 
 
+if OPTIONS.optional.baseline_shuffle
+    OPTIONS = be_shufle_baseline(OPTIONS);
+end
 
 %% ===== Normalization ==== %% 
 % we absorb units (pT, nA) in the data, leadfields; we normalize the data
@@ -150,7 +154,7 @@ OPTIONS = be_model_of_null_hypothesis(OPTIONS);
 % for the data: normalization/wavelet/denoise
 [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS);
 if OPTIONS.optional.display
-    [obj.hfig obj.hfigtab] = be_display_time_scale_boxes(obj,OPTIONS);
+    [obj.hfig, obj.hfigtab] = be_display_time_scale_boxes(obj,OPTIONS);
 end
 
 %% ===== Compute Minimum Norm Solution ==== %% 

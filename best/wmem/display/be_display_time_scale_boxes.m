@@ -93,7 +93,7 @@ for ii = 1:length(OPTIONS.mandatory.DataTypes)
               'LineStyle','-', ...
               'edgecolor','k', ...
               'FaceColor',MMM(b,:));
-    pause(0.015)
+    %pause(0.015)
     end
     hold off
     

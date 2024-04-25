@@ -95,12 +95,10 @@ function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS, Results)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% END OF TO DO LIST %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-global MEMglobal
-
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline cMEM\n');
 end 
+ obj = struct('hfig', [] , 'hfigtab', [] );
 
 %% Retrieve vertex connectivity - needed for clustering
 [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);

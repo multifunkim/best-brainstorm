@@ -35,7 +35,11 @@ function [OPTIONS] = be_normalize_and_units(OPTIONS)
 for ii = 1 : numel(OPTIONS.mandatory.DataTypes) %For every Modality (Data Type)
     
     % Std deviation for every channels on a modality
-    SD = std(OPTIONS.automatic.Modality(ii).baseline');
+    if isfield(OPTIONS.optional, 'baseline_shuffle') && OPTIONS.optional.baseline_shuffle
+        SD = std(OPTIONS.automatic.Modality(ii).baseline(:,:,1)');
+    else
+        SD = std(OPTIONS.automatic.Modality(ii).baseline');
+    end
     
     % Define the mean standard deviation (MSD) of the present modality
     MSD = mean(SD);
