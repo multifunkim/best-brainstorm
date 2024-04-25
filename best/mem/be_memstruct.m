@@ -153,17 +153,11 @@ for ii = 1:nb_clusters
     % percentage)   
     if isfield(OPTIONS.optional.clustering, 'initial_sigma')
         active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(cID{ii}) );     
-    elseif strcmp(OPTIONS.optional.normalization, 'adaptive')       
+    else      
         if OPTIONS.model.depth_weigth_MEM > 0 
             active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2) * Sigma_s(cID{ii},cID{ii});
         else
             active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2 );
-        end
-    elseif strcmp(OPTIONS.optional.normalization, 'fixed')  
-        if OPTIONS.model.depth_weigth_MEM > 0 
-            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2 )* Sigma_s(cID{ii},cID{ii});
-        else
-            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( (cluster_G{ii}'*GpGptinv_M).^2 );    
         end
     end
 

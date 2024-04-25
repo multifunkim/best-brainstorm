@@ -2,3 +2,5 @@
 .DS_Store
 
 best/wmem/preprocess/be_wdata_preprocessing.asv
+
+*.asv
