@@ -1,4 +1,4 @@
-function OPTIONS = baseline(OPTIONS)
+function OPTIONS = be_shufle_baseline(OPTIONS)
     fs = round( 1 / diff( OPTIONS.mandatory.DataTime([1 2]) ) );
     baseline_length_sample = OPTIONS.optional.baseline_shuffle_windows*fs; % in sample
     no_of_baseline  = floor(length(OPTIONS.optional.Baseline)/baseline_length_sample);

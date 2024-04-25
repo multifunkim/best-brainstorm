@@ -137,7 +137,7 @@ OPTIONS.mandatory.Data = detrend(OPTIONS.mandatory.Data')';   %
 
 
 if OPTIONS.optional.baseline_shuffle
-    OPTIONS = baseline(OPTIONS);
+    OPTIONS = be_shufle_baseline(OPTIONS);
 end
 
 %% ===== Normalization ==== %% 
