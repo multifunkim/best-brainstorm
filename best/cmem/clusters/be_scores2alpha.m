@@ -9,7 +9,7 @@ function [alpha, CLS, OPTIONS] = be_scores2alpha(SCR, CLS, OPTIONS, varargin)
 %               model.alpha_method  :   method of initialization of the active           
 %                   initial parcel active probabilities. (1=mean of MSP scores
 %                   of sources within  parcel, 2=max, 3=median, 4=all 
-%                   probabilities set to 0.5, 5=all prob. set to 1,  6=% of the MNE energy in the parcel)
+%                   probabilities set to 0.5, 5=all prob. set to 1)
 %
 %               model.alpha_threshold:  threshold on the active probabilities. 
 %                   All prob. < threshold are set to 0 (parcel not part of the 
@@ -80,11 +80,6 @@ for jj=1:size(SCR,2)
                  
             case 5  % Method 5 (alpha = 1 )
                  alpha(idCLS,jj) = 1;
-
-            case 6  % Method 6 ( % of the MNE energy in the parcel)
-                 WSjj = OPTIONS.automatic.Modality(1).Jmne(:,jj).^2;
-                 WSjj_ii = WSjj(idCLS); 
-                 alpha(idCLS,jj) = sqrt((sum(WSjj_ii) / sum(WSjj)));
 
             otherwise
                 error('Wrong ALPHA Method')

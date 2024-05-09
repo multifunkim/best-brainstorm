@@ -7,9 +7,7 @@ function [alpha, CLS, OPTIONS] = be_gain2alpha(M, CLS, OPTIONS, varargin)
 %       -   CLS     : vector of parcel labels for each source (1xNsources)
 %       -   OPTIONS : 
 %               model.alpha_method  :   method of initialization of the active           
-%                   initial parcel active probabilities. (1=mean of MSP scores
-%                   of sources within  parcel, 2=max, 3=median, 4=all 
-%                   probabilities set to 0.5, 5=all prob. set to 1)
+%                   initial parcel active probabilities. (6=% of the MNE energy in the parcel)
 %
 %               model.alpha_threshold:  threshold on the active probabilities. 
 %                   All prob. < threshold are set to 0 (parcel not part of the 
@@ -84,21 +82,11 @@ for jj=1:size(CLS,2)
         idCLS = clusters==ii;
         switch ALPHA_METHOD
                 
-            case 1  % Method 1 (alpha = mean in the parcel)
-                % we check the existence of NEW:
+            case 6  % Method 1 (alpha = % of MNE energy inside the parcel)
                 WSjj = weight_alpha(:,jj).^2;
                 WSjj_ii = WSjj(idCLS); 
                 alpha(idCLS,jj) = sqrt((sum(WSjj_ii) / sum(WSjj)));
                 
-            case 3  % Method 3 (alpha = median in the parcel)
-                 inside_scores = weight_alpha(idCLS, jj);
-                 alpha(idCLS,jj) = median(inside_scores);
-                
-            case 4  % Method 4 (alpha = 1/2)
-                 alpha(idCLS,jj) = 0.5;
-                 
-            case 5  % Method 4 (alpha = 1)
-                alpha(idCLS,jj) = 1;                
             otherwise
                 error('Wrong ALPHA Method')
         end

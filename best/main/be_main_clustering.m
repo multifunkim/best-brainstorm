@@ -57,7 +57,13 @@ elseif ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
             [ALPHA, CLS, OPTIONS]   = be_scores2alpha(SCR, CLS, OPTIONS);
         case 'wMEM'
             [CLS, SCR, OPTIONS] = be_wmem_clusterize_multim(obj, OPTIONS);
-            [ALPHA, CLS, OPTIONS] = be_scores2alpha(SCR, CLS, OPTIONS);
+
+            if OPTIONS.model.alpha_method ~= 6
+                [ALPHA, CLS, OPTIONS] = be_scores2alpha(SCR, CLS, OPTIONS);
+            else % We compute the score using MNE
+                BOX = OPTIONS.automatic.selected_samples(1,:); % box of interest
+                [ALPHA, CLS, OPTIONS] = be_gain2alpha(obj.data{1}(:,BOX), CLS, OPTIONS);
+            end
 
         case 'rMEM'
             [CLS, SCR, OPTIONS] = be_rmem_clusterize_multim(obj, OPTIONS);
