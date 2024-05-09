@@ -604,11 +604,14 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jTxtMuMet.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTxtMuMet.setHorizontalAlignment(JTextField.RIGHT);
         jTxtMuMet.setToolTipText('<HTML><B>Initialization of cluster k''s active mean (&mu)</B>:<BR>1 = regular minimum norm J (&mu<sub>k</sub> = mean(J<sub>k</sub>))<BR>2 = null hypothesis (&mu<sub>k</sub> = 0)<BR>3 = MSP-regularized minimum norm mJ (&mu<sub>k</sub> = mean(mJ<sub>k</sub>))<BR>4 = L-curve optimized Minimum Norm Estimate</HTML>');        
+        java_setcb(jTxtMuMet, 'ActionPerformedCallback', @(h,ev)adjust_range('jTxtMuMet', [1 4]) );
         jTxtMuMet.setEnabled(0);
+
     jTxtAlMet  = JTextField( num2str(OPTIONS.model.alpha_method) );
         jTxtAlMet.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTxtAlMet.setHorizontalAlignment(JTextField.RIGHT);
-        jTxtAlMet.setToolTipText('<HTML><B>Initialization of cluster k''s active probability (&alpha)</B>:<BR>1 = average MSP scores (&alpha<sub>k</sub> = mean(MSP<sub>k</sub>))<BR>2 = max MSP scores (&alpha<sub>k</sub> = max(MSP<sub>k</sub>))<BR>3 = median MSP scores (&alpha<sub>k</sub> = mean(MSP<sub>k</sub>))<BR>4 = equal (&alpha = 0.5)<BR>5 = equal (&alpha = 1)</HTML>');        
+        jTxtAlMet.setToolTipText('<HTML><B>Initialization of cluster k''s active probability (&alpha)</B>:<BR>1 = average MSP scores (&alpha<sub>k</sub> = mean(MSP<sub>k</sub>))<BR>2 = max MSP scores (&alpha<sub>k</sub> = max(MSP<sub>k</sub>))<BR>3 = median MSP scores (&alpha<sub>k</sub> = mean(MSP<sub>k</sub>))<BR>4 = equal (&alpha = 0.5)<BR>5 = equal (&alpha = 1)<BR>6 = % of MNE Energy</HTML>');        
+        java_setcb(jTxtMuMet, 'ActionPerformedCallback', @(h,ev)adjust_range('jTxtMuMet', [1 6]) );
         jTxtAlMet.setEnabled(0);
     jTxtAlThr  = JTextField( num2str(OPTIONS.model.alpha_threshold) );
         jTxtAlThr.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
