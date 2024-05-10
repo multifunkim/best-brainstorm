@@ -172,6 +172,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     jPanelLeft.add(jPanel, c);
     gridyL = gridyL + 1;
 
+    % Add glue to fill vertical space at the end
+    c.gridy   = gridyL;
+    c.weighty = 1;
+    jPanelLeft.add(Box.createVerticalGlue(), c);
+    c.weighty = 0;
 
     %% ----------------------------------------------------------------- %%
     % Right panel
@@ -216,6 +221,12 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     c.gridy = gridyR;
     jPanelRight.add(jPanel, c);
     gridyR = gridyR + 1;
+
+    % Add glue to fill vertical space at the end
+    c.gridy   = gridyR;
+    c.weighty = 1;
+    jPanelRight.add(Box.createVerticalGlue(), c);
+    c.weighty = 0;
 
     % ===== VALIDATION BUTTONS =====
     jPanelBottom = gui_river([1,1], [0,6,6,6]);
