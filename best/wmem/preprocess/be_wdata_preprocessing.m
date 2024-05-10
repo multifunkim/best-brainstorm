@@ -48,7 +48,7 @@ end
         % normalization/wavelet/denoise
         [obj, OPTIONS] = be_discrete_wavelet_preprocessing(obj, OPTIONS);
 
-        for iii=1:size(OPTIONS.automatic.Modality.baseline,3)
+        for iii=1:size(OPTIONS.automatic.Modality(1).baseline,3)
             noise_var(:,:,iii) = covariance_processing(OPTIONS,iii);
         end
         %[noise_var] = covariance_processing(OPTIONS);
@@ -178,7 +178,7 @@ function [noise_var] = estimate_noise_var(OPTIONS)
                     noise_var(iD, iD) = diag(ones(1,length(variance))*mean(variance));
 
                 case 6
-                    isc = 2; % Scale one which the noise covariance is calculated ?
+                    isc = 3; % Scale one which the noise covariance is calculated ?
 
                     w1 = wavelet_obj.data{1}(:,end/2^(isc)+6:end/2^(isc-1)-5)';
                     a = max(1,round(wavelet_obj.info_extension.start / 2^(isc)));

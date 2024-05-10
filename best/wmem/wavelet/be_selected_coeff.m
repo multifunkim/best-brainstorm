@@ -116,6 +116,9 @@ tma = OPTIONS.automatic.selected_samples(6,:)+2.^(OPTIONS.automatic.selected_sam
 sl = ~((tma<t1)|(tmi>t2));
 OPTIONS.automatic.selected_samples = [OPTIONS.automatic.selected_samples ; sl];
 for ii = 1 : length(OPTIONS.mandatory.DataTypes)
+    tmi = OPTIONS.automatic.Modality(ii).selected_jk(6,:)-2.^(OPTIONS.automatic.Modality(ii).selected_jk(2,:)-1)/fs/2;
+    tma = OPTIONS.automatic.Modality(ii).selected_jk(6,:)+2.^(OPTIONS.automatic.Modality(ii).selected_jk(2,:)-1)/fs/2;
+    sl = ~((tma<t1)|(tmi>t2));
     OPTIONS.automatic.selected_values{ii} = [OPTIONS.automatic.selected_values{ii} ; sl];
 end
 

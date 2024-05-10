@@ -1,5 +1,5 @@
 function [obj] = be_fusion_of_modalities(data, obj, OPTIONS)
-%BE_FUSION_OF_MODALITIES fuses data and leadfields from EEG and MEG for 
+%BE_FUSION_OF_MODALITIES fuses data and leadfields from EEG and MEG for
 % multimodal sources estimation using MEM
 %
 %   INPUTS:
@@ -11,13 +11,13 @@ function [obj] = be_fusion_of_modalities(data, obj, OPTIONS)
 %       -   OPTIONS
 %       - obj
 %
-%% ==============================================   
+%% ==============================================
 % Copyright (C) 2011 - LATIS Team
 %
 %  Authors: LATIS team, 2011
 %
 %% ==============================================
-% License 
+% License
 %
 % BEst is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ function [obj] = be_fusion_of_modalities(data, obj, OPTIONS)
 %
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
-% -------------------------------------------------------------------------   
+% -------------------------------------------------------------------------
 
 
 if isempty(data)
@@ -57,7 +57,7 @@ if size(OPTIONS.automatic.Modality(1).covariance,3)>1
 else
     obj.noise_var   = diag( OPTIONS.automatic.Modality(1).covariance );
 end
-    
+
 obj.baseline    = OPTIONS.automatic.Modality(1).baseline;
 obj.channels    = OPTIONS.automatic.Modality(1).channels;
 
@@ -65,10 +65,17 @@ if length(OPTIONS.mandatory.DataTypes)>1 % fusion of modalities if requested
     if OPTIONS.optional.verbose
         fprintf('%s, MULTIMODAL data ... ',OPTIONS.mandatory.pipeline);
     end
+    if strcmp(OPTIONS.mandatory.pipeline,'wMEM')
+        obj.data = data{1};
+    end
+
     for ii=2:length(OPTIONS.mandatory.DataTypes)
+
         obj.data = [obj.data ; data{ii}];
+
+
         if exist('idata', 'var'); obj.idata = [obj.idata; idata{ii}]; end
-        data{ii}        = []; 
+        data{ii}        = [];
         idata{ii}       = [];
 
         if isfield( OPTIONS.automatic.Modality(1), 'gain' )
@@ -81,6 +88,13 @@ if length(OPTIONS.mandatory.DataTypes)>1 % fusion of modalities if requested
             fprintf('... %s found ', OPTIONS.mandatory.DataTypes{ii})
         end
     end
+
+    if strcmp(OPTIONS.mandatory.pipeline,'wMEM')
+        temp=obj.data;
+        obj.data = [];
+        obj.data{1} = temp;
+    end
+
 
 else
     if OPTIONS.optional.verbose
