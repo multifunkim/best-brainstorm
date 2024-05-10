@@ -105,91 +105,131 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     % Create main main panel
     jPanelMain = gui_component('Panel');
+    jPanelMain.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
+    % Default grid bag constrains (for Left and Right panels)
+    c = GridBagConstraints();
+    c.fill    = GridBagConstraints.HORIZONTAL;
+    c.weightx = 1;
+    c.weighty = 0;
 
     %% --------------------- REGULAR OPTIONS PANEL --------------------- %%
     % ===== MEM METHOD =====
-        
+
     ctrl = struct();
 
     % Left panel
-    jPanelLeft = gui_river(); 
-    jPanelMain.add(jPanelLeft, BorderLayout.CENTER);
+    jPanelLeft = java_create('javax.swing.JPanel');
+    jPanelLeft.setLayout(GridBagLayout());
+    jPanelMain.add(jPanelLeft, BorderLayout.WEST);
+    % Counter for elements in panel L
+    gridyL = 1;
 
     % Add MEM type selection
     [jPanelType, ctrl_tmp] = CreatePanelType();
     ctrl = struct_copy_fields(ctrl,ctrl_tmp);
-    jPanelLeft.add('hfill', jPanelType);
+    c.gridy = gridyL;
+    jPanelLeft.add(jPanelType, c);
+    gridyL = gridyL + 1;
 
     % Add MEM references
     [jPanelRef, ctrl_tmp] = CreatePanelRef();
     jPanelRef.setMinimumSize(Dimension(10*TEXT_WIDTH, 40*DEFAULT_HEIGHT));
-    jPanelLeft.add('br vfill hfill', jPanelRef);
     ctrl = struct_copy_fields(ctrl,ctrl_tmp);
-        
-    [jPanelData, ctrl_tmp] = CreatePanelData();  
-    jPanelData.setMinimumSize(Dimension(10*TEXT_WIDTH, 40*DEFAULT_HEIGHT));
-    jPanelLeft.add('br  hfill', jPanelData);
-    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyL;
+    jPanelLeft.add(jPanelRef, c);
+    gridyL = gridyL + 1;
 
-    [jPanel, ctrl_tmp] = CreatePanelOscillation();   
-    jPanelLeft.add(' br hfill  ', jPanel); 
+    [jPanelData, ctrl_tmp] = CreatePanelData();
+    jPanelData.setMinimumSize(Dimension(10*TEXT_WIDTH, 40*DEFAULT_HEIGHT));
     ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyL;
+    jPanelLeft.add(jPanelData, c);
+    gridyL = gridyL + 1;
+
+    [jPanel, ctrl_tmp] = CreatePanelOscillation();
+    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyL;
+    jPanelLeft.add(jPanel, c);
+    gridyL = gridyL + 1;
 
     [jPanel, ctrl_tmp] = CreatePanelSynchrony();
-    jPanelLeft.add(' br hfill  ', jPanel); 
-    ctrl = struct_copy_fields(ctrl,ctrl_tmp);              
-            
+    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyL;
+    jPanelLeft.add(jPanel, c);
+    gridyL = gridyL + 1;
+
     [jPanel, ctrl_tmp] = CreatePanelClustering();
-    jPanelLeft.add('br  hfill', jPanel); 
-    ctrl = struct_copy_fields(ctrl,ctrl_tmp);              
+    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyL;
+    jPanelLeft.add(jPanel, c);
+    gridyL = gridyL + 1;
 
     % ===== GROUP ANALYSIS =====
     % Group analysis - conditional
     [jPanel, ctrl_tmp] = CreatePanelGroup();
-    jPanelLeft.add('br  hfill', jPanel); 
-    ctrl = struct_copy_fields(ctrl,ctrl_tmp);  
-               
+    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyL;
+    jPanelLeft.add(jPanel, c);
+    gridyL = gridyL + 1;
+
+
     %% ----------------------------------------------------------------- %%
-    jPanelRight = gui_river();
+    % Right panel
+    jPanelRight = java_create('javax.swing.JPanel');
+    jPanelRight.setLayout(GridBagLayout());
     jPanelMain.add(jPanelRight, BorderLayout.EAST);
+    % Counter for elements in panel R
+    gridyR = 1;
 
     % ===== depth-weighting METHOD =====
     [jPanel, ctrl_tmp] = CreatePanelDepthWeighting();
-    jPanelRight.add('br hfill', jPanel);
-    ctrl = struct_copy_fields(ctrl,ctrl_tmp);              
+    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyR;
+    jPanelRight.add(jPanel, c);
+    gridyR = gridyR + 1;
 
     %% ---------------------- EXPERT OPTIONS PANEL --------------------- %%
     % Add priors to panel
     [jPanel, ctrl_tmp] = CreatePanelModelPrior();
-    ctrl = struct_copy_fields(ctrl,ctrl_tmp);              
-    jPanelRight.add('br hfill', jPanel);
-        
+    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyR;
+    jPanelRight.add(jPanel, c);
+    gridyR = gridyR + 1;
+
     % ==== Wavelet processing
     [jPanel, ctrl_tmp] = CreatePanelWavelet();
-    jPanelRight.add('br hfill', jPanel);
-    ctrl = struct_copy_fields(ctrl,ctrl_tmp);              
+    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyR;
+    jPanelRight.add(jPanel, c);
+    gridyR = gridyR + 1;
 
     % ==== Ridges
     [jPanel, ctrl_tmp] = CreatePanelRidge();
-    jPanelRight.add('br hfill', jPanel);
-    ctrl = struct_copy_fields(ctrl,ctrl_tmp);              
+    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyR;
+    jPanelRight.add(jPanel, c);
+    gridyR = gridyR + 1;
 
     % Solver
     [jPanel, ctrl_tmp] = CreatePanelSolver();
-    jPanelRight.add('br hfill', jPanel);
     ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyR;
+    jPanelRight.add(jPanel, c);
+    gridyR = gridyR + 1;
 
     % ===== VALIDATION BUTTONS =====
-   JButEXP = gui_component('button', jPanelRight, 'br center', 'Normal', [], [], @SwitchExpertMEM, []);
-   gui_component('button', jPanelRight, [], 'Cancel', [], [], @(src,ev)ButtonCancel_Callback(), []);
-   JButOK = gui_component('button', jPanelRight, [], 'OK', [], [], @ButtonOk_Callback, []);
-   JButOK.setEnabled(0);
-    
-   ctrl = struct_copy_fields(ctrl,struct( 'jPanelTop',            jPanelMain, ...
-                                          'jButEXP',              JButEXP, ...
-                                          'jButOk',               JButOK, ...
-                                          'jTXTver',              jTXTver, ...
-                                          'jTXTupd',              jTXTupd));
+    jPanelBottom = gui_river([1,1], [0,6,6,6]);
+    jPanelMain.add(jPanelBottom, BorderLayout.SOUTH);
+    JButEXP = gui_component('button', jPanelBottom, 'br center', 'Normal', [], [], @SwitchExpertMEM, []);
+    gui_component('button', jPanelBottom, [], 'Cancel', [], [], @(src,ev)ButtonCancel_Callback(), []);
+    JButOK = gui_component('button', jPanelBottom, [], 'OK', [], [], @ButtonOk_Callback, []);
+    JButOK.setEnabled(0);
+
+    ctrl = struct_copy_fields(ctrl,struct( 'jPanelTop',            jPanelMain, ...
+                                           'jButEXP',              JButEXP, ...
+                                           'jButOk',               JButOK, ...
+                                           'jTXTver',              jTXTver, ...
+                                           'jTXTupd',              jTXTupd));
 
 
     % ===== PANEL CREATION =====
@@ -207,8 +247,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     %% Create Panels REF
     function [jPanel, ctrl] = CreatePanelType()
         % Panel: Selection of the type of MEM (cMEM, wMEM, rMEM)
-        
-        jPanel = gui_river( 'MEM type');
+
+        jPanel = gui_river([1,1], [0, 6, 6, 6],'MEM type');
         jButtonGroupMemType = ButtonGroup();
     
         jTypeCMEM = gui_component('radio', jPanel, [], 'cMEM', jButtonGroupMemType, [], @(h,ev)SwitchPipeline(), []);
@@ -300,7 +340,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelData()
-        jPanel = gui_river([2,2], [0,1,1,1], 'Data definition');
+        jPanel = gui_river([1,1], [0, 6, 6, 6], 'Data definition');
         % ===== TIME SEGMENT =====
         jPanel.add('br', JLabel(''));
         jLabelTime = JLabel('Time window: ');
@@ -619,8 +659,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanel.add('br', JLabel(''));
         JW = JLabel('    WARNING: very slow');
         jPanel.add('tab', JW);
-        
-        jPanelLeft.add('br hfill', jPanel); 
 
         ctrl = struct('JPanelGRP',jPanel, ...
                       'jCheckGRP', jCheckGRP);
@@ -1041,6 +1079,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         choices = {'cMEM', 'wMEM', 'rMEM'};
         selected = [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
         if ~any(selected)
+            ctrl.JPanelref.setPreferredSize(java_scaled('dimension', 600, 650));
             ctrl.JPanelData.setVisible(0);
             ctrl.JPanelnwav.setVisible(0);
             ctrl.JPanelnosc.setVisible(0);
