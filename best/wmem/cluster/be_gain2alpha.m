@@ -44,7 +44,6 @@ function [alpha, CLS, OPTIONS] = be_gain2alpha(obj, CLS, OPTIONS, varargin)
                                                         
 alpha = zeros(size(CLS));
 ALPHA_METHOD = OPTIONS.model.alpha_method;
-alpha_threshold = OPTIONS.model.alpha_threshold;
 
 BOX = OPTIONS.automatic.selected_samples(1,:); % box of interest
 
@@ -94,14 +93,8 @@ for jj=1:size(CLS,2)
                 error('Wrong ALPHA Method')
         end
         
-        % Check if cluster's active proba<threshold
-        if alpha(idCLS,jj) < alpha_threshold
-            CLS(idCLS,jj) = 0;
-            alpha(idCLS,jj) = 0;
-        else
-            CLS(idCLS,jj) = curr_cls;
-            curr_cls = curr_cls + 1;
-        end
+        CLS(idCLS,jj) = curr_cls;
+        curr_cls = curr_cls + 1;
         
         % update progress bar
          if hmem
