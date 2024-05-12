@@ -169,12 +169,12 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
         obj.noise_var = squeeze(obj.noise_var(:,:,OPTIONS.automatic.selected_samples(2,ii)) );
     
     elseif (size(obj.noise_var,3)>1) && OPTIONS.optional.baseline_shuffle == 1
-        idx_baseline = find(obj.time(ii) >= min(OPTIONS.automatic.Modality.BaselineTime) & ...
-                            obj.time(ii) <= max(OPTIONS.automatic.Modality.BaselineTime));
+        idx_baseline = find(obj.time(ii) >= min(OPTIONS.automatic.Modality(1).BaselineTime) & ...
+                            obj.time(ii) <= max(OPTIONS.automatic.Modality(1).BaselineTime));
     
-        if isempty(idx_baseline) && obj.time(ii) > max(max(OPTIONS.automatic.Modality.BaselineTime))
-            idx_baseline = size(OPTIONS.automatic.Modality.BaselineTime,2);
-        elseif isempty(idx_baseline) && obj.time(ii) < min(min(OPTIONS.automatic.Modality.BaselineTime))
+        if isempty(idx_baseline) && obj.time(ii) > max(max(OPTIONS.automatic.Modality(1).BaselineTime))
+            idx_baseline = size(OPTIONS.automatic.Modality(1).BaselineTime,2);
+        elseif isempty(idx_baseline) && obj.time(ii) < min(min(OPTIONS.automatic.Modality(1).BaselineTime))
             idx_baseline = 1;
         end
 

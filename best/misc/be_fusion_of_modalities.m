@@ -49,11 +49,8 @@ if isfield( OPTIONS.automatic.Modality(1), 'gain' )
 end
 
 % If the covariance matrix is scale dependent, no multimodality possible
-if size(OPTIONS.automatic.Modality(1).covariance,3)>1
+if size(OPTIONS.automatic.Modality(1).covariance,3) > 1
     obj.noise_var = OPTIONS.automatic.Modality(1).covariance;
-    if length(OPTIONS.mandatory.DataTypes)>1
-        error('No multimodality possible with a scale dependent noise_cov');
-    end
 else
     obj.noise_var   = diag( OPTIONS.automatic.Modality(1).covariance );
 end
@@ -63,7 +60,7 @@ obj.channels    = OPTIONS.automatic.Modality(1).channels;
 
 if length(OPTIONS.mandatory.DataTypes)>1 % fusion of modalities if requested
     if OPTIONS.optional.verbose
-        fprintf('%s, MULTIMODAL data ... ',OPTIONS.mandatory.pipeline);
+        fprintf('%s, MULTIMODAL data ... %s ',OPTIONS.mandatory.pipeline,  OPTIONS.mandatory.DataTypes{1});
     end
     if strcmp(OPTIONS.mandatory.pipeline,'wMEM')
         obj.data = data{1};
@@ -81,7 +78,18 @@ if length(OPTIONS.mandatory.DataTypes)>1 % fusion of modalities if requested
         if isfield( OPTIONS.automatic.Modality(1), 'gain' )
             obj.gain        = [obj.gain ; OPTIONS.automatic.Modality(ii).gain];
         end
-        obj.noise_var   = [obj.noise_var; diag(OPTIONS.automatic.Modality(ii).covariance)];
+        if size(OPTIONS.automatic.Modality(1).covariance,3) > 1 && OPTIONS.optional.baseline_shuffle
+            % we concatanate for each covariance matrix
+            tmp = [];
+            for ibaseline = 1:size(obj.noise_var,3)
+                tmp(:,:,ibaseline) = blkdiag(obj.noise_var(:,:,ibaseline),OPTIONS.automatic.Modality(ii).covariance(:,:,ibaseline));
+            end
+            obj.noise_var = tmp;
+
+        else
+            obj.noise_var   = [obj.noise_var; diag(OPTIONS.automatic.Modality(ii).covariance)];
+        end
+
         obj.baseline    = [obj.baseline; OPTIONS.automatic.Modality(ii).baseline];
         obj.channels    = [obj.channels; OPTIONS.automatic.Modality(ii).channels];
         if OPTIONS.optional.verbose
@@ -108,3 +116,5 @@ if size(OPTIONS.automatic.Modality(1).covariance,3)==1
 end
 
 if OPTIONS.optional.verbose, fprintf('\n'); end
+
+end

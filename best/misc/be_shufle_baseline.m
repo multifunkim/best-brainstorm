@@ -1,26 +1,28 @@
 function OPTIONS = be_shufle_baseline(OPTIONS)
     fs = round( 1 / diff( OPTIONS.mandatory.DataTime([1 2]) ) );
     baseline_length_sample = OPTIONS.optional.baseline_shuffle_windows*fs; % in sample
-    no_of_baseline  = floor(length(OPTIONS.optional.Baseline)/baseline_length_sample);
-    if no_of_baseline > 1
-        Baseline = zeros(size(OPTIONS.optional.Baseline,1), baseline_length_sample, no_of_baseline);
-        BaselineTime = zeros(baseline_length_sample, no_of_baseline);
+    no_of_baseline  = floor(length(OPTIONS.optional.BaselineTime)/baseline_length_sample);
 
-        for k=0:(no_of_baseline-1)
-            idx = (1+ k*baseline_length_sample):(baseline_length_sample*(k+1));
-            base = OPTIONS.optional.Baseline(:,idx);
-            Baseline(:,:,k+1)   = BEst_baseline_from_signal(base);
-            BaselineTime(:,k+1) =  OPTIONS.optional.BaselineTime(idx);
+    for iMod = 1:length(OPTIONS.automatic.Modality)
+        if no_of_baseline > 1
+            Baseline = zeros(size(OPTIONS.automatic.Modality(iMod).baseline,1), baseline_length_sample, no_of_baseline);
+            BaselineTime = zeros(baseline_length_sample, no_of_baseline);
+    
+            for k=0:(no_of_baseline-1)
+                idx = (1+ k*baseline_length_sample):(baseline_length_sample*(k+1));
+                base = OPTIONS.automatic.Modality(iMod).baseline(:,idx);
+                Baseline(:,:,k+1)   = BEst_baseline_from_signal(base);
+                BaselineTime(:,k+1) =  OPTIONS.optional.BaselineTime(idx);
+            end
+        else
+            Baseline        = BEst_baseline_from_signal(OPTIONS.automatic.Modality(iMod).baseline);
+            BaselineTime    = OPTIONS.optional.BaselineTime;
         end
-    else
-        Baseline        = BEst_baseline_from_signal(OPTIONS.optional.Baseline);
-        BaselineTime    = OPTIONS.optional.BaselineTime;
+    
+    
+        OPTIONS.automatic.Modality(iMod).baseline = Baseline;
+        OPTIONS.automatic.Modality(iMod).BaselineTime = BaselineTime;
     end
-
-    OPTIONS.optional.Baseline = Baseline;
-    OPTIONS.optional.BaselineTime = BaselineTime;
-    OPTIONS.automatic.Modality.baseline = Baseline;
-    OPTIONS.automatic.Modality.BaselineTime = BaselineTime;
 end
 
 function baseline = BEst_baseline_from_signal(signal)
