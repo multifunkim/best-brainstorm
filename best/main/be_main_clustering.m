@@ -61,8 +61,7 @@ elseif ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
             if OPTIONS.model.alpha_method ~= 6
                 [ALPHA, CLS, OPTIONS] = be_scores2alpha(SCR, CLS, OPTIONS);
             else % We compute the score using MNE
-                BOX = OPTIONS.automatic.selected_samples(1,:); % box of interest
-                [ALPHA, CLS, OPTIONS] = be_gain2alpha(obj.data{1}(:,BOX), CLS, OPTIONS);
+                [ALPHA, CLS, OPTIONS] = be_gain2alpha(obj , CLS, OPTIONS);
             end
 
         case 'rMEM'

@@ -72,11 +72,6 @@ SCR = [];
 CLS = [];
 
 if strcmp(OPTIONS.clustering.clusters_type,'static')
-    
-    % Stable clustering approach:
-    if OPTIONS.optional.verbose
-        fprintf('%s, stable clustering ...\n', OPTIONS.mandatory.pipeline);
-    end
     [CLS, SCR, OPTIONS]  = be_wstable_clustering_multim(obj, OPTIONS);
 elseif strcmp(OPTIONS.clustering.clusters_type,'wfdr')
     [CLS, SCR, OPTIONS]  = be_wfdr_clustering_multim(obj, OPTIONS);

@@ -1,4 +1,4 @@
-function [alpha, CLS, OPTIONS] = be_gain2alpha(M, CLS, OPTIONS, varargin)
+function [alpha, CLS, OPTIONS] = be_gain2alpha(obj, CLS, OPTIONS, varargin)
 % BE_GAIN2ALPHA computes the initial probability of a parcel being active in 
 %   the MEM model without using the MSP scores.
 %
@@ -45,24 +45,27 @@ function [alpha, CLS, OPTIONS] = be_gain2alpha(M, CLS, OPTIONS, varargin)
 alpha = zeros(size(CLS));
 ALPHA_METHOD = OPTIONS.model.alpha_method;
 alpha_threshold = OPTIONS.model.alpha_threshold;
-verb = OPTIONS.optional.verbose;
 
+BOX = OPTIONS.automatic.selected_samples(1,:); % box of interest
 
-if verb
-    fprintf('       Gain to Alpha in be_gain2alpha\n');
-    fprintf('       WE CONSIDER A UNIQUE MODALITY\n');
+Mn = []; 
+for iMod = 1:length(OPTIONS.automatic.Modality)  
+
+    M = obj.data{iMod}(:,BOX);
+    % Normalize the data matrix. Eliminate any resulting NaN.
+    Mn = vertcat( Mn, bsxfun(@rdivide, M, sqrt(sum(M.^2, 1))));
 end
 
-
-% Normalize the data matrix. Eliminate any resulting NaN.
-Mn = bsxfun(@rdivide, M, sqrt(sum(M.^2, 1)));
 Mn(isnan(Mn)) = 0;
 
 
 % New alpha scores 
-Gstruct = OPTIONS.automatic.Modality(1).gain_struct;
+Gn = [];
+for iMod = 1:length(OPTIONS.automatic.Modality)  
+    Gn = vertcat(Gn, OPTIONS.automatic.Modality(iMod).gain_struct.Gn);
+end
 
-Op = Gstruct.Gn'*pinv(Gstruct.Gn*Gstruct.Gn');
+Op = Gn'*pinv(Gn*Gn');
 weight_alpha = Op * Mn;
 
 
