@@ -35,8 +35,9 @@ end
 %% ===== CREATE PANEL =====
 function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU> 
 
+
+    
     global MEMglobal
-    clear global MEMglobal  
 
     panelName       =   'InverseOptionsMEM';
     bstPanelNew     =   [];
@@ -502,9 +503,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jBoxWAVsc.setPreferredSize(Dimension(TEXT_WIDTH+60, DEFAULT_HEIGHT));
         jBoxWAVsc.setToolTipText('<HTML><B>Analyzed scales</B>:<BR>vector = analyze scales in vector<BR>integer = analyze scales up to integer<BR>0 = analyze all scales</HTML>');        
         jBoxWAVsc.setEditable(1);
-        hndl    =   handle(jBoxWAVsc, 'callbackproperties');
-        set(hndl, 'ActionPerformedCallback', @(src,ev)rememberTFindex('scales') );
-
         jPanel.add('p left', JLabel('Scales analyzed') );
         jPanel.add('tab hfill', jBoxWAVsc);
 
@@ -520,9 +518,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jTxtRfrs.setPreferredSize(Dimension(TEXT_WIDTH+30, DEFAULT_HEIGHT));
         jTxtRfrs.setToolTipText('<HTML><B>Ridge frequency band</B>:<BR>delta=1-3, theta=4-7, alpha=8-12, beta=13-30, gamma=31-100<BR>(type in either a string or a frequency range) </HTML>');        
         jTxtRfrs.setEditable(1);
-        hndl    =   handle(jTxtRfrs, 'callbackproperties');
-        set(hndl, 'ActionPerformedCallback', @(src,ev)rememberTFindex('freqs') );
-        %set(jTxtRfrs, 'ActionPerformedCallback', @(src,ev)rememberTFindex('freqs') );
+
         jPanel.add('p left', JLabel('Frequency (Hz)') );
         jPanel.add('tab', jTxtRfrs);
         % RDG min dur
@@ -593,7 +589,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         % Arbitrary
         jPanel.add('br', JLabel(''));
         jRadioSCRarb = JRadioButton('Arbitrary', ~strcmp(OPTIONS.clustering.MSP_scores_threshold,'fdr') );
-        java_setcb(jRadioSCRarb, 'ActionPerformedCallback', @(h,ev)UpdatePanel());
+        java_setcb(jRadioSCRarb, 'ActionPerformedCallback', @(h,ev)switchMspThresholdType());
         jRadioSCRarb.setToolTipText('<HTML><B>Arbitrary threshold</B>:<BR>whole brain parcellation if set to 0 ([0 1])</HTML>');        
         jButtonMSPscth.add(jRadioSCRarb);
         jPanel.add(jRadioSCRarb);
@@ -605,7 +601,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         % FDR
         jPanel.add('br', JLabel(''));
         jRadioSCRfdr = JRadioButton('FDR method', strcmp(OPTIONS.clustering.MSP_scores_threshold,'fdr') );
-        java_setcb(jRadioSCRfdr, 'ActionPerformedCallback', @(h,ev)UpdatePanel());
+        java_setcb(jRadioSCRfdr, 'ActionPerformedCallback', @(h,ev)switchMspThresholdType());
         jRadioSCRfdr.setToolTipText('<HTML><B>Adaptive threshold</B>:<BR>thresholds are learned from baseline<BR>using the FDR method</HTML>');        
         jButtonMSPscth.add(jRadioSCRfdr);
         jPanel.add(jRadioSCRfdr);
@@ -661,7 +657,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Group analysis');
 
         % Spatial smoothing
-        jCheckGRP = JCheckBox('Multi-subjects spatial priors', 0);
+        jCheckGRP = JCheckBox('Multi-subjects spatial priors', OPTIONS.optional.groupAnalysis);
         jCheckGRP.setToolTipText('<HTML><B>Warning</B>:<BR>Computations may take a lot of time</HTML>');        
 
         jPanel.add('tab', jCheckGRP);
@@ -949,11 +945,12 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         choices = {'cMEM', 'wMEM', 'rMEM'};
         selected = strcmp(OPTIONS.mandatory.pipeline , choices);
         MEM_button  = [ctrl.jMEMdef ctrl.jMEMw ctrl.jMEMr ];
-
+        
         if any(selected)
             MEM_button(selected).setSelected(1);
         end
         
+        % OPTIONS from CreatePanelData
         ctrl.jTextTimeStart.setText(num2str(OPTIONS.optional.TimeSegment(1)))
         ctrl.jTextTimeStop.setText(num2str(OPTIONS.optional.TimeSegment(2)))
         check_time('time', '', '');
@@ -969,18 +966,72 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
         ctrl.jTextBSLStart.setText(num2str(OPTIONS.optional.BaselineSegment(1)))
         ctrl.jTextBSLStop.setText(num2str(OPTIONS.optional.BaselineSegment(2)))
-
-
+        
         check_time('set_scales', '', '');
         check_time('set_freqs', '', '');
 
+        % OPTIONS from CreatePanelOscillation()
+        if length(OPTIONS.wavelet.selected_scales) == 1
+            ctrl.jWavScales.setSelectedIndex(OPTIONS.wavelet.selected_scales+1);
+        else % all scale
+            ctrl.jWavScales.setSelectedIndex(1);
+        end
 
+        % OPTIONS from CreatePanelSynchrony()
+
+        if ~isempty(OPTIONS.ridges.frequency_range)
+            freq_label= {'gamma', 'beta', 'alpha', 'theta', 'delta'};
+            freqs = [ [30 100] ; ... % gamma
+                    [13 29]; ... % beta
+                    [8 12]; ... % alpha
+                    [4 7]; ... % delta
+                    [1 3]]; %theta 
+
+            selected_scale = find(all(freqs == OPTIONS.ridges.frequency_range,2));
+            if any(selected_scale)
+                ctrl.jRDGrangeS.setSelectedIndex(selected_scale+1);
+            else
+                ctrl.jRDGrangeS.setSelectedIndex(1);
+            end
+        end
+        ctrl.jRDGmindur.setText(num2str(OPTIONS.ridges.min_duration));
+
+
+
+        % OPTIONS from CreatePanelClustering
+        ctrl.jCLSd.setSelected(strcmp(OPTIONS.clustering.clusters_type,'blockwise'));
+        ctrl.jCLSs.setSelected(strcmp(OPTIONS.clustering.clusters_type,'static'));
+        ctrl.jCLSf.setSelected(strcmp(OPTIONS.clustering.clusters_type,'wfdr') );
+
+        ctrl.jTextMspWindow.setText(num2str(OPTIONS.clustering.MSP_window));
+
+
+       ctrl.jRadioSCRarb.setSelected(~strcmp(OPTIONS.clustering.MSP_scores_threshold,'fdr'))
+       ctrl.jRadioSCRfdr.setSelected(strcmp(OPTIONS.clustering.MSP_scores_threshold,'fdr'))
+       if strcmp(OPTIONS.clustering.MSP_scores_threshold,'fdr')
+            ctrl.jTextMspThresh.setText(OPTIONS.clustering.MSP_scores_threshold);
+       else
+            ctrl.jTextMspThresh.setText(num2str(OPTIONS.clustering.MSP_scores_threshold));
+       end
+
+       ctrl.jTextNeighbor.setText(num2str(OPTIONS.clustering.neighborhood_order));
+       ctrl.jTextSmooth.setText(num2str(OPTIONS.solver.spatial_smoothing));
+
+
+        % OPTIONS from CreatePanelGroup
+        ctrl.jCheckGRP.setSelected(OPTIONS.optional.groupAnalysis)
+
+
+        % OPTIONS from CreatePanelDepthWeighting
         if  (OPTIONS.model.depth_weigth_MNE > 0 || OPTIONS.model.depth_weigth_MEM > 0)
             ctrl.jCheckDepthWeighting.setSelected(1);
             ctrl.jTxtDepthMNE.setText(num2str(OPTIONS.model.depth_weigth_MNE));
             ctrl.jTxtDepthMEM.setText(num2str(OPTIONS.model.depth_weigth_MEM));
+        else 
+            ctrl.jCheckDepthWeighting.setSelected(0);
         end
 
+        % OPTIONS from CreatePanelModelPrior
         ctrl.jMuMethod.setText(num2str(OPTIONS.model.active_mean_method));
         ctrl.jAlphaMethod.setText(num2str(OPTIONS.model.alpha_method));
         ctrl.jAlphaThresh.setText(num2str(OPTIONS.model.alpha_threshold));
@@ -988,18 +1039,28 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ctrl.jActiveVar.setText(num2str(OPTIONS.solver.active_var_mult));
         ctrl.jInactiveVar.setText(num2str(OPTIONS.solver.inactive_var_mult));
 
+
+        % OPTIONS from CreatePanelWavelet
+        ctrl.jWavType.setText(OPTIONS.wavelet.type);
+        ctrl.jWavVanish.setText(num2str(OPTIONS.wavelet.vanish_moments))
+        ctrl.jWavShrinkage.setText(num2str(OPTIONS.wavelet.shrinkage))
+        ctrl.jWavOrder.setText(num2str(OPTIONS.wavelet.order))
+        ctrl.jWavLevels.setText(num2str(OPTIONS.wavelet.nb_levels))
+
+        % OPTIONS from CreatePanelRidge()
+
+        ctrl.jRDGscaloth.setText(num2str(OPTIONS.ridges.scalo_threshold))
+        ctrl.jRDGnrjth.setText(num2str(OPTIONS.ridges.energy_threshold))
+        ctrl.jRDGstrength.setText(num2str(OPTIONS.ridges.strength_threshold))
+        ctrl.jRDGmincycles.setText(num2str(OPTIONS.ridges.cycles_in_window))
+
+        % OPTIONS from CreatePanelSolver
         ctrl.jOptimFN.setText(OPTIONS.solver.Optim_method);
-
-
         ctrl.jBoxShow.setSelected(OPTIONS.optional.display);
-
         ctrl.jParallel.setSelected(OPTIONS.solver.parallel_matlab);
-
         ctrl.jNewCOV.setSelected(OPTIONS.solver.NoiseCov_recompute);
-
         ctrl.jVarCovar.setText(num2str(OPTIONS.solver.NoiseCov_method) );
 
-        ctrl.jWavType.setText(OPTIONS.wavelet.type);
 
 
         if strcmp( char(ctrl.jButEXP.getText()),'Expert' ) && OPTIONS.automatic.MEMexpert
@@ -1023,6 +1084,13 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         be_print_best(OPTIONS);
     end
 
+    function switchMspThresholdType()
+        if ctrl.jRadioSCRarb.isSelected()
+            ctrl.jTextMspThresh.setText('0');
+        else 
+            ctrl.jTextMspThresh.setText('fdr')
+        end
+    end
     %% ===== SWITCH EXPERT MODE =====
     function SwitchExpertMEM(varargin)
         
@@ -1047,9 +1115,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
         choices = {'cMEM', 'wMEM', 'rMEM'};
         selected = [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
-
         if any(selected)
-            
+
             if strcmp(choices(selected), 'cMEM')
                 OPTIONS = struct_copy_fields(OPTIONS,be_cmem_pipelineoptions,1,1);
             elseif strcmp(choices(selected), 'wMEM')
@@ -1058,6 +1125,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 OPTIONS = struct_copy_fields(OPTIONS,be_rmem_pipelineoptions,1,1);
             end
 
+            OPTIONS.mandatory.pipeline = choices(selected);
             setOptions(OPTIONS)
         end
 
@@ -1154,6 +1222,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 ctrl.jPanelRDG.setVisible(1);
                 ctrl.jCLSf.setEnabled(1);
                 ctrl.jCLSd.setEnabled(1);
+                ctrl.jCLSs.setEnabled(0);
                 ctrl.jTextMspWindow.setEnabled(1);
                 ctrl.jWavOrder.setVisible(1);
                 ctrl.jWavOrderLabel.setVisible(1);
@@ -1182,13 +1251,14 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             end
                 
             % Fill fields
+            ctrl.jWavScales.removeAllItems();
             ctrl.jWavScales.insertItemAt( '', 0)
             ctrl.jWavScales.insertItemAt( 'all', 1)
             for ii = 1 : size(MEMglobal.available_scales,2)
                 IT = [num2str(ii) ' (' num2str(MEMglobal.available_scales(2,ii)) ':' num2str(MEMglobal.available_scales(1,ii)) ' Hz)'];
                 ctrl.jWavScales.insertItemAt(IT, ii+1);
             end
-            ctrl.jWavScales.setSelectedIndex(0); 
+            ctrl.jWavScales.setSelectedIndex(1); 
             
         elseif numel(time)<128
             ctrl.jWavScales.insertItemAt( 'NOT ENOUGH SAMPLES', 0)
@@ -1204,7 +1274,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [freqs] = set_freqs(time)
-        
         if ~isfield(MEMglobal, 'selected_freqs_index') && numel(time)>127
             
             if ~isfield(MEMglobal, 'freqs_available')
@@ -1240,10 +1309,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             end
             
             % Fill fields
+            ctrl.jRDGrangeS.removeAllItems();
             for ii = 1 : numel(MEMglobal.freqs_available)
                 ctrl.jRDGrangeS.insertItemAt(MEMglobal.freqs_available{ii}, ii-1);
             end        
-            ctrl.jRDGrangeS.setSelectedIndex(0);   
+            ctrl.jRDGrangeS.setSelectedIndex(1);   
         
         elseif numel(time)<128
             ctrl.jRDGrangeS.insertItemAt( 'NOT ENOUGH SAMPLES', 0)
@@ -1344,22 +1414,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         
         
     end
-
-    function rememberTFindex(type)
-        
-        switch type
-            case 'scales'
-                MEMglobal.selected_scale_index = ctrl.jWavScales.getSelectedIndex;
-                ctrl.jWavScales.removeItemAt( 0 );
-                ctrl.jWavScales.insertItemAt( ctrl.jWavScales.getSelectedItem(),0 );
-                
-            case 'freqs'
-                MEMglobal.selected_freqs_index = ctrl.jRDGrangeS.getSelectedIndex;
-                ctrl.jRDGrangeS.removeItemAt( 0 );
-                ctrl.jRDGrangeS.insertItemAt( ctrl.jRDGrangeS.getSelectedItem(),0 );
-        end
-
-end
 
     function import_baseline(hObject, event)
     
@@ -1600,12 +1654,15 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     % Get clustering options
 
     MEMpaneloptions.clustering.neighborhood_order     = str2double(char(ctrl.jTextNeighbor.getText()));
-    MEMpaneloptions.clustering.MSP_window             = str2double(char(ctrl.jTextMspWindow.getText()));
 
     choices = {'blockwise', 'static', 'wfdr'};
     selected = [ctrl.jCLSd.isSelected() ctrl.jCLSs.isSelected() ctrl.jCLSf.isSelected()];
     MEMpaneloptions.clustering.clusters_type = choices{ selected };
     
+    if strcmp(choices(selected), 'blockwise')
+        MEMpaneloptions.clustering.MSP_window = str2double(char(ctrl.jTextMspWindow.getText()));
+    end
+
     % Get MSP thresholding method
     if ctrl.jRadioSCRarb.isSelected()
         MEMpaneloptions.clustering.MSP_scores_threshold = str2double(char(ctrl.jTextMspThresh.getText()));
@@ -1676,7 +1733,6 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
         
     elseif strcmp(MEMpaneloptions.mandatory.pipeline, 'rMEM')
 
-
         MEMpaneloptions.ridges.scalo_threshold       =   str2double( ctrl.jRDGscaloth.getText() );
         MEMpaneloptions.ridges.energy_threshold      =   str2double( ctrl.jRDGnrjth.getText() );
         MEMpaneloptions.ridges.strength_threshold    =   str2double( ctrl.jRDGstrength.getText() );
@@ -1684,33 +1740,23 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
         MEMpaneloptions.ridges.cycles_in_window    	 =   str2double( ctrl.jRDGmincycles.getText() );
         
         % process frq range
-        rng.gamma = [30 100];
-        rng.beta  = [13 29];
-        rng.alpha = [8 12];
-        rng.delta = [4 7];
-        rng.theta = [1 3];
+        freq_label= {'gamma', 'beta', 'alpha', 'theta', 'delta'};
+        freqs = [ [30 100] ; ... % gamma
+                  [13 29]; ... % beta
+                  [8 12]; ... % alpha
+                  [4 7]; ... % delta
+                  [1 3]]; %theta 
         RNG = strrep( lower(strtrim( char( ctrl.jRDGrangeS.getSelectedItem() ) ) ), '-', ' ' );
         
         if strcmpi( RNG, 'all') || isempty(RNG)
-            MEMpaneloptions.ridges.frequency_range      =   [1 99999];
+            MEMpaneloptions.ridges.frequency_range      =   [MEMglobal.freqs_analyzed(1) MEMglobal.freqs_analyzed(end)];
             
         elseif strcmpi( RNG, 'not enough samples')
             MEMpaneloptions.ridges.frequency_range      =   [];
             
         else
-            RNG = strrep(RNG, ' ', ''';''');
-            RNG = eval(['{''' RNG '''}']);
-            miF = [];maF = [];
-            for ii = 1 : numel(RNG)
-                if ~isnan( str2double(RNG{ii}) )
-                    miF = [miF str2double(RNG{ii})];
-                    maF = [maF str2double(RNG{ii})];
-                elseif any( strcmp(RNG{ii}, {'gamma', 'beta', 'alpha', 'theta', 'delta'}) )
-                    miF = [miF rng.(RNG{ii})(1)];
-                    maF = [maF rng.(RNG{ii})(2)];
-                end
-            end
-            MEMpaneloptions.ridges.frequency_range      =   [min(miF) max(maF)];
+            selected_freq = strcmpi(freq_label, RNG);
+            MEMpaneloptions.ridges.frequency_range      =   freqs(selected_freq,:);
             
             if MEMpaneloptions.ridges.frequency_range(1)<MEMglobal.freqs_analyzed(1)
                 MEMpaneloptions.ridges.frequency_range(1)   =   MEMglobal.freqs_analyzed(1);
