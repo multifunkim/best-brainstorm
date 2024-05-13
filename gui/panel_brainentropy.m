@@ -802,32 +802,40 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jTxtWAVsh.setHorizontalAlignment(JTextField.RIGHT);
         jTxtWAVsh.setEnabled(0);
         jTxtWAVsh.setToolTipText('<HTML><B>DWT denoising</B>:<BR>0 = no denoising<BR>1 = soft denoising (remove low energy coeff.)</HTML>');        
-        jPanel.add('p left', JLabel('Coefficient shrinkage') );
+        
+        jTxtWAVshLabel = JLabel('Coefficient shrinkage');
+        jPanel.add('p left', jTxtWAVshLabel );
         jPanel.add('tab', jTxtWAVsh);            
     
         % Order
+        jTxtWAVorLabel =  JLabel('Wavelet order');
+
         jTxtWAVor  = JTextField( num2str(OPTIONS.wavelet.order) );
         jTxtWAVor.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTxtWAVor.setHorizontalAlignment(JTextField.RIGHT);
         jTxtWAVor.setEnabled(0);
-        jPanel.add('p left', JLabel('Wavelet order') );
+        jPanel.add('p left', jTxtWAVorLabel );
         jPanel.add('tab', jTxtWAVor);
 
         % Levels
+        jTxtWAVlvLabel = JLabel('Decomposition levels');
         jTxtWAVlv  = JTextField( num2str(OPTIONS.wavelet.nb_levels) );
         jTxtWAVlv.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTxtWAVlv.setHorizontalAlignment(JTextField.RIGHT);
         jTxtWAVlv.setEnabled(0);
 
-        jPanel.add('p left', JLabel('Decomposition levels') );
+        jPanel.add('p left', jTxtWAVlvLabel );
         jPanel.add('tab', jTxtWAVlv);
 
         ctrl = struct('jPanelWAV',      jPanel, ...
                       'jWavType',       jTxtWAVtp, ...
                       'jWavVanish',     jTxtWAVvm,...
                       'jWavShrinkage',  jTxtWAVsh, ...
+                      'jWavShrinkageLabel' , jTxtWAVshLabel, ...
                       'jWavOrder',      jTxtWAVor,...
-                      'jWavLevels',     jTxtWAVlv);
+                      'jWavOrderLabel', jTxtWAVorLabel, ... 
+                      'jWavLevels',     jTxtWAVlv, ...
+                      'jWavLevelsLabel', jTxtWAVlvLabel);
     end
 
     function [jPanel, ctrl] = CreatePanelRidge()
@@ -991,6 +999,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
         ctrl.jVarCovar.setText(num2str(OPTIONS.solver.NoiseCov_method) );
 
+        ctrl.jWavType.setText(OPTIONS.wavelet.type);
+
+
         if strcmp( char(ctrl.jButEXP.getText()),'Expert' ) && OPTIONS.automatic.MEMexpert
             SwitchExpertMEM();
         elseif strcmp( char(ctrl.jButEXP.getText()),'Normal' ) && ~OPTIONS.automatic.MEMexpert
@@ -1119,16 +1130,37 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 ctrl.JPanelnosc.setVisible(0);
                 ctrl.jPanelWAV.setVisible(0);
                 ctrl.jPanelRDG.setVisible(0);
+                ctrl.jCLSd.setEnabled(1);
+                ctrl.jCLSf.setEnabled(0);
+                ctrl.jTextMspWindow.setEnabled(1);
             elseif strcmp(choices(selected), 'wMEM')
                 ctrl.JPanelnwav.setVisible(1);
                 ctrl.jPanelWAV.setVisible(1);
                 ctrl.JPanelnosc.setVisible(0);
                 ctrl.jPanelRDG.setVisible(0);
+                ctrl.jCLSf.setEnabled(1);
+                ctrl.jTextMspWindow.setEnabled(0);
+                ctrl.jCLSd.setEnabled(0);
+                ctrl.jWavOrder.setVisible(0);
+                ctrl.jWavOrderLabel.setVisible(0);
+                ctrl.jWavLevelsLabel.setVisible(0);
+                ctrl.jWavShrinkage.setVisible(1);
+                ctrl.jWavShrinkageLabel.setVisible(1);
+                ctrl.jWavLevels.setVisible(0);
             elseif  strcmp(choices(selected), 'rMEM')
                 ctrl.JPanelnwav.setVisible(0);
                 ctrl.JPanelnosc.setVisible(1);
                 ctrl.jPanelWAV.setVisible(1);
                 ctrl.jPanelRDG.setVisible(1);
+                ctrl.jCLSf.setEnabled(1);
+                ctrl.jCLSd.setEnabled(1);
+                ctrl.jTextMspWindow.setEnabled(1);
+                ctrl.jWavOrder.setVisible(1);
+                ctrl.jWavOrderLabel.setVisible(1);
+                ctrl.jWavLevelsLabel.setVisible(1);
+                ctrl.jWavLevels.setVisible(1);
+                ctrl.jWavShrinkage.setVisible(0);
+                ctrl.jWavShrinkageLabel.setVisible(0);
             end
     
         end            
