@@ -401,7 +401,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jRadioWithinBrainstorm = gui_component('radio', jPanel, [], 'Within Brainstorm', jButtonGroupBslType, [], @(h,ev)SwitchBaseline(), []);
         jRadioWithinBrainstorm.setToolTipText(['<HTML><B>Within Brainstorm</B>:', ...
             '<BR>Extracts baseline from a recording within your brainstorm database </HTML>']);
-
+        jPanel.add('br', JLabel(''));
         jRadioExternal = gui_component('radio', jPanel, [], 'External', jButtonGroupBslType, [], @(h,ev)SwitchBaseline(), []);
         jRadioExternal.setToolTipText(['<HTML><B>External</B>:', ...
             '<BR>Extracts baseline from a recording external to your brainstorm database </HTML>']);
@@ -1102,6 +1102,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.jPanelRDG.setVisible(0);
             ctrl.jPanelSensC.setVisible(0);
         else
+            ctrl.JPanelData.setPreferredSize(java_scaled('dimension', 320, 250));
             ctrl.JPanelref.setVisible(0);
             ctrl.JPanelData.setVisible(1);
             ctrl.JPanelDepth.setVisible(1);
