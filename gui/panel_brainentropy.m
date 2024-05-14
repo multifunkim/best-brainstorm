@@ -1691,6 +1691,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     selected = [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
     MEMpaneloptions.mandatory.pipeline      =   choices{ selected };
     
+
     % Get Data
     MEMpaneloptions.optional.TimeSegment              = [str2double(char(ctrl.jTextTimeStart.getText())) ...
                                                          str2double(char(ctrl.jTextTimeStop.getText()))];
@@ -1699,6 +1700,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     % Get Baseline
     choices = {'within-data', 'within-brainstorm', 'external','all-data'};
     selected = [ctrl.jRadioWithinData.isSelected() ctrl.jRadioWithinBrainstorm.isSelected() ctrl.jRadioExternal.isSelected()  ctrl.jRadioReshuffle.isSelected()];
+
     
     MEMpaneloptions.optional.BaselineType = choices(selected);
     if strcmp(choices(selected), 'within-data') 
