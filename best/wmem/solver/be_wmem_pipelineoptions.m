@@ -5,6 +5,9 @@ function DEF = be_wmem_pipelineoptions()
         DEF.clustering.MSP_scores_threshold = 'fdr';
 %        DEF.clustering.neighborhood_order   = 4;
         
+       DEF.optional.baseline_shuffle   = 0;
+         DEF.optional.baseline_shuffle_windows = 1; % in seconds
+         
         % model
         DEF.model.alpha_threshold       = 0.10;
         DEF.model.active_mean_method    = 2;
@@ -15,6 +18,8 @@ function DEF = be_wmem_pipelineoptions()
         % wavelet processing
         DEF.wavelet.type                = 'rdw';
         DEF.wavelet.vanish_moments      = 4;
+        DEF.wavelet.order               = 10;
+        DEF.wavelet.nb_levels   = 128;
         DEF.wavelet.shrinkage           = 1;
         DEF.wavelet.selected_scales     = 0;
         DEF.wavelet.verbose             = 0;
