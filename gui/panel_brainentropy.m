@@ -39,7 +39,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     
     global MEMglobal
     MEMglobal = [];
-    
+
     panelName       =   'InverseOptionsMEM';
     bstPanelNew     =   [];
     
@@ -461,7 +461,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jTextPathBsl.setEditable(0);
         jBaselineExternal.add('hfill', jTextPathBsl);
         jButtonImport = gui_component('button', jBaselineExternal, 'br center', 'Select file', [], ['<HTML><B>Baseline file</B>:', ...
-                                                                                                        '<BR>Import baseline from a file.</HTML>'], @(h, ev) import_baseline, []);
+                                                                                                        '<BR>Import baseline from a file.</HTML>'], @(h, ev) import_baseline(), []);
 
         jBaselineExternal.add(jButtonImport);
         jPanel.add('hfill',jBaselineExternal);
@@ -990,7 +990,23 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     
         if any(strcmp(OPTIONS.optional.BaselineType, choices ))
             baseline_control(strcmp(OPTIONS.optional.BaselineType, choices )).setSelected(1);
-            ctrl.jBaselineTimeSelect.setVisible(1);
+
+            if strcmp(OPTIONS.optional.BaselineType, 'all-data' )
+                ctrl.jTextBSLSize.setVisible(1);
+            else
+                ctrl.jBaselineTimeSelect.setVisible(1);
+            end
+
+            if strcmp(OPTIONS.optional.BaselineType, 'within-brainstorm' )
+                ctrl.jTextLoadAutoBsl.setText(OPTIONS.optional.BaselineHistory{2});
+                ctrl.jBaselineWithinBst.setVisible(1);
+                load_auto_bsl();
+            elseif strcmp(OPTIONS.optional.BaselineType, 'external' )
+                disp(OPTIONS.optional.BaselineHistory{3})
+                import_baseline( OPTIONS.optional.Baseline,OPTIONS.optional.BaselineHistory{2} );
+                ctrl.jBaselineExternal.setVisible(1);
+            end
+
             check_time('bsl', '', '', 'checkOK');
         end
 
@@ -1480,78 +1496,72 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         
         
     end
-
-    function import_baseline(hObject, event)
-    
-    
-    ctrl = bst_get('PanelControls', 'InverseOptionsMEM');
-    
-    DefaultFormats = bst_get('DefaultFormats');
-    iP  = bst_get('ProtocolInfo');  
-    [Lst, Frmt]   = java_getfile( 'open', ...
-            'Import EEG/MEG recordings...', ...       % Window title
-            iP.STUDIES, ...                           % default directory
-            'single', 'files_and_dirs', ...           % Selection mode
-            {{'.*'},                 'MEG/EEG: 4D-Neuroimaging/BTi (*.*)',   '4D'; ...
-             {'_data'},              'MEG/EEG: Brainstorm (*data*.mat)',     'BST-MAT'; ...
-             {'.meg4','.res4'},      'MEG/EEG: CTF (*.ds;*.meg4;*.res4)',    'CTF'; ...
-             {'.fif'},               'MEG/EEG: Elekta-Neuromag (*.fif)',     'FIF'; ...
-             {'*'},                  'EEG: ASCII text (*.*)',                'EEG-ASCII'; ...
-             {'.avr','.mux','.mul'}, 'EEG: BESA exports (*.avr;*.mul;*.mux)','EEG-BESA'; ...
-             {'.eeg','.dat'},        'EEG: BrainAmp (*.eeg;*.dat)',          'EEG-BRAINAMP'; ...
-             {'.txt'},               'EEG: BrainVision Analyzer (*.txt)',    'EEG-BRAINVISION'; ...
-             {'.sef','.ep','.eph'},  'EEG: Cartool (*.sef;*.ep;*.eph)',      'EEG-CARTOOL'; ...
-             {'.edf','.rec'},        'EEG: EDF / EDF+ (*.rec;*.edf)',        'EEG-EDF'; ...
-             {'.set'},               'EEG: EEGLAB (*.set)',                  'EEG-EEGLAB'; ...
-             {'.raw'},               'EEG: EGI Netstation RAW (*.raw)',      'EEG-EGI-RAW'; ...
-             {'.erp','.hdr'},        'EEG: ERPCenter (*.hdr;*.erp)',         'EEG-ERPCENTER'; ...
-             {'.mat'},               'EEG: Matlab matrix (*.mat)',           'EEG-MAT'; ...
-             {'.cnt','.avg','.eeg','.dat'}, 'EEG: Neuroscan (*.cnt;*.eeg;*.avg;*.dat)', 'EEG-NEUROSCAN'; ...
-             {'.mat'},               'NIRS: MFIP (*.mat)',                   'NIRS-MFIP'; ...
-            }, DefaultFormats.DataIn);
+    function import_baseline( Lst,Frmt  )
         
-    if isempty(Lst) 
-        ctrl.jradwit.setSelected(1);
-        check_time('bsl', '', '');
-        return
-    end
-    
-    ctrl.jTextBSL.setText(Lst);
-    MEMglobal.BSLinfo.file    = Lst;
-    MEMglobal.BSLinfo.format  = Frmt; 
-    
-    if strcmp(Frmt, 'BST-MAT')
-        BSL = Lst;
-        BSLc = fullfile(iP.STUDIES, bst_get('ChannelFileForStudy', Lst));
-    else
-        try
-            % This code block should not be correct as it is not consistent with the
-            % signature of in_data()...
-            [BSL, BSLc] = in_data( Lst, Frmt, [], []);
-            if numel(BSL)>1
-                ctrl.jTextBSL.setText('loading only trial 1');
-                pause(2)
-                ctrl.jTextBSL.setText(Lst);
-            end    
-            BSL = BSL(1).FileName;
-        catch
-            ctrl.jTextBSL.setText('File cannot be used. Select new file');
-            pause(2)
-            ctrl.jTextBSL.setText('');
-            ctrl.jradimp.setSelected(0);
-            ctrl.jradwit.setSelected(1);        
-        end
-    end
-    
-    MEMglobal.Baseline              = BSL;
-    MEMglobal.BaselineChannels      = BSLc;
-    MEMglobal.BaselineHistory{1}    = 'import';
-    MEMglobal.BaselineHistory{2}    = '';
-    MEMglobal.BaselineHistory{3}    = Lst;
-    
-    check_time('bsl', 'import', 'true', 'checkOK');
-    ctrl.jBaselineTimeSelect.setVisible(1);
+        DefaultFormats = bst_get('DefaultFormats');
+        iP  = bst_get('ProtocolInfo');  
 
+        if nargin < 2 || isempty(Lst)
+            [Lst, Frmt]   = java_getfile( 'open', ...
+                    'Import EEG/MEG recordings...', ...       % Window title
+                    iP.STUDIES, ...                           % default directory
+                    'single', 'files_and_dirs', ...           % Selection mode
+                    {{'.*'},                 'MEG/EEG: 4D-Neuroimaging/BTi (*.*)',   '4D'; ...
+                     {'_data'},              'MEG/EEG: Brainstorm (*data*.mat)',     'BST-MAT'; ...
+                     {'.meg4','.res4'},      'MEG/EEG: CTF (*.ds;*.meg4;*.res4)',    'CTF'; ...
+                     {'.fif'},               'MEG/EEG: Elekta-Neuromag (*.fif)',     'FIF'; ...
+                     {'*'},                  'EEG: ASCII text (*.*)',                'EEG-ASCII'; ...
+                     {'.avr','.mux','.mul'}, 'EEG: BESA exports (*.avr;*.mul;*.mux)','EEG-BESA'; ...
+                     {'.eeg','.dat'},        'EEG: BrainAmp (*.eeg;*.dat)',          'EEG-BRAINAMP'; ...
+                     {'.txt'},               'EEG: BrainVision Analyzer (*.txt)',    'EEG-BRAINVISION'; ...
+                     {'.sef','.ep','.eph'},  'EEG: Cartool (*.sef;*.ep;*.eph)',      'EEG-CARTOOL'; ...
+                     {'.edf','.rec'},        'EEG: EDF / EDF+ (*.rec;*.edf)',        'EEG-EDF'; ...
+                     {'.set'},               'EEG: EEGLAB (*.set)',                  'EEG-EEGLAB'; ...
+                     {'.raw'},               'EEG: EGI Netstation RAW (*.raw)',      'EEG-EGI-RAW'; ...
+                     {'.erp','.hdr'},        'EEG: ERPCenter (*.hdr;*.erp)',         'EEG-ERPCENTER'; ...
+                     {'.mat'},               'EEG: Matlab matrix (*.mat)',           'EEG-MAT'; ...
+                     {'.cnt','.avg','.eeg','.dat'}, 'EEG: Neuroscan (*.cnt;*.eeg;*.avg;*.dat)', 'EEG-NEUROSCAN'; ...
+                     {'.mat'},               'NIRS: MFIP (*.mat)',                   'NIRS-MFIP'; ...
+                    }, DefaultFormats.DataIn);
+                
+            if isempty(Lst) 
+                check_time('bsl', '', '');
+                return
+            end
+        end
+        ctrl.jTextBSL.setText(Lst);
+        MEMglobal.BSLinfo.file    = Lst;
+        MEMglobal.BSLinfo.format  = Frmt; 
+        
+        if strcmp(Frmt, 'BST-MAT')
+            BSL = Lst;
+            BSLc = fullfile(iP.STUDIES, bst_get('ChannelFileForStudy', Lst));
+        else
+            try
+                % This code block should not be correct as it is not consistent with the
+                % signature of in_data()...
+                [BSL, BSLc] = in_data( Lst, Frmt, [], []);
+                if numel(BSL)>1
+                    ctrl.jTextBSL.setText('loading only trial 1');
+                    pause(2)
+                    ctrl.jTextBSL.setText(Lst);
+                end    
+                BSL = BSL(1).FileName;
+            catch
+                java_dialog('warning', 'File cannot be used. Select new file')
+                ctrl.jTextBSL.setText('');    
+                return;
+            end
+        end
+        
+        MEMglobal.Baseline              = BSL;
+        MEMglobal.BaselineChannels      = BSLc;
+        MEMglobal.BaselineHistory{1}    = 'import';
+        MEMglobal.BaselineHistory{2}    = Frmt;
+        MEMglobal.BaselineHistory{3}    = Lst;
+        
+        check_time('bsl', 'import', 'true', 'checkOK');
+        ctrl.jBaselineTimeSelect.setVisible(1);
     end
 
 
