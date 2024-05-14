@@ -403,14 +403,16 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jRadioWithinBrainstorm.setToolTipText(['<HTML><B>Within Brainstorm</B>:', ...
             '<BR>Extracts baseline from a recording within your brainstorm database </HTML>']);
         jPanel.add('br', JLabel(''));
+
         jRadioExternal = gui_component('radio', jPanel, [], 'External', jButtonGroupBslType, [], @(h,ev)SwitchBaseline(), []);
         jRadioExternal.setToolTipText(['<HTML><B>External</B>:', ...
             '<BR>Extracts baseline from a recording external to your brainstorm database </HTML>']);
 
-
+        jRadioReshuffle= gui_component('radio', jPanel, [], 'All data (resting-state)', jButtonGroupBslType, [], @(h,ev)SwitchBaseline(), []);
+        jRadioReshuffle.setToolTipText(['<HTML><B>All data</B>:', ...
+            '<BR>Use Phase-reshuffling to generate surogate data as baseline (recommended for resting state analysis)</HTML>']);
         jPanel.add('br', JLabel(''));
 
-               
         % -- Import Baseline from Brainstorm 
 
         jBaselineWithinBst = gui_river( '');
@@ -476,6 +478,18 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
         jBaselineTimeSelect.hide();
         jPanel.add(jBaselineTimeSelect);
+
+        jPanel.add('br', JLabel(''));
+
+        jBaselineShuffleWindowsSelect = gui_river( '');
+        jBaselineShuffleWindowsSelect.add(JLabel('Window length: '));
+        jTextBSLSize = JTextField( num2str(OPTIONS.optional.baseline_shuffle_windows) );
+        jTextBSLSize.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
+        jTextBSLSize.setHorizontalAlignment(JTextField.RIGHT);
+        jBaselineShuffleWindowsSelect.add(jTextBSLSize);
+        jBaselineShuffleWindowsSelect.add('tab', JLabel('s'));
+        jBaselineShuffleWindowsSelect.hide();
+        jPanel.add(jBaselineShuffleWindowsSelect);
         
 
         ctrl = struct( ...
@@ -484,6 +498,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             'jRadioWithinData',jRadioWithinData, ...
             'jRadioWithinBrainstorm', jRadioWithinBrainstorm, ...
             'jRadioExternal', jRadioExternal, ...
+            'jRadioReshuffle',jRadioReshuffle, ...
             'jTextLoadAutoBsl', jTextLoadAutoBsl, ...
             'jradimp',          jRadioExternal, ...
             'jBaselineWithinBst', jBaselineWithinBst, ...
@@ -492,8 +507,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             'jTextBSLStart',    jTextBSLStart, ...
             'jTextBSLStop',     jTextBSLStop, ...
             'jTextBSL',         jTextPathBsl, ...
+            'jBaselineShuffleWindowsSelect',jBaselineShuffleWindowsSelect ,...
+            'jTextBSLSize', jTextBSLSize, ...
             'JPanelData'  ,     jPanel);
-
     end
 
     function [jPanel, ctrl] = CreatePanelOscillation()
@@ -712,6 +728,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jTxtMuMet.setHorizontalAlignment(JTextField.RIGHT);
         jTxtMuMet.setToolTipText('<HTML><B>Initialization of cluster k''s active mean (&mu)</B>:<BR>1 = regular minimum norm J (&mu<sub>k</sub> = mean(J<sub>k</sub>))<BR>2 = null hypothesis (&mu<sub>k</sub> = 0)<BR>3 = MSP-regularized minimum norm mJ (&mu<sub>k</sub> = mean(mJ<sub>k</sub>))<BR>4 = L-curve optimized Minimum Norm Estimate</HTML>');        
         jTxtMuMet.setEnabled(0);
+        java_setcb(jTxtMuMet, 'ActionPerformedCallback', @(h,ev)adjust_range('jTxtMuMet', [1 4]) );
         jPanel.add('p left', JLabel('Active mean intialization') );
         jPanel.add('tab tab', jTxtMuMet);
 
@@ -719,8 +736,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jTxtAlMet  = JTextField( num2str(OPTIONS.model.alpha_method) );
         jTxtAlMet.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTxtAlMet.setHorizontalAlignment(JTextField.RIGHT);
-        jTxtAlMet.setToolTipText('<HTML><B>Initialization of cluster k''s active probability (&alpha)</B>:<BR>1 = average MSP scores (&alpha<sub>k</sub> = mean(MSP<sub>k</sub>))<BR>2 = max MSP scores (&alpha<sub>k</sub> = max(MSP<sub>k</sub>))<BR>3 = median MSP scores (&alpha<sub>k</sub> = mean(MSP<sub>k</sub>))<BR>4 = equal (&alpha = 0.5)<BR>5 = equal (&alpha = 1)</HTML>');        
-        jTxtAlMet.setEnabled(0);
+        jTxtAlMet.setToolTipText('<HTML><B>Initialization of cluster k''s active probability (&alpha)</B>:<BR>1 = average MSP scores (&alpha<sub>k</sub> = mean(MSP<sub>k</sub>))<BR>2 = max MSP scores (&alpha<sub>k</sub> = max(MSP<sub>k</sub>))<BR>3 = median MSP scores (&alpha<sub>k</sub> = mean(MSP<sub>k</sub>))<BR>4 = equal (&alpha = 0.5)<BR>5 = equal (&alpha = 1)<BR>6 = % of MNE Energy</HTML>');        jTxtAlMet.setEnabled(0);
+        java_setcb(jTxtMuMet, 'ActionPerformedCallback', @(h,ev)adjust_range('jTxtMuMet', [1 6]) );
         jPanel.add('p left', JLabel('Active probability intialization') );
         jPanel.add('tab', jTxtAlMet);
 
@@ -762,13 +779,42 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanel.add('p left', JLabel('Inactive variance coeff.') );
         jPanel.add('tab', jTxtInactV);
 
-        ctrl = struct( 'jPanelModP', jPanel , ...
+        jsep = gui_component('label', jPanel, 'br hfill', ' ');
+        jsep.setBackground(java.awt.Color(.4,.4,.4));
+        jsep.setOpaque(1);
+        jsep.setPreferredSize(Dimension(1,1));
+        gui_component('label', jPanel, 'br', '');
+        % Compute new matrix?
+        jBoxNewC  = JCheckBox( 'Recompute covariance matrix' );
+        jBoxNewC.setSelected(OPTIONS.solver.NoiseCov_recompute);
+        jBoxNewC.setToolTipText('<HTML><B>Noise covariance matrix</B>:<BR>The performance of the MEM is tied to<BR>a consistent estimation of this matrix<BR>(keep checked)</HTML>');
+        jPanel.add('p left', jBoxNewC);
+        % Matrix type
+        jTxtVCOV  = JTextField( num2str(OPTIONS.solver.NoiseCov_method) );
+        jTxtVCOV.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
+        jTxtVCOV.setHorizontalAlignment(JTextField.RIGHT);
+        jTxtVCOV.setToolTipText(['<HTML><B>Sensors noise covariance matrix</B>:<BR>' ...
+             '0 = identity matrix<BR>' ...
+             '1 = diagonal (same variance along diagonal)<BR>' ...
+             '2 = diagonal<BR>' ...
+             '3 = full<BR>' ...
+             '4 = wavelet-based estimation (scale j = 1, diagonal)<BR>' ...
+             '5 = wavelet-based (scale j = 1, same variance along diagonal)<BR>'...
+             '6 = wavelet-based (scale j = 2, diagonal)<BR> </HTML>']);               
+        java_setcb(jTxtVCOV, 'FocusLostCallback', @(h,ev)adjust_range('jVarCovar', {[1 4], [4 6], [1 5]}));
+        jTxtVCOV.setEnabled(0);
+        jPanel.add('p left', JLabel('Covariance matrix type') );
+        jPanel.add('tab tab', jTxtVCOV);
+
+        ctrl = struct( 'jPanelModP',           jPanel , ...
                        'jMuMethod',            jTxtMuMet, ... 
                        'jAlphaMethod',         jTxtAlMet, ...
                        'jAlphaThresh',         jTxtAlThr, ...
                        'jLambda',              jTxtLmbd, ...
                        'jActiveVar',           jTxtActV, ...
-                       'jInactiveVar',         jTxtInactV);
+                       'jInactiveVar',         jTxtInactV,...
+                       'jNewCOV',              jBoxNewC,...
+                       'jVarCovar',            jTxtVCOV);
     end
     
     function [jPanel, ctrl] = CreatePanelWavelet()
@@ -911,32 +957,12 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         % Separator
         jPanel.add('br', JLabel(''));
     
-        jsep = gui_component('label', jPanel, 'br hfill', ' ');
-        jsep.setBackground(java.awt.Color(.4,.4,.4));
-        jsep.setOpaque(1);
-        jsep.setPreferredSize(Dimension(1,1));
-        gui_component('label', jPanel, 'br', '');
-        % Compute new matrix?
-        jBoxNewC  = JCheckBox( 'Recompute covariance matrix' );
-        jBoxNewC.setSelected(OPTIONS.solver.NoiseCov_recompute);
-        jBoxNewC.setToolTipText('<HTML><B>Noise covariance matrix</B>:<BR>The performance of the MEM is tied to<BR>a consistent estimation of this matrix<BR>(keep checked)</HTML>');
-        jPanel.add('p left', jBoxNewC);
-        % Matrix type
-        jTxtVCOV  = JTextField( num2str(OPTIONS.solver.NoiseCov_method) );
-        jTxtVCOV.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
-        jTxtVCOV.setHorizontalAlignment(JTextField.RIGHT);
-        jTxtVCOV.setToolTipText('<HTML><B>Sensors noise covariance matrix</B>:<BR>0 = identity matrix<BR>1 = diagonal (same variance along diagonal)<BR>2 = diagonal<BR>3 = full<BR>4 = wavelet-based estimation<BR>(scale j=1 of the discrete wavelet transform)<BR>5 = wavelet-based + scale-adaptvive<BR>(different mat. for each scale of the signal)</HTML>');        
-        java_setcb(jTxtVCOV, 'FocusLostCallback', @(h,ev)adjust_range('jVarCovar', {[1 4], [4 5], [1 5]}));
-        jTxtVCOV.setEnabled(0);
-        jPanel.add('p left', JLabel('Covariance matrix type') );
-        jPanel.add('tab tab', jTxtVCOV);
+        
 
         ctrl = struct('jPanelSensC', jPanel ,...
                       'jOptimFN',    jTxtOptFn, ...
                       'jBoxShow',    jBoxShow, ...
-                      'jParallel',   jBoxPara, ...
-                      'jNewCOV',     jBoxNewC,...
-                      'jVarCovar',   jTxtVCOV);
+                      'jParallel',   jBoxPara);
 
     end
     
@@ -955,8 +981,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ctrl.jTextTimeStop.setText(num2str(OPTIONS.optional.TimeSegment(2)))
         check_time('time', '', '');
 
-        choices = {'within-data', 'within-brainstorm', 'external'};
-        baseline_control = [ctrl.jRadioWithinData ctrl.jRadioWithinBrainstorm ctrl.jRadioExternal];
+        choices = {'within-data', 'within-brainstorm', 'external','all-data'};
+        baseline_control = [ctrl.jRadioWithinData ctrl.jRadioWithinBrainstorm ctrl.jRadioExternal, ctrl.jRadioReshuffle];
     
         if any(strcmp(OPTIONS.optional.BaselineType, choices ))
             baseline_control(strcmp(OPTIONS.optional.BaselineType, choices )).setSelected(1);
@@ -964,9 +990,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             check_time('bsl', '', '', 'checkOK');
         end
 
-        ctrl.jTextBSLStart.setText(num2str(OPTIONS.optional.BaselineSegment(1)))
-        ctrl.jTextBSLStop.setText(num2str(OPTIONS.optional.BaselineSegment(2)))
-        
+        ctrl.jTextBSLStart.setText(num2str(OPTIONS.optional.BaselineSegment(1)));
+        ctrl.jTextBSLStop.setText(num2str(OPTIONS.optional.BaselineSegment(2)));
+        ctrl.jTextBSLSize.setText(num2str(OPTIONS.optional.baseline_shuffle_windows));
+
         check_time('set_scales', '', '');
         check_time('set_freqs', '', '');
 
@@ -1097,7 +1124,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         isExpert = strcmp( char(ctrl.jButEXP.getText()),'Expert' );
         modes    = {'Expert', 'Normal'};
         
-        panels = [ctrl.jPanelModP, ctrl.JPanelDepth ,ctrl.jPanelSensC, ctrl.jPanelWAV, ctrl.jPanelRDG];
+        panels = [ctrl.JPanelCLSType, ctrl.jPanelModP, ctrl.JPanelDepth ,ctrl.jPanelSensC, ctrl.jPanelWAV, ctrl.jPanelRDG];
 
         for iPanel = 1:length(panels)
             panels(iPanel).setEnabled(isExpert);
@@ -1133,8 +1160,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function SwitchBaseline(varargin)
-        choices = {'within-data', 'within-brainstorm', 'external'};
-        selected = [ctrl.jRadioWithinData.isSelected() ctrl.jRadioWithinBrainstorm.isSelected() ctrl.jRadioExternal.isSelected()];
+        choices = {'within-data', 'within-brainstorm', 'external','all-data'};
+        selected = [ctrl.jRadioWithinData.isSelected() ctrl.jRadioWithinBrainstorm.isSelected() ctrl.jRadioExternal.isSelected(), ctrl.jRadioReshuffle.isSelected()];
         
         if ~any(selected)
             return;
@@ -1144,17 +1171,27 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
            ctrl.jBaselineTimeSelect.setVisible(1);
            ctrl.jBaselineWithinBst.setVisible(0);
            ctrl.jBaselineExternal.setVisible(0);
+           ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
 
           check_time('bsl', '', '', 'checkOK');
        elseif strcmp( choices(selected), 'within-brainstorm') 
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(1);
             ctrl.jBaselineExternal.setVisible(0);
+            ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
 
        elseif strcmp( choices(selected), 'external') 
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(0);
             ctrl.jBaselineExternal.setVisible(1);
+            ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
+
+       elseif strcmp( choices(selected), 'all-data')  
+            ctrl.jBaselineTimeSelect.setVisible(0);
+            ctrl.jBaselineWithinBst.setVisible(0);
+            ctrl.jBaselineExternal.setVisible(0);
+            ctrl.jBaselineShuffleWindowsSelect.setVisible(1);
+            check_time('bsl', '', '', 'checkOK');
        end
     end
 
@@ -1181,7 +1218,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.jPanelRDG.setVisible(0);
             ctrl.jPanelSensC.setVisible(0);
         else
-            ctrl.JPanelData.setPreferredSize(java_scaled('dimension', 320, 250));
+            ctrl.JPanelData.setPreferredSize(java_scaled('dimension', 320, 270));
             ctrl.JPanelref.setVisible(0);
             ctrl.JPanelData.setVisible(1);
             ctrl.JPanelDepth.setVisible(1);
@@ -1619,8 +1656,8 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.optional.TimeSegment(isnan(MEMpaneloptions.optional.TimeSegment) ) = [];
 
     % Get Baseline
-    choices = {'within-data', 'within-brainstorm', 'external'};
-    selected = [ctrl.jRadioWithinData.isSelected() ctrl.jRadioWithinBrainstorm.isSelected() ctrl.jRadioExternal.isSelected()];
+    choices = {'within-data', 'within-brainstorm', 'external','all-data'};
+    selected = [ctrl.jRadioWithinData.isSelected() ctrl.jRadioWithinBrainstorm.isSelected() ctrl.jRadioExternal.isSelected()  ctrl.jRadioReshuffle.isSelected()];
     
     MEMpaneloptions.optional.BaselineType = choices(selected);
     if strcmp(choices(selected), 'within-data') 
@@ -1642,13 +1679,26 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
         else
             MEMpaneloptions.optional.BaselineHistory = [];
         end
-    end
-    MEMpaneloptions.optional.BaselineSegment    = [str2double(char(ctrl.jTextBSLStart.getText())), ...
-                                                   str2double(char(ctrl.jTextBSLStop.getText()))];
 
-    if any(isnan( MEMpaneloptions.optional.BaselineSegment ) )
-        MEMpaneloptions.optional.BaselineSegment = [];
+    elseif strcmp(choices(selected), 'all-data')
+        MEMpaneloptions.optional.Baseline = [];
+        MEMpaneloptions.optional.BaselineHistory{1} = 'within';
+        MEMpaneloptions.optional.baseline_shuffle   = 1;
+        MEMpaneloptions.optional.baseline_shuffle_windows = str2double(char(ctrl.jTextBSLSize.getText())); % in seconds
     end
+    
+    if strcmp(choices(selected), 'all-data')
+        MEMpaneloptions.optional.BaselineSegment    = MEMpaneloptions.optional.TimeSegment;
+    else
+        MEMpaneloptions.optional.BaselineSegment    = [str2double(char(ctrl.jTextBSLStart.getText())), ...
+                                                       str2double(char(ctrl.jTextBSLStop.getText()))];
+
+        if any(isnan( MEMpaneloptions.optional.BaselineSegment ) )
+            MEMpaneloptions.optional.BaselineSegment = [];
+        end
+    end
+
+
 
 
     % Get clustering options
@@ -1678,7 +1728,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
 
 
     % Depth-weighting options
-    if ctrl.jCheckDepthWeighting.isSelected() && any( strcmp(MEMpaneloptions.mandatory.pipeline, {'cMEM'}) )
+    if ctrl.jCheckDepthWeighting.isSelected() && any( strcmp(MEMpaneloptions.mandatory.pipeline, {'cMEM','wMEM'}) )
         MEMpaneloptions.model.depth_weigth_MNE  = str2double( ctrl.jTxtDepthMNE.getText() );
         MEMpaneloptions.model.depth_weigth_MEM  = str2double( ctrl.jTxtDepthMEM.getText() );
     else
