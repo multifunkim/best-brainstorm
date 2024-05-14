@@ -95,7 +95,8 @@ if OPTIONS.optional.verbose
 end        
         
 %% Useful variables
-obj.ImageGridAmp = []; 
+ obj = struct('hfig', [] , 'hfigtab', [],  'ImageGridAmp', []);
+
 if ~isfield(HeadModel, 'vertex_connectivity')
     [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 else
@@ -126,10 +127,16 @@ end
 % it uses empty-room data if available
 % if PlOS one : nothing is done here
 % [OPTIONS] = be_prewhite(OPTIONS);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
+
+
+if OPTIONS.optional.baseline_shuffle
+    OPTIONS = be_shufle_baseline(OPTIONS);
+end
 
 %% ===== Normalization ==== %% 
 % we absorb units (pT, nA) in the data, leadfields; we normalize the data
@@ -145,8 +152,12 @@ OPTIONS = be_model_of_null_hypothesis(OPTIONS);
 % for the data: normalization/wavelet/denoise
 [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS);
 if OPTIONS.optional.display
-    [obj.hfig obj.hfigtab] = be_display_time_scale_boxes(obj,OPTIONS);
+    [obj.hfig, obj.hfigtab] = be_display_time_scale_boxes(obj,OPTIONS);
 end
+
+%% ===== Compute Minimum Norm Solution ==== %% 
+% we compute MNE (using l-curve for nirs or depth-weighted version)
+[obj, OPTIONS] = be_main_mne(obj, OPTIONS);
 
 %% ===== Double to single precision  ===== %%
 [OPTIONS] = be_switch_precision(OPTIONS, 'single');

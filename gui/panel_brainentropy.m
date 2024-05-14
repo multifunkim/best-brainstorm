@@ -746,6 +746,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jTxtMuMet.setHorizontalAlignment(JTextField.RIGHT);
         jTxtMuMet.setToolTipText('<HTML><B>Initialization of cluster k''s active mean (&mu)</B>:<BR>1 = regular minimum norm J (&mu<sub>k</sub> = mean(J<sub>k</sub>))<BR>2 = null hypothesis (&mu<sub>k</sub> = 0)<BR>3 = MSP-regularized minimum norm mJ (&mu<sub>k</sub> = mean(mJ<sub>k</sub>))<BR>4 = L-curve optimized Minimum Norm Estimate</HTML>');        
         java_setcb(jTxtMuMet, 'ActionPerformedCallback', @(h,ev)adjust_range('jTxtMuMet', [1 4]) );
+
         jPanel.add('p left', JLabel('Active mean intialization') );
         jPanel.add('tab tab', jTxtMuMet);
 
@@ -811,6 +812,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
              '1 = diagonal (same variance along diagonal)<BR>' ...
              '2 = diagonal<BR>' ...
              '3 = full<BR>' ...
+
              '4 = wavelet-based estimation (scale j = 1, diagonal)<BR>' ...
              '5 = wavelet-based (scale j = 1, same variance along diagonal)<BR>'...
              '6 = wavelet-based (scale j = 2, diagonal)<BR> </HTML>']);               
@@ -831,7 +833,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     
     function [jPanel, ctrl] = CreatePanelWavelet()
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Wavelet processing');
-
         jTxtWAVtp  = JTextField(OPTIONS.wavelet.type);
         jTxtWAVtp.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
         jTxtWAVtp.setHorizontalAlignment(JTextField.RIGHT);
@@ -1355,6 +1356,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                  
     end
 
+
     function [freqs] = set_freqs(time)
         if ~isfield(MEMglobal, 'selected_freqs_index') && numel(time)>127
             
@@ -1724,6 +1726,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
         MEMpaneloptions.optional.BaselineHistory{1} = 'within';
         MEMpaneloptions.optional.baseline_shuffle   = 1;
         MEMpaneloptions.optional.baseline_shuffle_windows = str2double(char(ctrl.jTextBSLSize.getText())); % in seconds
+
     end
     
     if strcmp(choices(selected), 'all-data')

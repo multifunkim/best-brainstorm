@@ -67,14 +67,19 @@ entropy_drop    = zeros(1,nbSmp);
 final_alpha     = cell(1,nbSmp);
 final_sigma     = cell(1,nbSmp);
 
-bst_progress('start', 'Solving MEM', 'Solving MEM', 0, nbSmp);
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('start', 'Solving MEM', 'Solving MEM', 0, nbSmp);
+end
 
 if OPTIONS.solver.parallel_matlab == 1
     warning off
-
-    q = parallel.pool.DataQueue;
-    afterEach(q, @(x) bst_progress('inc', 1));
     
+    
+    q = parallel.pool.DataQueue;
+    if ~OPTIONS.automatic.stand_alone
+        afterEach(q, @(x) bst_progress('inc', 1));
+    end
+
     time_it_starts = tic;
     parfor ii = 1 : nbSmp
         [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS);
@@ -106,14 +111,19 @@ else
         
         % Store in matrix
         ImageSourceAmp      = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS);
-        bst_progress('inc', 1);
+        if ~OPTIONS.automatic.stand_alone
+            bst_progress('inc', 1);
+        end
+        
     end
     time_it_ends = toc(time_it_starts);
     if OPTIONS.optional.verbose
         fprintf('%s, Elapsed CPU time is %5.2f seconds.\nBye.\n', OPTIONS.mandatory.pipeline, time_it_ends);
     end
 end
-bst_progress('stop');
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('stop');
+end
 
 if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
     ImageGridAmp = [];
@@ -143,25 +153,36 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
 
     % MEM parameters structure
     obj.ind    = ii;
-    %obj.data   = Data(obj.iModall,ii); %.*Dunits;
-    obj.data   = Data(:,ii);
-    %obj.scores = obj.SCR(:,ii);
-    
-    if strcmp(OPTIONS.optional.normalization, 'adaptive')  
-        obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii);
 
-        if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-            obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
-        end
-    end
+    obj.data   = Data(:,ii);
     
+    obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii) ;
+    obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
+
+
     % check if there's a noise cov for each scale
-    if (size(obj.noise_var,3)>1)
+    if (size(obj.noise_var,3)>1) && OPTIONS.optional.baseline_shuffle ~= 1
         if OPTIONS.optional.verbose
             fprintf('%s, Noise variance at scale %i is selected\n',...
                 OPTIONS.mandatory.pipeline,OPTIONS.automatic.selected_samples(2,ii));
         end
         obj.noise_var = squeeze(obj.noise_var(:,:,OPTIONS.automatic.selected_samples(2,ii)) );
+    
+    elseif (size(obj.noise_var,3)>1) && OPTIONS.optional.baseline_shuffle == 1
+        idx_baseline = find(obj.time(ii) >= min(OPTIONS.automatic.Modality(1).BaselineTime) & ...
+                            obj.time(ii) <= max(OPTIONS.automatic.Modality(1).BaselineTime));
+    
+        if isempty(idx_baseline) && obj.time(ii) > max(max(OPTIONS.automatic.Modality(1).BaselineTime))
+            idx_baseline = size(OPTIONS.automatic.Modality(1).BaselineTime,2);
+        elseif isempty(idx_baseline) && obj.time(ii) < min(min(OPTIONS.automatic.Modality(1).BaselineTime))
+            idx_baseline = 1;
+        end
+
+        if OPTIONS.optional.verbose
+            fprintf('%s, Noise variance from baseline %i is selected\n',...
+                OPTIONS.mandatory.pipeline, idx_baseline);
+        end
+        obj.noise_var = squeeze(obj.noise_var(:,:, idx_baseline) );
     end
 
     if ~sum(obj.CLS(:,ii))

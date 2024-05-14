@@ -39,5 +39,7 @@ function DEF = be_wmem_pipelineoptions()
         
         % optional
         DEF.optional.normalization      = 'fixed'; 
+        DEF.optional.baseline_shuffle   = 0;
+        DEF.optional.baseline_shuffle_windows = 1; % in seconds
 
 return
