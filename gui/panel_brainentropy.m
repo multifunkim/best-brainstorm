@@ -38,7 +38,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     
     global MEMglobal
-
+    MEMglobal = [];
+    
     panelName       =   'InverseOptionsMEM';
     bstPanelNew     =   [];
     
