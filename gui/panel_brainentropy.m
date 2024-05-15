@@ -932,7 +932,13 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
        jPanel = gui_river([1,1], [0, 6, 6, 6], 'Solver options');
     
         % Optimization routine
-        optFnChoices = { "fminunc" "minFunc" "minFuncNM" };
+        % Show "fminuc function only if avaiable"
+        if be_canUsefminunc()
+            optFnChoices = { "fminunc"  "minFunc" "minFuncNM" };
+        else
+            optFnChoices = { "minFunc" "minFuncNM" };
+        end
+
         jTxtOptFn  = JComboBox(optFnChoices);
         jTxtOptFn.setPreferredSize(Dimension(TEXT_WIDTH + 40, DEFAULT_HEIGHT));
         jTxtOptFn.setSelectedItem(OPTIONS.solver.Optim_method);
