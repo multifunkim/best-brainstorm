@@ -67,9 +67,20 @@ entropy_drop    = zeros(1,nbSmp);
 final_alpha     = cell(1,nbSmp);
 final_sigma     = cell(1,nbSmp);
 
+
+% Pre-compute Sigma_s
+
+if OPTIONS.model.depth_weigth_MEM > 0 
+    p = OPTIONS.model.depth_weigth_MEM;
+    G = obj.gain;
+    OPTIONS.automatic.Sigma_s = diag(power(diag(G'*G) ,-p));
+end
+
 if ~OPTIONS.automatic.stand_alone
     bst_progress('start', 'Solving MEM', 'Solving MEM', 0, nbSmp);
 end
+
+
 
 if OPTIONS.solver.parallel_matlab == 1
     warning off
