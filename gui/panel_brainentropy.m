@@ -1178,7 +1178,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 OPTIONS = struct_copy_fields(OPTIONS,be_rmem_pipelineoptions,1,1);
             end
 
+            %% Save options while changing the pipeline
             OPTIONS.automatic.MEMexpert = strcmp( char(ctrl.jButEXP.getText()),'Normal' );
+            OPTIONS.optional.display = ctrl.jBoxShow.isSelected();
             OPTIONS.mandatory.pipeline = choices(selected);
             setOptions(OPTIONS)
         end
