@@ -932,11 +932,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
        jPanel = gui_river([1,1], [0, 6, 6, 6], 'Solver options');
     
         % Optimization routine
-        optFnChoices = { "fminunc" "minFunc" "minFuncNM" }
-        OPTIONS.solver.Optim_method
-
+        optFnChoices = { "fminunc" "minFunc" "minFuncNM" };
         jTxtOptFn  = JComboBox(optFnChoices);
         jTxtOptFn.setPreferredSize(Dimension(TEXT_WIDTH + 40, DEFAULT_HEIGHT));
+        jTxtOptFn.setSelectedItem(OPTIONS.solver.Optim_method);
         tooltip_text = ['<HTML>', ...
             '<B>Optimization routine</B>:', ...
             '<BR>fminunc = Matlab standard unconst. optimization', ...
@@ -1189,6 +1188,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             OPTIONS.optional.TimeSegment = [ ...
                 str2double(char(ctrl.jTextTimeStart.getText())) ...
                 str2double(char(ctrl.jTextTimeStop.getText()))];
+            % Save Optimization routine
+            OPTIONS.solver.Optim_method = ctrl.jOptimFN.getSelectedItem();
 
             OPTIONS.mandatory.pipeline = choices(selected);
             setOptions(OPTIONS)
