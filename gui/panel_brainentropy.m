@@ -1179,8 +1179,15 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             end
 
             %% Save options while changing the pipeline
+            % Save mode (expert/normal)
             OPTIONS.automatic.MEMexpert = strcmp( char(ctrl.jButEXP.getText()),'Normal' );
+            % Save "Activate MEM Display"
             OPTIONS.optional.display = ctrl.jBoxShow.isSelected();
+            % Save time window
+            OPTIONS.optional.TimeSegment = [ ...
+                str2double(char(ctrl.jTextTimeStart.getText())) ...
+                str2double(char(ctrl.jTextTimeStop.getText()))];
+
             OPTIONS.mandatory.pipeline = choices(selected);
             setOptions(OPTIONS)
         end
