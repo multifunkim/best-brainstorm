@@ -1196,6 +1196,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 str2double(char(ctrl.jTextTimeStop.getText()))];
             % Save Optimization routine
             OPTIONS.solver.Optim_method = ctrl.jOptimFN.getSelectedItem();
+            % Save Baseline start and stop
+            OPTIONS.optional.BaselineSegment    = [ ...
+                str2double(char(ctrl.jTextBSLStart.getText())), ...
+                str2double(char(ctrl.jTextBSLStop.getText()))];
 
             OPTIONS.mandatory.pipeline = choices(selected);
             setOptions(OPTIONS)
