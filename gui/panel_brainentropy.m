@@ -107,7 +107,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     % Create main main panel
     jPanelMain = gui_component('Panel');
-    jPanelMain.setBorder(BorderFactory.createEmptyBorder(12,12,12,12));
+    jPanelMain.setPreferredSize(Dimension(900,900));
+    jPanelMain.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
     % Default grid bag constrains (for Left and Right panels)
     c = GridBagConstraints();
     c.fill    = GridBagConstraints.HORIZONTAL;
