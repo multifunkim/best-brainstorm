@@ -932,9 +932,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
        jPanel = gui_river([1,1], [0, 6, 6, 6], 'Solver options');
     
         % Optimization routine
-        jTxtOptFn  = JTextField(OPTIONS.solver.Optim_method);
-        jTxtOptFn.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
-        jTxtOptFn.setHorizontalAlignment(JTextField.RIGHT);
+        optFnChoices = { "fminunc" "minFunc" "minFuncNM" }
+        OPTIONS.solver.Optim_method
+
+        jTxtOptFn  = JComboBox(optFnChoices);
+        jTxtOptFn.setPreferredSize(Dimension(TEXT_WIDTH + 40, DEFAULT_HEIGHT));
         tooltip_text = ['<HTML>', ...
             '<B>Optimization routine</B>:', ...
             '<BR>fminunc = Matlab standard unconst. optimization', ...
@@ -1104,7 +1106,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ctrl.jRDGmincycles.setText(num2str(OPTIONS.ridges.cycles_in_window))
 
         % OPTIONS from CreatePanelSolver
-        ctrl.jOptimFN.setText(OPTIONS.solver.Optim_method);
+        ctrl.jOptimFN.setSelectedItem(OPTIONS.solver.Optim_method);
         ctrl.jBoxShow.setSelected(OPTIONS.optional.display);
         ctrl.jParallel.setSelected(OPTIONS.solver.parallel_matlab);
         ctrl.jNewCOV.setSelected(OPTIONS.solver.NoiseCov_recompute);
@@ -1801,7 +1803,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.solver.inactive_var_mult  	= str2double( ctrl.jInactiveVar.getText() );
 
     
-    MEMpaneloptions.solver.Optim_method       	= char( ctrl.jOptimFN.getText() );
+    MEMpaneloptions.solver.Optim_method       	= char( ctrl.jOptimFN.getSelectedItem() );
     MEMpaneloptions.solver.parallel_matlab      = double( ctrl.jParallel.isSelected() );
     MEMpaneloptions.optional.display            = ctrl.jBoxShow.isSelected();
     MEMpaneloptions.solver.NoiseCov_recompute   = double( ctrl.jNewCOV.isSelected() );
