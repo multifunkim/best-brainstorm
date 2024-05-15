@@ -157,7 +157,7 @@ Def_OPTIONS.solver.active_var_mult              = 0.05;
 Def_OPTIONS.solver.inactive_var_mult            = 0;
 Def_OPTIONS.solver.Optim_method                 = 'fminunc';
 Def_OPTIONS.solver.covariance_scale             = 1;
-Def_OPTIONS.solver.parallel_matlab              = false;
+Def_OPTIONS.solver.parallel_matlab              = be_canUseParallelPool();
 
 return
 

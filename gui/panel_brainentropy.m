@@ -249,7 +249,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     % ===== VALIDATION BUTTONS =====
     jPanelBottom = gui_river([1,1], [0,6,6,6]);
     jPanelMain.add(jPanelBottom, BorderLayout.SOUTH);
-    JButEXP = gui_component('button', jPanelBottom, 'br center', 'Normal', [], [], @SwitchExpertMEM, []);
+    JButEXP = gui_component('button', jPanelBottom, 'br center', 'Expert', [], [], @SwitchExpertMEM, []);
     gui_component('button', jPanelBottom, [], 'Cancel', [], [], @(src,ev)ButtonCancel_Callback(), []);
     JButOK = gui_component('button', jPanelBottom, [], 'OK', [], [], @ButtonOk_Callback, []);
     JButOK.setEnabled(0);
@@ -266,8 +266,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     bstPanelNew = BstPanel(panelName, jPanelMain, ctrl);
     setOptions(OPTIONS);
     UpdatePanel()
-    SwitchExpertMEM();
-
 
 %% =================================================================================
 %  === INTERNAL CALLBACKS ==========================================================
@@ -812,7 +810,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
              '1 = diagonal (same variance along diagonal)<BR>' ...
              '2 = diagonal<BR>' ...
              '3 = full<BR>' ...
-
              '4 = wavelet-based estimation (scale j = 1, diagonal)<BR>' ...
              '5 = wavelet-based (scale j = 1, same variance along diagonal)<BR>'...
              '6 = wavelet-based (scale j = 2, diagonal)<BR> </HTML>']);               
@@ -1075,6 +1072,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.jCheckDepthWeighting.setSelected(1);
             ctrl.jTxtDepthMNE.setText(num2str(OPTIONS.model.depth_weigth_MNE));
             ctrl.jTxtDepthMEM.setText(num2str(OPTIONS.model.depth_weigth_MEM));
+            ctrl.jTxtDepthMNE.setEnabled(1);
+            ctrl.jTxtDepthMEM.setEnabled(1);
+
         else 
             ctrl.jCheckDepthWeighting.setSelected(0);
         end
@@ -1177,6 +1177,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 OPTIONS = struct_copy_fields(OPTIONS,be_rmem_pipelineoptions,1,1);
             end
 
+            OPTIONS.automatic.MEMexpert = strcmp( char(ctrl.jButEXP.getText()),'Normal' );
             OPTIONS.mandatory.pipeline = choices(selected);
             setOptions(OPTIONS)
         end

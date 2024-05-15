@@ -1,26 +1,23 @@
 function DEF = be_wmem_pipelineoptions()
 
         % clustering
-        DEF.clustering.clusters_type        = 'wfdr';
-        DEF.clustering.MSP_scores_threshold = 'fdr';
-%        DEF.clustering.neighborhood_order   = 4;
-        
-       DEF.optional.baseline_shuffle   = 0;
-         DEF.optional.baseline_shuffle_windows = 1; % in seconds
-         
+        DEF.clustering.clusters_type        = 'static';
+        DEF.clustering.MSP_window         	= 1;
+        DEF.clustering.MSP_scores_threshold = 0;
+
         % model
-        DEF.model.alpha_threshold       = 0.10;
+        DEF.model.alpha_threshold       = 0;
         DEF.model.active_mean_method    = 2;
-        DEF.model.alpha_method          = 3;
-        DEF.model.depth_weigth_MNE      = 0;
-        DEF.model.depth_weigth_MEM      = 0;
+        DEF.model.alpha_method          = 6;
+        DEF.model.depth_weigth_MNE      = 0.5;
+        DEF.model.depth_weigth_MEM      = 0.5;
         
         % wavelet processing
         DEF.wavelet.type                = 'rdw';
         DEF.wavelet.vanish_moments      = 4;
         DEF.wavelet.order               = 10;
-        DEF.wavelet.nb_levels   = 128;
-        DEF.wavelet.shrinkage           = 1;
+        DEF.wavelet.nb_levels           = 128;
+        DEF.wavelet.shrinkage           = 0;
         DEF.wavelet.selected_scales     = 0;
         DEF.wavelet.verbose             = 0;
         DEF.wavelet.single_box          = 0;
@@ -35,7 +32,7 @@ function DEF = be_wmem_pipelineoptions()
         % solver
         DEF.solver.spatial_smoothing    = 0.6;
         DEF.solver.Optim_method         = 'fminunc';
-        DEF.solver.NoiseCov_method      = 5;
+        DEF.solver.NoiseCov_method      = 6;
         
         % optional
         DEF.optional.normalization      = 'fixed'; 
