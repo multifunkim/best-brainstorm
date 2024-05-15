@@ -932,9 +932,16 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
        jPanel = gui_river([1,1], [0, 6, 6, 6], 'Solver options');
     
         % Optimization routine
-        jTxtOptFn  = JTextField(OPTIONS.solver.Optim_method);
-        jTxtOptFn.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
-        jTxtOptFn.setHorizontalAlignment(JTextField.RIGHT);
+        % Show "fminuc function only if avaiable"
+        if be_canUsefminunc()
+            optFnChoices = { "fminunc"  "minFunc" "minFuncNM" };
+        else
+            optFnChoices = { "minFunc" "minFuncNM" };
+        end
+
+        jTxtOptFn  = JComboBox(optFnChoices);
+        jTxtOptFn.setPreferredSize(Dimension(TEXT_WIDTH + 40, DEFAULT_HEIGHT));
+        jTxtOptFn.setSelectedItem(OPTIONS.solver.Optim_method);
         tooltip_text = ['<HTML>', ...
             '<B>Optimization routine</B>:', ...
             '<BR>fminunc = Matlab standard unconst. optimization', ...
@@ -1104,7 +1111,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ctrl.jRDGmincycles.setText(num2str(OPTIONS.ridges.cycles_in_window))
 
         % OPTIONS from CreatePanelSolver
-        ctrl.jOptimFN.setText(OPTIONS.solver.Optim_method);
+        ctrl.jOptimFN.setSelectedItem(OPTIONS.solver.Optim_method);
         ctrl.jBoxShow.setSelected(OPTIONS.optional.display);
         ctrl.jParallel.setSelected(OPTIONS.solver.parallel_matlab);
         ctrl.jNewCOV.setSelected(OPTIONS.solver.NoiseCov_recompute);
@@ -1178,7 +1185,22 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 OPTIONS = struct_copy_fields(OPTIONS,be_rmem_pipelineoptions,1,1);
             end
 
+            %% Save options while changing the pipeline
+            % Save mode (expert/normal)
             OPTIONS.automatic.MEMexpert = strcmp( char(ctrl.jButEXP.getText()),'Normal' );
+            % Save "Activate MEM Display"
+            OPTIONS.optional.display = ctrl.jBoxShow.isSelected();
+            % Save time window
+            OPTIONS.optional.TimeSegment = [ ...
+                str2double(char(ctrl.jTextTimeStart.getText())) ...
+                str2double(char(ctrl.jTextTimeStop.getText()))];
+            % Save Optimization routine
+            OPTIONS.solver.Optim_method = ctrl.jOptimFN.getSelectedItem();
+            % Save Baseline start and stop
+            OPTIONS.optional.BaselineSegment    = [ ...
+                str2double(char(ctrl.jTextBSLStart.getText())), ...
+                str2double(char(ctrl.jTextBSLStop.getText()))];
+
             OPTIONS.mandatory.pipeline = choices(selected);
             setOptions(OPTIONS)
         end
@@ -1792,7 +1814,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.solver.inactive_var_mult  	= str2double( ctrl.jInactiveVar.getText() );
 
     
-    MEMpaneloptions.solver.Optim_method       	= char( ctrl.jOptimFN.getText() );
+    MEMpaneloptions.solver.Optim_method       	= char( ctrl.jOptimFN.getSelectedItem() );
     MEMpaneloptions.solver.parallel_matlab      = double( ctrl.jParallel.isSelected() );
     MEMpaneloptions.optional.display            = ctrl.jBoxShow.isSelected();
     MEMpaneloptions.solver.NoiseCov_recompute   = double( ctrl.jNewCOV.isSelected() );
