@@ -152,7 +152,7 @@ for ii = 1:nb_clusters
         active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(cID{ii}) );     
     else      
         if OPTIONS.model.depth_weigth_MEM > 0 
-            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2) * OPTIONS.automatic.Sigma_s(cID{ii},cID{ii});
+            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2) * diag(OPTIONS.automatic.Sigma_s(cID{ii}));
         else
             active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2 );
         end
