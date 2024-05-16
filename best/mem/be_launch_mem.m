@@ -157,6 +157,7 @@ elseif strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && ~OPTIONS.wavelet.single_box
 
     proj     =   be_wavelet_inverse( wav, OPTIONS )';
     ImageGridAmp(obj.iModS,:)     =  (proj *  ImageSourceAmp')' ;
+    ImageGridAmp = ImageGridAmp(:,obj.info_extension.start:obj.info_extension.end);
 else
     ImageGridAmp = zeros( obj.nb_dipoles, size(ImageSourceAmp,2) );
     ImageGridAmp(obj.iModS,:) = ImageSourceAmp;
@@ -254,27 +255,5 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
     A = act_proba;
     S = act_var;
     
-end
-
-function [SOL] = store_solution( vec, ii, obj, OPTIONS )
-    
-    if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
-        SOL     =   vec;
-    elseif strcmp(OPTIONS.mandatory.pipeline, 'wMEM')
-        % Construct wavelet
-        nbSmp   =   size(obj.data{1},2);
-        scale   =   OPTIONS.automatic.selected_samples(2,ii);
-        transl  =   OPTIONS.automatic.selected_samples(3,ii);
-        wav     =   zeros( 1, nbSmp );
-        wav( nbSmp/2^scale + transl ) = 1;
-        wav     =   sparse(be_wavelet_inverse( wav, OPTIONS ));
-        SOL     =   sparse(vec) * wav;
-        
-    else
-        SOL     =   sparse( obj.nb_dipoles, size(obj.data, 2) );
-        SOL(:,ii) = sparse(vec);
-        
-    end        
-        
 end
 
