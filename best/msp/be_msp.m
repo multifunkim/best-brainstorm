@@ -87,8 +87,7 @@ Ut = Gstruct.U(:,sort(i_T));
 
 % Create the projector.
 Ms = Ut*Ut'*Mn;
-Ps = Ms * pinv(Ms'*Ms) * Ms';
-clear Ms Ut R2 gamma C Mn indices i_T M
+Ps = Ms * pinv(Ms);
 
 % Calculate the MSP scores.
 Ps2=Ps*Gstruct.Gn;
