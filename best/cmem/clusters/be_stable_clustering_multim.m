@@ -132,10 +132,8 @@ end
 % Contains labels ranging from 0 to number of parcels (1 column / time sample) for each sources.
 
 nb_time = size(SCR,2);
-CLS     = zeros(nbS, nb_time);
+[OPTIONS, CLS,cellstruct_cls] = be_create_clusters(VertConn, mean(SCR,2), OPTIONS );
+CLS = repmat(CLS,1, nb_time);
 
-for i = 1:nb_time
-    [OPTIONS, CLS(:,i),cellstruct_cls] = be_create_clusters(VertConn, mean(SCR,2), OPTIONS );
-end
 
 end
