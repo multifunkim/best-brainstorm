@@ -34,7 +34,7 @@ function [ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS)
 
 if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
     % normalize alpha for each coloum
-    obj.ALPHA = bsxfun(@rdivide,obj.ALPHA,max(obj.ALPHA,[],1)); % Normalize M
+    obj.ALPHA = bsxfun(@rdivide,obj.ALPHA,max(obj.ALPHA,[],1)); 
 end
 
 % All samples or a selection?
@@ -46,20 +46,21 @@ elseif ~strcmp(OPTIONS.mandatory.pipeline,'wMEM')
     Data  = obj.data;
 end
 
-% time series or wavelet representation ?
+% time series or wavelet representation
 nbSmp           = size(Data,2);
-ImageSourceAmp  = zeros( length(obj.iModS), 1 );
 
 if strcmp(OPTIONS.mandatory.pipeline,'wMEM')
-    obj.time     = OPTIONS.automatic.selected_samples(6,:); % USELESS  ???
-    obj.scale    = OPTIONS.automatic.selected_samples(2,:); % USELESS ???
+    obj.time     = OPTIONS.automatic.selected_samples(6,:); 
+    obj.scale    = OPTIONS.automatic.selected_samples(2,:); 
     if ~OPTIONS.wavelet.single_box
-        ImageSourceAmp  = sparse(length(obj.iModS), size(obj.data{1},2));
+        ImageSourceAmp  = zeros(length(obj.iModS), nbSmp);
+    else
+        ImageSourceAmp  = zeros( length(obj.iModS), 1 );
     end
 else
-    obj.time        = obj.t0+(1:nbSmp)/OPTIONS.automatic.sampling_rate; % USELESS ??
-    obj.scale       = zeros(1,nbSmp); % ??????
-    ImageSourceAmp  = sparse(length(obj.iModS), nbSmp);  
+    obj.time        = obj.t0+(1:nbSmp)/OPTIONS.automatic.sampling_rate; 
+    obj.scale       = zeros(1,nbSmp); 
+    ImageSourceAmp  = zeros(length(obj.iModS), nbSmp);  
 end
 
 % fixed parameters
@@ -99,8 +100,10 @@ if OPTIONS.solver.parallel_matlab == 1
         final_sigma{ii}     =   S;
         
         %Store in a matrix
-        ImageSourceAmp = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS );
-        send(q, 1); 
+        ImageSourceAmp(:, ii)      =  R;
+        if ~OPTIONS.automatic.stand_alone
+            send(q, 1); 
+        end
     end
     time_it_ends = toc(time_it_starts);
     if OPTIONS.optional.verbose
@@ -121,7 +124,7 @@ else
         final_sigma{ii}     = S;
         
         % Store in matrix
-        ImageSourceAmp      = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS);
+        ImageSourceAmp(:, ii)      =  R;
         if ~OPTIONS.automatic.stand_alone
             bst_progress('inc', 1);
         end
@@ -136,21 +139,37 @@ if ~OPTIONS.automatic.stand_alone
     bst_progress('stop');
 end
 
+% store the results where it should and Conversion from wMEM box to time-series
 if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
     ImageGridAmp = [];
     OPTIONS.automatic.wActivation   =   full(ImageSourceAmp);
-else
-    % store the results where it should:
-    ImageGridAmp = zeros( obj.nb_dipoles, size(ImageSourceAmp,2) );
 
-    if  strcmp(OPTIONS.optional.normalization,'adaptive')
-        ImageGridAmp(obj.iModS,:) = full(ImageSourceAmp)/OPTIONS.automatic.Modality(1,1).ratioAmp;
-    else
-        ImageGridAmp(obj.iModS,:) = full(ImageSourceAmp)*OPTIONS.automatic.Modality(1).units_dipoles; %Modified by JSB August 17th 2015
+elseif strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && ~OPTIONS.wavelet.single_box
+    ImageGridAmp  = zeros(obj.nb_dipoles, size(obj.data{1},2));
+    proj     =   zeros( nbSmp, size(obj.data{1},2) );
+
+    for ii = 1 : nbSmp
+        nbSmpTime   =   size(obj.data{1},2);
+        scale   =   OPTIONS.automatic.selected_samples(2,ii);
+        transl  =   OPTIONS.automatic.selected_samples(3,ii);
+        wav =   zeros( 1, nbSmpTime );
+        wav( nbSmpTime/2^scale + transl ) = 1;
+        proj(ii,:)     =   be_wavelet_inverse( wav, OPTIONS );
     end
-    
-    clear ImageSourceAmp
+    ImageGridAmp(obj.iModS,:)     =  ImageSourceAmp  * proj;
+
+else
+    ImageGridAmp = zeros( obj.nb_dipoles, size(ImageSourceAmp,2) );
+    ImageGridAmp(obj.iModS,:) = ImageSourceAmp;
+
 end
+
+if  strcmp(OPTIONS.optional.normalization,'adaptive')
+    ImageGridAmp = ImageGridAmp/OPTIONS.automatic.Modality(1,1).ratioAmp;
+else
+    ImageGridAmp = ImageGridAmp*OPTIONS.automatic.Modality(1).units_dipoles; %Modified by JSB August 17th 2015
+end
+
 
 OPTIONS.automatic.entropy_drops = entropy_drop;
 OPTIONS.automatic.final_alpha   = final_alpha;
