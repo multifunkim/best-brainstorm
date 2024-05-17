@@ -1159,7 +1159,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     function SwitchExpertMEM(varargin)
         isExpert = OPTIONS.automatic.MEMexpert;
         OPTIONS.automatic.MEMexpert = ~isExpert;
-        ctrl.jButEXP.setText(ExpertButtonTexts(isExpert+1));       
+        ctrl.jButEXP.setText(ExpertButtonTexts((~isExpert) + 1));       
 
         UpdatePanel()
     end   
