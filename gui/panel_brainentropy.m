@@ -1,4 +1,4 @@
-    function varargout = panel_brainentropy(varargin)
+function varargout = panel_brainentropy(varargin)
 % PANEL_BRAINENTROPY: Options for BrainEntropy MEM.
 % 
 % USAGE:  bstPanelNew = panel_brainentropy('CreatePanel')
@@ -1157,9 +1157,12 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     %% ===== SWITCH EXPERT MODE =====
     function SwitchExpertMEM(varargin)
-        isExpert = OPTIONS.automatic.MEMexpert;
-        OPTIONS.automatic.MEMexpert = ~isExpert;
-        ctrl.jButEXP.setText(ExpertButtonTexts((~isExpert) + 1));       
+        wasExpert = OPTIONS.automatic.MEMexpert;
+        isExpert = ~wasExpert;
+
+        OPTIONS.automatic.MEMexpert = isExpert;
+        ctrl.jButEXP.setText(ExpertButtonTexts(isExpert + 1));
+
 
         UpdatePanel()
     end   
@@ -1244,6 +1247,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     %% ===== UPDATE PANEL =====
     function UpdatePanel()
+
         choices = {'cMEM', 'wMEM', 'rMEM'};
         selected = [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
         if ~any(selected)
