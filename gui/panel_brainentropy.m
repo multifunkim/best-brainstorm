@@ -1161,6 +1161,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         isExpert = ~wasExpert;
 
         OPTIONS.automatic.MEMexpert = isExpert;
+        MEMglobal.isExpert = isExpert;
+
         ctrl.jButEXP.setText(ExpertButtonTexts(isExpert + 1));
 
 
@@ -1705,9 +1707,13 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     global MEMglobal
 
     MEMpaneloptions.InverseMethod           = 'MEM';
-    MEMpaneloptions.automatic.MEMexpert     =   OPTIONS.automatic.MEMexpert;              
-    MEMpaneloptions.automatic.version       =   char( ctrl.jTXTver.getText() ); 
-    MEMpaneloptions.automatic.last_update   =   char( ctrl.jTXTupd.getText() ); 
+    if isfield(MEMglobal, 'isExpert')
+        MEMpaneloptions.automatic.MEMexpert = MEMglobal.isExpert; 
+    else
+        MEMpaneloptions.automatic.MEMexpert = 0;
+    end
+    MEMpaneloptions.automatic.version       = char( ctrl.jTXTver.getText() ); 
+    MEMpaneloptions.automatic.last_update   = char( ctrl.jTXTupd.getText() ); 
 
     % Get MEM method
     choices = {'cMEM', 'wMEM', 'rMEM'};
