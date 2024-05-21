@@ -76,10 +76,7 @@ for i = 1:length(alpha)
 end
 
 [~,Index] = min(Fit/max(Fit)+Prior/max(Prior));  % Find the optimal alpha
-
-Kernel = ((G2tG2 + alpha(Index).*Sigma_s2)^-1)*G2';
-J = WV*Kernel*M;
-
+J = ((GtG + alpha(Index).*Sigma_s)^-1)*G'*M;
 
 if nargout > 1
     varargout{1} = alpha(Index);
