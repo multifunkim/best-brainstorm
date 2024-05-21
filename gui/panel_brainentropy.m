@@ -40,6 +40,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     global MEMglobal
     MEMglobal = [];
 
+    global ExpertButtonTexts
+    ExpertButtonTexts = {'Show details', 'Hide details'};
+
     panelName       =   'InverseOptionsMEM';
     bstPanelNew     =   [];
     
@@ -107,7 +110,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     % Create main main panel
     jPanelMain = gui_component('Panel');
-    jPanelMain.setPreferredSize(Dimension(900,900));
+    jPanelMain.setPreferredSize(Dimension(1000,900));
     jPanelMain.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
     % Default grid bag constrains (for Left and Right panels)
     c = GridBagConstraints();
@@ -250,7 +253,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     % ===== VALIDATION BUTTONS =====
     jPanelBottom = gui_river([1,1], [0,6,6,6]);
     jPanelMain.add(jPanelBottom, BorderLayout.SOUTH);
-    JButEXP = gui_component('button', jPanelBottom, 'br center', 'Expert', [], [], @SwitchExpertMEM, []);
+    JButEXP = gui_component('button', jPanelBottom, 'br center', ExpertButtonTexts{1}, [], [], @SwitchExpertMEM, []);
     gui_component('button', jPanelBottom, [], 'Cancel', [], [], @(src,ev)ButtonCancel_Callback(), []);
     JButOK = gui_component('button', jPanelBottom, [], 'OK', [], [], @ButtonOk_Callback, []);
     JButOK.setEnabled(0);
@@ -1116,15 +1119,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ctrl.jParallel.setSelected(OPTIONS.solver.parallel_matlab);
         ctrl.jNewCOV.setSelected(OPTIONS.solver.NoiseCov_recompute);
         ctrl.jVarCovar.setText(num2str(OPTIONS.solver.NoiseCov_method) );
-
-
-
-        if strcmp( char(ctrl.jButEXP.getText()),'Expert' ) && OPTIONS.automatic.MEMexpert
-            SwitchExpertMEM();
-        elseif strcmp( char(ctrl.jButEXP.getText()),'Normal' ) && ~OPTIONS.automatic.MEMexpert
-            SwitchExpertMEM();
-        end
-
     end
 
 
@@ -1147,26 +1141,32 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.jTextMspThresh.setText('fdr')
         end
     end
-    %% ===== SWITCH EXPERT MODE =====
-    function SwitchExpertMEM(varargin)
-        
-        isExpert = strcmp( char(ctrl.jButEXP.getText()),'Expert' );
-        modes    = {'Expert', 'Normal'};
-        
+
+    function SetAllExpertPanelsVisiblity(visibility)
         panels = [ctrl.JPanelCLSType, ctrl.jPanelModP, ctrl.JPanelDepth , ctrl.jPanelWAV, ctrl.jPanelRDG];
 
         for iPanel = 1:length(panels)
-            %panels(iPanel).setEnabled(isExpert);
-            panels(iPanel).setVisible(isExpert);
+            panels(iPanel).setVisible(visibility);
 
             comps = panels(iPanel).getComponents();
             for iComp = 1:length(comps)
-                %comps(iComp).setEnabled(isExpert);
-                comps(iComp).setVisible(isExpert);
+                comps(iComp).setVisible(visibility);
             end
         end
+    end
+
+    %% ===== SWITCH EXPERT MODE =====
+    function SwitchExpertMEM(varargin)
+        wasExpert = OPTIONS.automatic.MEMexpert;
+        isExpert = ~wasExpert;
+
+        OPTIONS.automatic.MEMexpert = isExpert;
+        MEMglobal.isExpert = isExpert;
+
+        ctrl.jButEXP.setText(ExpertButtonTexts(isExpert + 1));
+
+
         UpdatePanel()
-        ctrl.jButEXP.setText(modes(isExpert+1));       
     end   
 
     %% ===== SWITCH PIPELINE =====
@@ -1178,31 +1178,29 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if any(selected)
 
             if strcmp(choices(selected), 'cMEM')
-                OPTIONS = struct_copy_fields(OPTIONS,be_cmem_pipelineoptions,1,1);
+                NEW_OPTIONS = struct_copy_fields(OPTIONS, be_cmem_pipelineoptions,1,1);
             elseif strcmp(choices(selected), 'wMEM')
-                OPTIONS = struct_copy_fields(OPTIONS,be_wmem_pipelineoptions,1,1);
+                NEW_OPTIONS = struct_copy_fields(OPTIONS, be_wmem_pipelineoptions,1,1);
             elseif strcmp(choices(selected), 'rMEM')
-                OPTIONS = struct_copy_fields(OPTIONS,be_rmem_pipelineoptions,1,1);
+                NEW_OPTIONS = struct_copy_fields(OPTIONS, be_rmem_pipelineoptions,1,1);
             end
 
             %% Save options while changing the pipeline
-            % Save mode (expert/normal)
-            OPTIONS.automatic.MEMexpert = strcmp( char(ctrl.jButEXP.getText()),'Normal' );
             % Save "Activate MEM Display"
-            OPTIONS.optional.display = ctrl.jBoxShow.isSelected();
+            NEW_OPTIONS.optional.display = ctrl.jBoxShow.isSelected();
             % Save time window
-            OPTIONS.optional.TimeSegment = [ ...
+            NEW_OPTIONS.optional.TimeSegment = [ ...
                 str2double(char(ctrl.jTextTimeStart.getText())) ...
                 str2double(char(ctrl.jTextTimeStop.getText()))];
             % Save Optimization routine
-            OPTIONS.solver.Optim_method = ctrl.jOptimFN.getSelectedItem();
+            NEW_OPTIONS.solver.Optim_method = ctrl.jOptimFN.getSelectedItem();
             % Save Baseline start and stop
-            OPTIONS.optional.BaselineSegment    = [ ...
+            NEW_OPTIONS.optional.BaselineSegment    = [ ...
                 str2double(char(ctrl.jTextBSLStart.getText())), ...
                 str2double(char(ctrl.jTextBSLStop.getText()))];
 
-            OPTIONS.mandatory.pipeline = choices(selected);
-            setOptions(OPTIONS)
+                NEW_OPTIONS.mandatory.pipeline = choices(selected);
+            setOptions(NEW_OPTIONS)
         end
 
         UpdatePanel()
@@ -1251,7 +1249,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     %% ===== UPDATE PANEL =====
     function UpdatePanel()
-            
+
         choices = {'cMEM', 'wMEM', 'rMEM'};
         selected = [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
         if ~any(selected)
@@ -1267,6 +1265,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.jPanelRDG.setVisible(0);
             ctrl.jPanelSensC.setVisible(0);
         else
+
+            SetAllExpertPanelsVisiblity(OPTIONS.automatic.MEMexpert);
+
             ctrl.JPanelData.setPreferredSize(java_scaled('dimension', 320, 270));
             ctrl.JPanelref.setVisible(0);
             ctrl.JPanelData.setVisible(1);
@@ -1706,9 +1707,13 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     global MEMglobal
 
     MEMpaneloptions.InverseMethod           = 'MEM';
-    MEMpaneloptions.automatic.MEMexpert     =   strcmp( char(ctrl.jButEXP.getText()),'Expert' );                    
-    MEMpaneloptions.automatic.version       =   char( ctrl.jTXTver.getText() ); 
-    MEMpaneloptions.automatic.last_update   =   char( ctrl.jTXTupd.getText() ); 
+    if isfield(MEMglobal, 'isExpert')
+        MEMpaneloptions.automatic.MEMexpert = MEMglobal.isExpert; 
+    else
+        MEMpaneloptions.automatic.MEMexpert = 0;
+    end
+    MEMpaneloptions.automatic.version       = char( ctrl.jTXTver.getText() ); 
+    MEMpaneloptions.automatic.last_update   = char( ctrl.jTXTupd.getText() ); 
 
     % Get MEM method
     choices = {'cMEM', 'wMEM', 'rMEM'};

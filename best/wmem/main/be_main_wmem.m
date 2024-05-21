@@ -43,9 +43,6 @@ function [obj, OPTIONS] = be_main_wmem(obj, OPTIONS)
             % [obj.scaling, OPTIONS_scaling] = be_launch_mem(obj, OPTIONS_scaling);
             % obj.ImageGridAmp = obj.ImageGridAmp + obj.scaling;
             
-            if ~isempty(obj.ImageGridAmp)
-            	obj.ImageGridAmp = obj.ImageGridAmp(:,obj.info_extension.start:obj.info_extension.end);
-            end
         	OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ')'];
 	else
 		disp('ERROR in calling wMEM'); return
