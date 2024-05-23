@@ -60,7 +60,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
             OPTIONS = OPTIONS.MEMpaneloptions;
         end
-        OPTIONS = struct_copy_fields(OPTIONS,be_main,0,1);
+        OPTIONS = be_struct_copy_fields(OPTIONS,be_main,[],0);
     elseif numel(varargin)==0
         % Call from the GUI
         bstPanel        = bst_get('Panel', 'Protocols');
@@ -83,9 +83,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         return
     end       
 
-    OPTIONS = struct_copy_fields(OPTIONS,be_cmem_pipelineoptions,0,1);
-    OPTIONS = struct_copy_fields(OPTIONS,be_wmem_pipelineoptions,0,1);
-    OPTIONS = struct_copy_fields(OPTIONS, be_rmem_pipelineoptions,0,1);
+    OPTIONS = be_struct_copy_fields(OPTIONS,be_cmem_pipelineoptions,[],0);
+    OPTIONS = be_struct_copy_fields(OPTIONS,be_wmem_pipelineoptions,[],0);
+    OPTIONS = be_struct_copy_fields(OPTIONS, be_rmem_pipelineoptions,[],0);
         
     % Version
     OPTIONS.automatic.version       =   '2.7.3';
@@ -1178,11 +1178,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if any(selected)
 
             if strcmp(choices(selected), 'cMEM')
-                NEW_OPTIONS = struct_copy_fields(OPTIONS, be_cmem_pipelineoptions,1,1);
+                NEW_OPTIONS = be_struct_copy_fields(OPTIONS, be_cmem_pipelineoptions,[],1);
             elseif strcmp(choices(selected), 'wMEM')
-                NEW_OPTIONS = struct_copy_fields(OPTIONS, be_wmem_pipelineoptions,1,1);
+                NEW_OPTIONS = be_struct_copy_fields(OPTIONS, be_wmem_pipelineoptions,[],1);
             elseif strcmp(choices(selected), 'rMEM')
-                NEW_OPTIONS = struct_copy_fields(OPTIONS, be_rmem_pipelineoptions,1,1);
+                NEW_OPTIONS = be_struct_copy_fields(OPTIONS, be_rmem_pipelineoptions,[],1);
             end
 
             %% Save options while changing the pipeline
@@ -1253,7 +1253,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         choices = {'cMEM', 'wMEM', 'rMEM'};
         selected = [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
         if ~any(selected)
-            ctrl.JPanelref.setPreferredSize(java_scaled('dimension', 600, 650));
+            ctrl.JPanelref.setPreferredSize(java_scaled('dimension', 500, 450));
             ctrl.JPanelData.setVisible(0);
             ctrl.JPanelnwav.setVisible(0);
             ctrl.JPanelnosc.setVisible(0);
