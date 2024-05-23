@@ -58,8 +58,15 @@ if length(OPTIONS.mandatory.DataTypes)==2
     TAB(3,tt2)  = tt1; 
     VAL(2,tt2) = V2(tt1);
     [v,i]=sort((VAL(1,:)+VAL(2,:))/2,'descend');
-    OPTIONS.automatic.selected_samples = ...
-        TAB(:,i);
+    OPTIONS.automatic.selected_samples = TAB(:,i);
+
+    selected_jk1=OPTIONS.automatic.Modality(1).selected_jk;
+    selected_jk2=OPTIONS.automatic.Modality(2).selected_jk;
+
+    [OPTIONS.automatic.selected_samples, ind1, ind2]=union(C1,C2);
+    OPTIONS.automatic.selected_samples(2:6,:)= [selected_jk1(2:6,ind1) selected_jk2(2:6,ind2)];
+    OPTIONS.automatic.selected_samples(7,:) = 1;
+
 else % only one modality, we keep the ordering related to the power 
     nboxes = size(OPTIONS.automatic.Modality(1).selected_jk,2);
     OPTIONS.automatic.selected_samples = ...

@@ -28,6 +28,7 @@ function [Data, OPTIONS] = be_wavelet_inverse(WData,OPTIONS)
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
+[Ns,No] = size(WData);
 
 if strcmp(OPTIONS.wavelet.type,'RDW')
     
@@ -40,11 +41,10 @@ if strcmp(OPTIONS.wavelet.type,'RDW')
     else
     filtre = MakeONFilter('Daubechies',2*OPTIONS.wavelet.vanish_moments+2);
     end
-    [Ns,No] = size(WData);
     Nj = fix(log2(No));
     Noff = Nj-size(OPTIONS.automatic.scales,2);
-    Data = [];
-    for i = 1:Ns;
+    Data = zeros(Ns,No);
+    for i = 1:Ns
         Data(i,:) = IWT_PO(WData(i,:),Noff,filtre);
     end
     
@@ -66,7 +66,11 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
     end
     
     Njs  = size(OPTIONS.automatic.scales,2);
-    Data =  be_dwsynthesis(WData, Njs, filtre);
+    Data = zeros(Ns,No);
+    for i = 1:Ns
+        Data(i,:) =  be_dwsynthesis(WData(i,:), Njs, filtre);
+    end
+
     if OPTIONS.optional.verbose
         fprintf(' done.\n');
     end

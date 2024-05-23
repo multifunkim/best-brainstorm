@@ -78,9 +78,9 @@ for jj=1:size(SCR,2)
             case 4  % Method 4 (alpha = 1/2)
                  alpha(idCLS,jj) = 0.5;
                  
-            case 5  % Method 4 (alpha = 1/2)
+            case 5  % Method 5 (alpha = 1 )
                  alpha(idCLS,jj) = 1;
-                
+
             otherwise
                 error('Wrong ALPHA Method')
         end
