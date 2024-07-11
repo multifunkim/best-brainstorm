@@ -88,7 +88,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     OPTIONS = be_struct_copy_fields(OPTIONS, be_rmem_pipelineoptions,[],0);
         
     % Version
-    OPTIONS.automatic.version       =   '2.7.3';
+    OPTIONS.automatic.version       =   '3.0.0';
     OPTIONS.automatic.last_update   =   '';
 
     jTXTver =   JTextField(OPTIONS.automatic.version);
