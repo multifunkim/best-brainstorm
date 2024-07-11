@@ -398,6 +398,6 @@ function [OPTIONS, obj] = get_ridge_data(OPTIONS, obj, ii)
         
     end
     
-disp('Bye.\n')
+disp('Bye.')
 end
 

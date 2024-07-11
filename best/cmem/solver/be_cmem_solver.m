@@ -206,7 +206,7 @@ Results = struct(...
     'MEMoptions',       OPTIONS); % ...
      %'MEMdata',          obj);
 
-disp('Bye.\n')
+disp('Bye.')
 end
 
 

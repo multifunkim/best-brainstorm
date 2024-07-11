@@ -211,6 +211,6 @@ function [OUT] = fuse(Real, Imag, what)
     end
             
 
-disp('Bye.\n')
+disp('Bye.')
 end
 
