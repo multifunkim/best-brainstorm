@@ -51,10 +51,10 @@ if isempty(obj) % - restrict time window, before MEM
     OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' | timewindow: ' num2str(OPTIONS.optional.TimeSegment(1)) ' to ' num2str(OPTIONS.optional.TimeSegment(end)) 's'];
     
 else % - expand result to fit data time window, after MEM
-    nr              =   zeros( obj.nb_sources, numel(OPTIONS.mandatory.DataTime) );
+    nr              =   zeros( size(obj.ImageGridAmp,1), numel(OPTIONS.mandatory.DataTime) );
     nr(:, DTs:DTn)  =   obj.ImageGridAmp;
     obj.ImageGridAmp=   nr;
     
 end
 
-return
+end

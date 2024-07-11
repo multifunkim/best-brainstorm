@@ -33,8 +33,19 @@ function [indices, G] = be_check_gain(G, type)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % ------------------------------------------------------------------------- 
 
+
 indices = 1 : size(G,2);
-if any(isnan(G))
+
+if sum(all(G == 0))
+    fprintf('\n')
+    fprintf('MEM >>> Warning: \n')
+    fprintf('MEM >>> %s gain for %d sources were null \n',type{1} , sum(all(G == 0)))
+    fprintf('MEM >>> Concerned sources were removed... ')
+
+    indices(all(G == 0)) =  [];
+end
+
+if sum(isnan(G),'all')
     disp('MEM >>> Warning:')
     disp(['MEM >>> ' type 'gain for some sources was incorrect (NaN)'])
     disp('MEM >>> concerned sources were removed')
