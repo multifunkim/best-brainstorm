@@ -1,18 +1,18 @@
 function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
-% Compute the minimum norm estimate, using l-curve to estimate the regularisation parameter
-%
+% Compute the minimum norm estimate using the regularized pseudo-inverse formula
+% the regularization parameter is estiamted using l-curve. This approach is
+% equivalent to the MAP estimator in be_jmne_lcurve_MAP
 %   INPUTS:
 %       -   G       : matrice des lead-fields (donnee par le probleme direct)
 %       -   M       : vecteur colonne contenant les donnees sur les capteurs
 %
 %   OUTPUTS:
-%       -   J       : MAP estimator
-%       -   varargout{1} : regulariwation parameter based on l-curve
+%       -   J       : regularized pseudo-inverse estimator
+%       -   varargout{1} : regularization parameter based on l-curve
 %% ==============================================
-% Copyright (C) 2011 - Christophe Grova
+% Copyright (C) 2024 - Edouard Delaire
 %
-%  Authors: Christophe Grova, 2011
-%
+%  Authors: Edouard Delaire, 2024
 %% ==============================================
 % License
 %
@@ -30,83 +30,91 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-if nargin < 4 
-    sfig = struct('hfig', [], 'hfigtab', []);
-end
+    if nargin < 4 
+        sfig = struct('hfig', [], 'hfigtab', []);
+    end
+    
+    % selection of the data:
+    if ~isempty(OPTIONS.automatic.selected_samples)   
+        selected_samples = OPTIONS.automatic.selected_samples(1,:);
+        M = M(:,selected_samples);
+    end
+    
+    
+    fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
+    
+    % Compute covariance matrices
+    Sigma_d    =   eye(size(M,1));  
 
-% selection of the data:
-if ~isempty(OPTIONS.automatic.selected_samples)   
-    selected_samples = OPTIONS.automatic.selected_samples(1,:);
-    M = M(:,selected_samples);
-end
-
-param1  = [0.1:0.1:1 1:5:100 100:100:1000]; 
-p       = OPTIONS.model.depth_weigth_MNE;
-
-fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
-
-% Compute some preliminary quantity required for MNE
-[U,S,V] = svd(G,'econ');
-GtG = V * S.^2 * V'; 
-
-Sigma_s_diag = diag(GtG).^p;
-Sigma_s = diag(Sigma_s_diag);
-
-W = diag(Sigma_s_diag.^0.5);
-
-scale = sum(diag(S).^2) / sum(Sigma_s_diag);       % Scale alpha using trace(G*G')./trace(W'*W)
-alpha = param1.*scale;
-
-G2 = U*S;
-Sigma_s2 = V'*Sigma_s*V;
-WV = diag(W).*V;
-
-G2tG2 = S.^2; % (U*S)' * U*S = S*U'*U*S  = S^2
-
-Fit     = zeros(1,length(alpha));
-Prior   = zeros(1,length(alpha));
+    p       = OPTIONS.model.depth_weigth_MNE;
+    Ps = diag(power(diag(G'*G),p)); 
+    W = sqrt(Ps);
+    Sigma_s = inv(Ps);
 
 
-for i = 1:length(alpha)
-    Kernel = ((G2tG2 + alpha(i).*Sigma_s2)^-1)*G2';
-    J = Kernel*M;
+    % Pre-compute matrix
+    GSG = G * Sigma_s * G';
+    SG  = Sigma_s * G';
 
-    Fit(i) = normest(M-G2*J);       % Define Fit as a function of alpha
-    Prior(i) = normest(WV*J);       % Define Prior as a function of alpha
-end
 
-[~,Index] = min(Fit/max(Fit)+Prior/max(Prior));  % Find the optimal alpha
-J = ((GtG + alpha(Index).*Sigma_s)^-1)*G'*M;
+    % Parameter for l-curve
+    param1  = [0.1:0.1:1 1:5:100 100:100:1000]; 
 
-if nargout > 1
-    varargout{1} = alpha(Index);
-end
+    % Scale alpha using trace(G*G')./trace(W'*W)  
+    scale   = trace(G*G')./ trace(Ps) ;       
+    alpha   = param1.*scale;
 
-fprintf('done. \n');
 
-if OPTIONS.optional.display
-    if isempty(sfig.hfig)
-        sfig.hfig =  figure();
-        sfig.hfigtab = uitabgroup;
+    Fit     = zeros(1,length(alpha));
+    Prior   = zeros(1,length(alpha));
+
+    bst_progress('start', 'wMNE, solving MNE by L-curve ... ' , 'Solving MNE by L-curve ... ', 1, length(param1));
+    for iAlpha = 1:length(alpha)
+        
+        Kermel = SG * inv( GSG  + alpha(iAlpha) * Sigma_d );
+        J = Kermel*M; 
+
+        Fit(iAlpha)     = norm(M-G*J);      % Define Fit as a function of alpha
+        Prior(iAlpha)   = norm(W*J);        % Define Prior as a function of alpha
+    
+        bst_progress('inc', 1); 
     end
 
-    onglet = uitab(sfig.hfigtab,'title','L-curve');
+    % Fid alpha optimal based on l-curve
+    [~,Index] = min(Fit/max(Fit)+Prior/max(Prior)); 
+    
+    Kermel = SG * inv( GSG  + alpha(Index) * Sigma_d );
+    J = Kermel*M; 
 
-    hpc = uipanel('Parent', onglet, ...
-              'Units', 'Normalized', ...
-              'Position', [0.01 0.01 0.98 0.98], ...
-              'FontWeight','demi');
-    set(hpc,'Title',' L-curve ','FontSize',8);
+    if nargout > 1
+        varargout{1} = alpha(Index);
+    end
 
-    ax = axes('parent',hpc, ...
-              'outerPosition',[0.01 0.01 0.98 0.98]);
-
-    hold on; 
-    plot(ax, Prior, Fit,'b.');
-    plot(ax, Prior(Index), Fit(Index),'ro');
-    hold off;
-    xlabel('Norm |WJ|');
-    ylabel('Residual |M-GJ|');
-end
+    fprintf('done. \n');
+    
+    if OPTIONS.optional.display
+        if isempty(sfig.hfig)
+            sfig.hfig =  figure();
+            sfig.hfigtab = uitabgroup;
+        end
+    
+        onglet = uitab(sfig.hfigtab,'title','L-curve');
+    
+        hpc = uipanel('Parent', onglet, ...
+                  'Units', 'Normalized', ...
+                  'Position', [0.01 0.01 0.98 0.98], ...
+                  'FontWeight','demi');
+        set(hpc,'Title',' L-curve ','FontSize',8);
+    
+        ax = axes('parent',hpc, ...
+                  'outerPosition',[0.01 0.01 0.98 0.98]);
+    
+        hold on; 
+        plot(ax, Prior, Fit,'b.');
+        plot(ax, Prior(Index), Fit(Index),'ro');
+        hold off;
+        xlabel('Norm |WJ|');
+        ylabel('Residual |M-GJ|');
+    end
 
 end
