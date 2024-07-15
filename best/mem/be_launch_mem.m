@@ -107,7 +107,7 @@ if OPTIONS.solver.parallel_matlab == 1
     end
     time_it_ends = toc(time_it_starts);
     if OPTIONS.optional.verbose
-        fprintf('%s, Elapsed CPU time is %5.2f seconds.\nBye.\n', OPTIONS.mandatory.pipeline, time_it_ends);
+        fprintf('%s, Elapsed CPU time is %5.2f seconds.\n', OPTIONS.mandatory.pipeline, time_it_ends);
     end
     warning on
 
