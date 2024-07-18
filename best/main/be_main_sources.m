@@ -54,6 +54,8 @@ end
 % what we keep:
 obj.nb_sources = numel(obj.iModS);
 
+assert(obj.nb_sources > 0, 'The source space is empty' );
+
 if OPTIONS.optional.verbose
     fprintf(' done.\n'); 
 end  

@@ -45,12 +45,15 @@ if sum(all(G == 0))
     indices(all(G == 0)) =  [];
 end
 
-if sum(isnan(G),'all')
-    disp('MEM >>> Warning:')
-    disp(['MEM >>> ' type 'gain for some sources was incorrect (NaN)'])
-    disp('MEM >>> concerned sources were removed')
+if any(any(isnan(G)))
     
     idx = logical( sum(isnan(G)) );
+
+    fprintf('\n')
+    disp('MEM >>> Warning:')
+    fprintf('MEM >>> %s gain for %d sources were incorrect (NaN) \n',type{1} , sum(idx))
+    disp('MEM >>> concerned sources were removed')
+    
     G(idx) = 0; % 
     indices(idx) = [];
 end
