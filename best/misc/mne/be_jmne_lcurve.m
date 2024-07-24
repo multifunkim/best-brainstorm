@@ -44,24 +44,33 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
     fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
     
     % Compute covariance matrices
-    Sigma_d    =   eye(size(M,1));  
+    if isempty(OPTIONS.automatic.Modality(1).covariance)
+        Sigma_d    =   eye(size(M,1));  
+    else
+        Sigma_d    =   OPTIONS.automatic.Modality(1).covariance;
+    end
+
 
     p       = OPTIONS.model.depth_weigth_MNE;
-    Ps = diag(power(diag(G'*G),p)); 
-    W = sqrt(Ps);
-    Sigma_s = inv(Ps);
-
+    if isempty(OPTIONS.automatic.Modality(1).covariance)
+        Sigma_s = diag(power(diag(G'*inv(Sigma_d)*G),-p)); 
+    else
+        Sigma_s = diag(power(diag(G'*G),-p)); 
+    end
+    
 
     % Pre-compute matrix
     GSG = G * Sigma_s * G';
     SG  = Sigma_s * G';
 
+    % Note W*S*G: W = Sigma_s^-0.5 so W*Sigma_s = Sigma_s^0.5
+    wSG = sqrt(Sigma_s) * G';
 
     % Parameter for l-curve
     param1  = [0.1:0.1:1 1:5:100 100:100:1000]; 
 
     % Scale alpha using trace(G*G')./trace(W'*W)  
-    scale   = trace(G*G')./ trace(Ps) ;       
+    scale   = trace(G*G')./ trace(inv(Sigma_s));       
     alpha   = param1.*scale;
 
 
@@ -71,11 +80,13 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
     bst_progress('start', 'wMNE, solving MNE by L-curve ... ' , 'Solving MNE by L-curve ... ', 1, length(param1));
     for iAlpha = 1:length(alpha)
         
-        Kermel = SG * inv( GSG  + alpha(iAlpha) * Sigma_d );
-        J = Kermel*M; 
+        inv_matrix = inv( GSG  + alpha(iAlpha) * Sigma_d );
+        
+        residual_kernal = eye(size(M,1)) - GSG * inv_matrix;
+        wKernel = wSG*inv_matrix;
 
-        Fit(iAlpha)     = norm(M-G*J);      % Define Fit as a function of alpha
-        Prior(iAlpha)   = norm(W*J);        % Define Prior as a function of alpha
+        Fit(iAlpha)     = normest(residual_kernal*M);  % Define Fit as a function of alpha
+        Prior(iAlpha)   = normest(wKernel*M);      % Define Prior as a function of alpha
     
         bst_progress('inc', 1); 
     end

@@ -53,6 +53,15 @@ if OPTIONS.optional.verbose
 end 
  obj = struct('hfig', [] , 'hfigtab', [] );
 
+ %% Retrieve vertex connectivity - needed for clustering
+[OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
+
+if isempty(OPTIONS.optional.clustering) && isempty(obj.VertConn) || diff(size(obj.VertConn))
+    fprintf('MEM error : no vertex connectivity matrix available.\n');
+    return
+end
+
+
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   'cMNE';
 
@@ -82,6 +91,16 @@ end
 %% ===== Apply temporal data window  ===== %%
 % check for a time segment to be localized
 [OPTIONS] = be_apply_window( OPTIONS, [] );
+
+
+%% ===== Noise estimation ===== %%   
+[OPTIONS, obj] = be_main_data_preprocessing(obj, OPTIONS);
+
+%% ===== Normalization ==== %% 
+% we absorb units (pT, nA) in the data, leadfields; we normalize the data
+% and the leadfields
+OPTIONS.optional.normalization = 'fixed';
+[OPTIONS] = be_normalize_and_units(OPTIONS);
 
 %% ===== Compute Minimum Norm Solution ==== %% 
 % we compute MNE (using l-curve for nirs or depth-weighted version)
