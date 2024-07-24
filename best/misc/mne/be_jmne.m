@@ -39,9 +39,11 @@ function [J,varargout] = be_jmne(G,M,OPTIONS)
 [n_capt, n_sour] = size(G);
 
 % selection of the data:
-sample = be_closest(OPTIONS.optional.TimeSegment([1 end]), OPTIONS.mandatory.DataTime);
-
-M = M(:,sample(1):sample(2));
+% selection of the data:
+if ~isempty(OPTIONS.automatic.selected_samples)   
+    selected_samples = OPTIONS.automatic.selected_samples(1,:);
+    M = M(:,selected_samples);
+end
 
 % We solve J = (W'W)^-1.G'.( G.(W'W)^-1.G' + alpha.Id )^-1.M
 GG = G*G';

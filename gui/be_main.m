@@ -85,6 +85,7 @@ Def_OPTIONS.optional.verbose                    = 1;
 Def_OPTIONS.optional.display                    = 0;  
 Def_OPTIONS.optional.iData                      = [];
 Def_OPTIONS.optional.Baseline                   = [];
+Def_OPTIONS.optional.BaselineType               = '';
 Def_OPTIONS.optional.BaselineTime               = [];
 Def_OPTIONS.optional.BaselineChannels           = [];
 Def_OPTIONS.optional.BaselineHistory            = [];
@@ -156,7 +157,7 @@ Def_OPTIONS.solver.active_var_mult              = 0.05;
 Def_OPTIONS.solver.inactive_var_mult            = 0;
 Def_OPTIONS.solver.Optim_method                 = 'fminunc';
 Def_OPTIONS.solver.covariance_scale             = 1;
-Def_OPTIONS.solver.parallel_matlab              = false;
+Def_OPTIONS.solver.parallel_matlab              = be_canUseParallelPool();
 
 return
 

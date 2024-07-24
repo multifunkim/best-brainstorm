@@ -1,3 +1,11 @@
+% 11-07-2024 - v3
+- wMEM: Support of depth-weighting
+- wMEM: stable parcellation in time
+- wMEM: New alpha initialization using MNE ( alpha method = 6)
+- wMEM: New noise covariance calculation (NoiseCov method = 6)
+- wMEM: Baseline shuffling for resting state analysis
+- GUI: new graphical interface to call MEM 
+
 % 26 - 10 - 2023
 - MEM : Merge pipeline for EEG/MEG and fNIRS
 - cMEM: Include option for depth-weighting

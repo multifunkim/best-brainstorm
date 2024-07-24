@@ -4,11 +4,12 @@ function DEF = be_cmem_pipelineoptions()
         DEF.clustering.clusters_type     	= 'static';
         DEF.clustering.MSP_window         	= 1;
         DEF.clustering.MSP_scores_threshold = 0.0;
+        
         DEF.model.alpha_threshold          	= 0.0;
         DEF.model.active_mean_method      	= 2;
         DEF.model.alpha_method              = 3;
-        DEF.model.depth_weigth_MNE          = 0;
-        DEF.model.depth_weigth_MEM          = 0;
+        DEF.model.depth_weigth_MNE          = 0.5;
+        DEF.model.depth_weigth_MEM          = 0.5;
 
         % automatic 
         DEF.automatic.selected_samples       = [];

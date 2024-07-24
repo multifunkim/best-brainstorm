@@ -17,6 +17,8 @@ switch pipeline
     case 'rMEM'
 
         DEF = be_rmem_pipelineoptions();
+    otherwise
+        DEF = be_cmem_pipelineoptions();   
         
 end
 

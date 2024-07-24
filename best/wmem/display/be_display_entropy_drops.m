@@ -1,4 +1,4 @@
-function  display_entropy_drops(obj,OPTIONS)
+function  be_display_entropy_drops(obj,OPTIONS)
 %DISPLAY_ENTROPY_DROPS displays a graphical window with MEM entropy drops at 
 % each  iteration
 %

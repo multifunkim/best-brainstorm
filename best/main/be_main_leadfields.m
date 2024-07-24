@@ -45,6 +45,7 @@ end
 
 for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
     OPTIONS.automatic.Modality(ii).gain = OPTIONS.automatic.Modality(ii).gain(:, obj.iModS);
+    obj.VertConn = obj.VertConn(obj.iModS,obj.iModS);
     OPTIONS.automatic.Modality(ii).gain_struct = be_decompose_gain(OPTIONS.automatic.Modality(ii).gain);
 end
 

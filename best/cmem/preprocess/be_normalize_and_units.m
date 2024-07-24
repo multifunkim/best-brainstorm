@@ -35,7 +35,11 @@ function [OPTIONS] = be_normalize_and_units(OPTIONS)
 for ii = 1 : numel(OPTIONS.mandatory.DataTypes) %For every Modality (Data Type)
     
     % Std deviation for every channels on a modality
-    SD = std(OPTIONS.automatic.Modality(ii).baseline');
+    if isfield(OPTIONS.optional, 'baseline_shuffle') && OPTIONS.optional.baseline_shuffle
+        SD = std(OPTIONS.automatic.Modality(ii).baseline(:,:,1)');
+    else
+        SD = std(OPTIONS.automatic.Modality(ii).baseline');
+    end
     
     % Define the mean standard deviation (MSD) of the present modality
     MSD = mean(SD);
@@ -52,45 +56,30 @@ end
 switch OPTIONS.optional.normalization
     
     case 'fixed'
-        units_dipoles = 1e-9; % nAm
+        if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+            units_dipoles = 1; 
+        else
+            units_dipoles = 1e-9; % nAm
+        end
+
         for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
             ratioG  =   1/max( max(OPTIONS.automatic.Modality(ii).gain) );
             OPTIONS.automatic.Modality(ii).units.Gain_units     =   ratioG;
             OPTIONS.automatic.Modality(ii).units.Data_units     =   ratioG/(units_dipoles);
             OPTIONS.automatic.Modality(ii).units.Cov_units      =   (ratioG/(units_dipoles))^2;
-            OPTIONS.automatic.Modality(ii).units_dipoles             =   units_dipoles;
-
+            OPTIONS.automatic.Modality(ii).units_dipoles        =   units_dipoles;
         end
-        
     case 'adaptive'
-        
-        %Local fusion of data and gain matrix to compute the
-        %regularisation parameter (J)        
-        if numel(OPTIONS.mandatory.DataTypes)>1
-            M = [OPTIONS.automatic.Modality(1).data;OPTIONS.automatic.Modality(2).data];
-            G = [OPTIONS.automatic.Modality(1).gain;OPTIONS.automatic.Modality(2).gain];
-        else
-            M   =   OPTIONS.automatic.Modality(1).data;
-            G   =   OPTIONS.automatic.Modality(1).gain;
-        end
-        
-        % % Add option OPTIONS.model.depth_weigth_MNE
-        if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp( OPTIONS.mandatory.DataTypes,'NIRS')) 
-            J   =   be_jmne_lcurve(G,M,OPTIONS); % use depth weighting MNE for NIRS MEM 
-        else
-            J   =   be_jmne(G,M,OPTIONS);
-        end
-        ratioAmp = 1 / max(max(abs(J))); %Same for both modalities
-        
+                
         for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)
-            
-            ratioG  = 1 / max(max(OPTIONS.automatic.Modality(ii).gain));
+            ratioAmp    = 1 / OPTIONS.automatic.Modality(ii).MNEAmp; %Same for every modalities
+            ratioG      = 1 / max(max(OPTIONS.automatic.Modality(ii).gain));
+
             OPTIONS.automatic.Modality(ii).units.Data_units = ratioAmp*ratioG;
             OPTIONS.automatic.Modality(ii).units.Cov_units = (ratioAmp*ratioG)^2;
             OPTIONS.automatic.Modality(ii).units.Gain_units = ratioG;
-            
-            OPTIONS.automatic.Modality(ii).Jmne = J * ratioAmp;
             OPTIONS.automatic.Modality(ii).ratioAmp = ratioAmp;
+            
         end
 end
 

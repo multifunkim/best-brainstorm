@@ -52,7 +52,7 @@ if (nargin == 0)
 end
 % Check field names of passed OPTIONS and fill missing ones with default values
 OPTIONS = be_struct_copy_fields(OPTIONS, Def_OPTIONS, [], 0);
-scores  =zeros(size(Gstruct.Gn,2),1);
+scores  = zeros(size(Gstruct.Gn,2),1);
 clear Def_OPTIONS
 
 % Check for NaN in the data
@@ -83,15 +83,18 @@ lambda = Gstruct.lambda(indices);
 % Select the columns of B as a function of the ordered singular values up
 % to the threshold value.
 i_T = indices( 1:find(cumsum(lambda)./sum(lambda ) >= OPTIONS.clustering.MSP_R2_threshold,1) );
-Ut = Gstruct.U(:,sort(i_T));
+Ut  = Gstruct.U(:,sort(i_T));
 
 % Create the projector.
 Ms = Ut*Ut'*Mn;
 Ps = Ms * pinv(Ms);
 
+
 % Calculate the MSP scores.
-Ps2=Ps*Gstruct.Gn;
+Ps2 = Ps*Gstruct.Gn;
+
 for i=1:size(Gstruct.Gn,2)
      scores(i)= Gstruct.Gn(:,i)'*Ps2(:,i);
 end
-return
+
+end
