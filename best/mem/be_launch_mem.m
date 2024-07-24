@@ -32,11 +32,6 @@ function [ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-    % normalize alpha for each coloum
-    obj.ALPHA = bsxfun(@rdivide,obj.ALPHA,max(obj.ALPHA,[],1)); % Normalize M
-end
-
 % All samples or a selection?
 Data  = [];
 
