@@ -44,7 +44,7 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
     fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
     
     % Compute covariance matrices
-    if isempty(OPTIONS.automatic.Modality(1).covariance)
+    if 1 || isempty(OPTIONS.automatic.Modality(1).covariance)
         Sigma_d    =   eye(size(M,1));  
     else
         Sigma_d    =   OPTIONS.automatic.Modality(1).covariance;
