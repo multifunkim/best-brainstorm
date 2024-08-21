@@ -183,9 +183,11 @@ if OPTIONS.optional.display
     be_display_entropy_drops(obj,OPTIONS);
 end
 
+%% ===== Un-Normalization  ===== %%
+[obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
+
 %% ===== Update Comment ===== %%
 OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ')'];
-
 
 
 % Results (full temporal sequence)

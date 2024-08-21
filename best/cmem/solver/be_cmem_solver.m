@@ -188,6 +188,10 @@ if OPTIONS.optional.display
     be_display_entropy_drops(obj,OPTIONS);
 end
 
+%% ===== Un-Normalization  ===== %%
+[obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
+
+
 %% ===== Inverse temporal data window  ===== %%
 
 [OPTIONS, obj] = be_apply_window( OPTIONS, obj );

@@ -165,13 +165,6 @@ else
 
 end
 
-if  strcmp(OPTIONS.optional.normalization,'adaptive')
-    ImageGridAmp = ImageGridAmp/OPTIONS.automatic.Modality(1,1).ratioAmp;
-else
-    ImageGridAmp = ImageGridAmp*OPTIONS.automatic.Modality(1).units_dipoles; %Modified by JSB August 17th 2015
-end
-
-
 OPTIONS.automatic.entropy_drops = entropy_drop;
 OPTIONS.automatic.final_alpha   = final_alpha;
 OPTIONS.automatic.final_sigma   = final_sigma;
