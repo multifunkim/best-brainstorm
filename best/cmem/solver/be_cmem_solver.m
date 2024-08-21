@@ -100,7 +100,6 @@ if OPTIONS.optional.verbose
 end 
 
 obj = struct();
-OPTIONS.optional.display = 1;
 [obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
 
 %% Retrieve vertex connectivity - needed for clustering
