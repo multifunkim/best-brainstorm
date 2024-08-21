@@ -155,8 +155,9 @@ elseif strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && ~OPTIONS.wavelet.single_box
         wav(ii,  nbSmpTime/2^scale + transl ) = 1;
     end
 
-    proj     =   be_wavelet_inverse( wav, OPTIONS )';
-    ImageGridAmp(obj.iModS,:)     =  (proj *  ImageSourceAmp')' ;
+    inv_proj     =   be_wavelet_inverse( wav, OPTIONS );
+    ImageGridAmp(obj.iModS,:)     =  ImageSourceAmp * inv_proj;
+    
     ImageGridAmp = ImageGridAmp(:,obj.info_extension.start:obj.info_extension.end);
 else
     ImageGridAmp = zeros( obj.nb_dipoles, size(ImageSourceAmp,2) );
