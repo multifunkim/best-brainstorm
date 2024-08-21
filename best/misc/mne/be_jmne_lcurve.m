@@ -76,8 +76,9 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
 
     Fit     = zeros(1,length(alpha));
     Prior   = zeros(1,length(alpha));
-
-    bst_progress('start', 'wMNE, solving MNE by L-curve ... ' , 'Solving MNE by L-curve ... ', 1, length(param1));
+    if ~OPTIONS.automatic.stand_alone
+        bst_progress('start', 'wMNE, solving MNE by L-curve ... ' , 'Solving MNE by L-curve ... ', 1, length(param1));
+    end
     for iAlpha = 1:length(alpha)
         
         inv_matrix = inv( GSG  + alpha(iAlpha) * Sigma_d );
@@ -87,8 +88,9 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
 
         Fit(iAlpha)     = normest(residual_kernal*M);  % Define Fit as a function of alpha
         Prior(iAlpha)   = normest(wKernel*M);      % Define Prior as a function of alpha
-    
-        bst_progress('inc', 1); 
+        if ~OPTIONS.automatic.stand_alone
+            bst_progress('inc', 1); 
+        end
     end
 
     % Fid alpha optimal based on l-curve
@@ -101,6 +103,9 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
         varargout{1} = alpha(Index);
     end
 
+    if ~OPTIONS.automatic.stand_alone
+        bst_progress('stop');
+    end
     fprintf('done. \n');
     
     if OPTIONS.optional.display
