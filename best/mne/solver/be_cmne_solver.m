@@ -51,7 +51,9 @@ function [Results, OPTIONS] = be_cmne_solver(HeadModel, OPTIONS, Results)
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline cMNE\n');
 end 
- obj = struct('hfig', [] , 'hfigtab', [] );
+
+obj = struct('hfig', [] , 'hfigtab', [] );
+[obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
 
  %% Retrieve vertex connectivity - needed for clustering
 [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);

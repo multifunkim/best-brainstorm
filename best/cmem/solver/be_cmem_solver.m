@@ -98,7 +98,10 @@ function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS, Results)
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline cMEM\n');
 end 
- obj = struct('hfig', [] , 'hfigtab', [] );
+
+obj = struct();
+OPTIONS.optional.display = 1;
+[obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
 
 %% Retrieve vertex connectivity - needed for clustering
 [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
@@ -154,8 +157,6 @@ end
 % and the leadfields
 [OPTIONS] = be_normalize_and_units(OPTIONS);
 
-
-
 %% ===== Double precision to single  ===== %%
 % relax the double precision for the msp (leadfield and data)
 [OPTIONS] = be_switch_precision( OPTIONS, 'single' );
@@ -184,7 +185,9 @@ obj = be_fusion_of_modalities(obj, OPTIONS);
 %% ===== Solve the MEM ===== %%
 
 [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
-
+if OPTIONS.optional.display
+    be_display_entropy_drops(obj,OPTIONS);
+end
 
 %% ===== Inverse temporal data window  ===== %%
 

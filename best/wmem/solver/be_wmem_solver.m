@@ -95,7 +95,8 @@ if OPTIONS.optional.verbose
 end        
         
 %% Useful variables
- obj = struct('hfig', [] , 'hfigtab', [],  'ImageGridAmp', []);
+obj = struct('ImageGridAmp', []);
+[obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
 
 if ~isfield(HeadModel, 'vertex_connectivity')
     [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
@@ -173,12 +174,19 @@ end
 % matrix W'W from the Henson paper
 [OPTIONS, obj.GreenM2] = be_spatial_priorw( OPTIONS, obj.VertConn);
 
+%% ===== Fuse modalities ===== %%   
+obj = be_fusion_of_modalities(obj.data,obj,OPTIONS);
+
 %% ===== Solve the MEM ===== %%
-% the main inverse process
-[obj, OPTIONS] = be_main_wmem(obj, OPTIONS);
+[obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
 if OPTIONS.optional.display
     be_display_entropy_drops(obj,OPTIONS);
 end
+
+%% ===== Update Comment ===== %%
+OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ')'];
+
+
 
 % Results (full temporal sequence)
 Results = struct(...
