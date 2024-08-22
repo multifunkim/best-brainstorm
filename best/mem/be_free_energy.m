@@ -71,20 +71,19 @@ for ii = 1:nb_clusters
     G_cluster = clusters(ii).G;
     active_probability = clusters(ii).active_probability;
     active_mean        = clusters(ii).active_mean;
+    active_var         = clusters(ii).active_var;
 
-    xi = G_cluster' * lambda;
-    
-    coeffs = [1-active_probability,  active_probability];
+    % xi = G_cluster' * lambda;
+    xi = (lambda_trans * G_cluster)';
          
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Estimating dF*(xi) (before F*(xi) to optimize the computing time
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % dF was split into dF1a and dF1b for optimization purposes only.
     
-    % Sigma is a symetric matrix, the transpose is not necessary
-    
-    dF1a = G_cluster * clusters(ii).active_var * xi;
-    
+    % Sigma (active_var) is a symetric matrix, the transpose is not necessary
+    dF1a = G_cluster * (active_var * xi);
+
     if ~isempty(active_mean)
         dF1b = G_cluster * active_mean;
         dF1 = dF1a + dF1b;
@@ -122,10 +121,10 @@ for ii = 1:nb_clusters
     % Reorganizing the equations for better results yields:
     % F*(xi)  = F1 + ln( (1-alpha) exp(F0 - F1) + alpha) if F1 > F0
     % F*(xi)  = F0 + ln( (1-alpha) + alpha * exp(F1-F0) ) if F1 < F0
+
     F_max = max(F0,F1);
     free_energy = exp([F0;F1] - F_max);
-    coeffs_free_energy = coeffs *  free_energy;
-    
+    coeffs_free_energy = [1-active_probability,  active_probability] *  free_energy;
     F = F_max + log(coeffs_free_energy);
     
     % ERROR when coeffs_free_energy == 0
