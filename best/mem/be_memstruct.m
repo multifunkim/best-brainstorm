@@ -77,8 +77,6 @@ function [OPTIONS, mem, active_var_out] = be_memstruct(OPTIONS, obj)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-
-
 % some basic parameters
 nb_clusters = max(obj.clusters);
 nb_sources  = obj.nb_sources;
@@ -86,12 +84,12 @@ nb_sensors  = obj.nb_channels;
 
 % some definitions 
 clusters_struct(nb_clusters) = struct;
-cluster_G = cell(1,nb_clusters);
-cID = cell(1,nb_clusters);
-proba = cell(1,nb_clusters);
+cluster_G   = cell(1,nb_clusters);
+cID         = cell(1,nb_clusters);
+proba       = cell(1,nb_clusters);
 active_mean = cell(1,nb_clusters);
-inactive_var = cell(1,nb_clusters);
-active_var = cell(1,nb_clusters);
+inactive_var= cell(1,nb_clusters);
+active_var  = cell(1,nb_clusters);
 active_var_out = zeros(obj.nb_sources,1);
 
 % Preliminar computation (used in the minimum norm solution)
@@ -111,11 +109,12 @@ end
 for ii = 1:nb_clusters
 
     % CLUSTER: Extraction of the parcel-wise lead field and index of sources
-    cluster_G{ii} =  obj.gain(:,obj.clusters==ii);
-    cID{ii} = find(obj.clusters == ii);
+    idx_cluster     = find(obj.clusters == ii);
+    cluster_G{ii}   = obj.gain(:,idx_cluster);
+    cID{ii}         = idx_cluster;
 
     % ALPHA: activation probability (alpha's) 
-    prb = obj.active_probability(cID{ii});
+    prb = obj.active_probability(idx_cluster);
     proba{ii}=prb(1);
 
     % MU (different options are proposed)
@@ -127,19 +126,19 @@ for ii = 1:nb_clusters
         case 1  % Method 1
             % the following function is in /misc
             MNS = be_solve_wmn(obj.data+rand(size(obj.data))*10, obj.gain, speye(nb_sources) );
-            active_mean{ii} = mean( MNS(obj.clusters==ii) );
+            active_mean{ii} = mean( MNS(idx_cluster) );
         case 2  % Method 2
             active_mean{ii} = []; 
         case 3  % Methode 3 (Minimum Norm regularized without null parcel)
             active_mean{ii} = mean(cluster_G{ii}'*GpGptinv_M);
         case 4
-            active_mean{ii} = mean( obj.Jmne(obj.clusters==ii) );
+            active_mean{ii} = mean( obj.Jmne(idx_cluster) );
         otherwise
             error('Wrong MU Method')
     end
 
     if ~isempty(active_mean{ii} )
-        active_mean{ii} = active_mean{ii} * ones(length(cID{ii}),1);
+        active_mean{ii} = active_mean{ii} * ones(length(idx_cluster),1);
     end
     
     % SIGMA: spatial smoothing (different options are proposed)
@@ -148,12 +147,12 @@ for ii = 1:nb_clusters
     % diagonal. Always multiplied with the mean activation (and a
     % percentage)   
     if isfield(OPTIONS.optional.clustering, 'initial_sigma')
-        active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(cID{ii}) );     
+        active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(idx_cluster) );     
     else      
         if OPTIONS.model.depth_weigth_MEM > 0 
-            active_var{ii} = full( OPTIONS.solver.active_var_mult * mean(jMNE_square(cID{ii}))  *  obj.GreenM2(cID{ii},cID{ii}) *  sparse(diag(OPTIONS.automatic.Sigma_s(cID{ii}))));
+            active_var{ii} = full( OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  *  obj.GreenM2(idx_cluster,idx_cluster) *  sparse(diag(OPTIONS.automatic.Sigma_s(idx_cluster))));
         else
-            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2 );
+            active_var{ii} = obj.GreenM2(idx_cluster,idx_cluster) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(idx_cluster).^2 );
         end
     end
 
@@ -161,7 +160,7 @@ for ii = 1:nb_clusters
     
     % SIGMA0: variance of the inactive state (not relevant for the present version)
     if OPTIONS.solver.inactive_var_mult ~= 0 
-        inactive_var{ii} = eye(length(cID{ii})) * abs(OPTIONS.solver.inactive_var_mult);   
+        inactive_var{ii} = eye(length(idx_cluster)) * abs(OPTIONS.solver.inactive_var_mult);   
     else
         inactive_var{ii} = [];
     end
