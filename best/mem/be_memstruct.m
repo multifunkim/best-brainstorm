@@ -132,7 +132,7 @@ for ii = 1:nb_clusters
             MNS = be_solve_wmn(obj.data+rand(size(obj.data))*10, obj.gain, speye(nb_sources) );
             active_mean{ii} = mean( MNS(obj.clusters==ii) );
         case 2  % Method 2
-            active_mean{ii} = 0;
+            active_mean{ii} = []; 
         case 3  % Methode 3 (Minimum Norm regularized without null parcel)
             active_mean{ii} = mean(cluster_G{ii}'*GpGptinv_M);
         case 4
@@ -140,8 +140,10 @@ for ii = 1:nb_clusters
         otherwise
             error('Wrong MU Method')
     end
-    active_mean{ii} = active_mean{ii} * ones(length(cID{ii}),1);
 
+    if ~isempty(active_mean{ii} )
+        active_mean{ii} = active_mean{ii} * ones(length(cID{ii}),1);
+    end
     
     % SIGMA: spatial smoothing (different options are proposed)
     % OPTIONS.spatial_smoothing = 1 : we use the Green matrix to install
@@ -161,7 +163,12 @@ for ii = 1:nb_clusters
     active_var_out(cID{ii}) = diag( active_var{ii} );
     
     % SIGMA0: variance of the inactive state (not relevant for the present version)
-    inactive_var{ii} = eye(length(cID{ii})) * abs(OPTIONS.solver.inactive_var_mult);    
+    if OPTIONS.solver.inactive_var_mult ~= 0 
+        inactive_var{ii} = eye(length(cID{ii})) * abs(OPTIONS.solver.inactive_var_mult);   
+    else
+        inactive_var{ii} = [];
+    end
+
 end  
         
 
