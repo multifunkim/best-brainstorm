@@ -183,8 +183,10 @@ if OPTIONS.optional.display
     be_display_entropy_drops(obj,OPTIONS);
 end
 
-%% Conversion to time-series
+%% ===== Un-Normalization  ===== %%
+[obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
 
+%% Conversion to time-series
 if ~OPTIONS.wavelet.single_box
     
     nbSmp       = size(obj.ImageGridAmp,2);
@@ -197,22 +199,18 @@ if ~OPTIONS.wavelet.single_box
         wav(ii,  nbSmpTime/2^scale + transl ) = 1;
     end
 
-    inv_proj     =   be_wavelet_inverse( wav, OPTIONS );
-
-    ImageGridAmp =  obj.ImageGridAmp * inv_proj;
-    obj.ImageGridAmp = ImageGridAmp(:,obj.info_extension.start:obj.info_extension.end);
+    inv_proj    =   be_wavelet_inverse( wav, OPTIONS );
+    inv_proj    =   inv_proj(:,obj.info_extension.start:obj.info_extension.end);
+    obj.ImageGridAmp =  obj.ImageGridAmp * inv_proj;
 end
-
-%% ===== Un-Normalization  ===== %%
-[obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
 
 %% ===== Update Comment ===== %%
 OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ')'];
 
-
 % Results (full temporal sequence)
 Results = struct(...
     'ImageGridAmp',     obj.ImageGridAmp, ...
+    'ImagingPostKernel',inv_proj, ...
     'ImagingKernel',    [], ...
     'MEMoptions',       OPTIONS, ...
     'MEMdata',          obj);
