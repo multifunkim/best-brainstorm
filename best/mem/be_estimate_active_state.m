@@ -75,8 +75,12 @@ for ii = 1 : nb_clusters
     else
         F0 = 1/2 * xi_trans * omega * xi;             
     end
-    F1 = 1/2 * xi_trans * sigma * xi + xi_trans * mu;
-    
+
+    if isempty(mu)
+        F1 = 1/2 * xi_trans * sigma * xi;
+    else
+        F1 = 1/2 * xi_trans * sigma * xi + xi_trans * mu;
+    end
     F = F0 - F1;
     
     % Estimating alpha*
@@ -92,10 +96,19 @@ for ii = 1 : nb_clusters
     
     
     % Estimating amplitudes*
-    estimated_amp{ii} = estimated_alpha * mu + ...
-        ((1 - estimated_alpha) * omega * xi) + ...
-        estimated_alpha * sigma * xi;
+    estimated_amp{ii} = estimated_alpha * sigma * xi;
+
+    if ~isempty(mu)
+        estimated_amp{ii} = estimated_amp{ii}  + ...
+                             estimated_alpha * mu;
+    end
+
+    if ~isempty(omega)
+        estimated_amp{ii}  = estimated_amp{ii}  + ...
+                             ((1 - estimated_alpha) * omega * xi);
+    end
+
 end
 
-return
+end
 

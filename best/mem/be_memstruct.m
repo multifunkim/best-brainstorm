@@ -77,8 +77,6 @@ function [OPTIONS, mem, active_var_out] = be_memstruct(OPTIONS, obj)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-
-
 % some basic parameters
 nb_clusters = max(obj.clusters);
 nb_sources  = obj.nb_sources;
@@ -86,12 +84,12 @@ nb_sensors  = obj.nb_channels;
 
 % some definitions 
 clusters_struct(nb_clusters) = struct;
-cluster_G = cell(1,nb_clusters);
-cID = cell(1,nb_clusters);
-proba = cell(1,nb_clusters);
+cluster_G   = cell(1,nb_clusters);
+cID         = cell(1,nb_clusters);
+proba       = cell(1,nb_clusters);
 active_mean = cell(1,nb_clusters);
-inactive_var = cell(1,nb_clusters);
-active_var = cell(1,nb_clusters);
+inactive_var= cell(1,nb_clusters);
+active_var  = cell(1,nb_clusters);
 active_var_out = zeros(obj.nb_sources,1);
 
 % Preliminar computation (used in the minimum norm solution)
@@ -104,21 +102,24 @@ if OPTIONS.model.active_mean_method == 3
     GpGptinv_M = V(:,1:I) * diag(1./eigen(1:I)) * U(:,1:I)' * obj.data;
 end
 
+% When there is no deph-weighting, then sigma_s is obj.GreenM2 * speye(size(G,2)
+Sigma_s = OPTIONS.automatic.Sigma_s;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the following loop goes though each of the clusters (non null clusters)
 % and initializes the parameters of the model attached to each of them
 
-%% Add option 
 
 
 for ii = 1:nb_clusters
 
     % CLUSTER: Extraction of the parcel-wise lead field and index of sources
-    cluster_G{ii} =  obj.gain(:,obj.clusters==ii);
-    cID{ii} = find(obj.clusters == ii);
+    idx_cluster     = find(obj.clusters == ii);
+    cluster_G{ii}   = obj.gain(:,idx_cluster);
+    cID{ii}         = idx_cluster;
 
     % ALPHA: activation probability (alpha's) 
-    prb = obj.active_probability(cID{ii});
+    prb = obj.active_probability(idx_cluster);
     proba{ii}=prb(1);
 
     % MU (different options are proposed)
@@ -130,18 +131,20 @@ for ii = 1:nb_clusters
         case 1  % Method 1
             % the following function is in /misc
             MNS = be_solve_wmn(obj.data+rand(size(obj.data))*10, obj.gain, speye(nb_sources) );
-            active_mean{ii} = mean( MNS(obj.clusters==ii) );
+            active_mean{ii} = mean( MNS(idx_cluster) );
         case 2  % Method 2
-            active_mean{ii} = 0;
+            active_mean{ii} = []; 
         case 3  % Methode 3 (Minimum Norm regularized without null parcel)
             active_mean{ii} = mean(cluster_G{ii}'*GpGptinv_M);
         case 4
-            active_mean{ii} = mean( obj.Jmne(obj.clusters==ii) );
+            active_mean{ii} = mean( obj.Jmne(idx_cluster) );
         otherwise
             error('Wrong MU Method')
     end
-    active_mean{ii} = active_mean{ii} * ones(length(cID{ii}),1);
 
+    if ~isempty(active_mean{ii} )
+        active_mean{ii} = active_mean{ii} * ones(length(idx_cluster),1);
+    end
     
     % SIGMA: spatial smoothing (different options are proposed)
     % OPTIONS.spatial_smoothing = 1 : we use the Green matrix to install
@@ -149,19 +152,20 @@ for ii = 1:nb_clusters
     % diagonal. Always multiplied with the mean activation (and a
     % percentage)   
     if isfield(OPTIONS.optional.clustering, 'initial_sigma')
-        active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(cID{ii}) );     
+        active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(idx_cluster) );     
     else      
-        if OPTIONS.model.depth_weigth_MEM > 0 
-            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2) * diag(OPTIONS.automatic.Sigma_s(cID{ii}));
-        else
-            active_var{ii} = obj.GreenM2(cID{ii},cID{ii}) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(cID{ii}).^2 );
-        end
+        active_var{ii} = OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  * Sigma_s(idx_cluster,idx_cluster) ;
     end
 
-    active_var_out(cID{ii}) = diag( active_var{ii} );
+    active_var_out(idx_cluster) = diag( active_var{ii} );
     
     % SIGMA0: variance of the inactive state (not relevant for the present version)
-    inactive_var{ii} = eye(length(cID{ii})) * abs(OPTIONS.solver.inactive_var_mult);    
+    if OPTIONS.solver.inactive_var_mult ~= 0 
+        inactive_var{ii} = eye(length(idx_cluster)) * abs(OPTIONS.solver.inactive_var_mult);   
+    else
+        inactive_var{ii} = [];
+    end
+
 end  
         
 
