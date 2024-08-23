@@ -67,7 +67,7 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
     wSG = sqrt(Sigma_s) * G';
 
     % Parameter for l-curve
-    param  = logspace(-2,3,100);
+    param  = [0.1:0.1:1 1:5:100 100:100:1000]; 
 
     % Scale alpha using trace(G*G')./trace(W'*W)  
     scale   = trace(G*G')./ trace(inv(Sigma_s));       
