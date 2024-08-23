@@ -102,7 +102,7 @@ if OPTIONS.model.active_mean_method == 3
     GpGptinv_M = V(:,1:I) * diag(1./eigen(1:I)) * U(:,1:I)' * obj.data;
 end
 
-% When there is no deph-weighting, then sigma_s is identity
+% When there is no deph-weighting, then sigma_s is obj.GreenM2 * speye(size(G,2)
 Sigma_s = OPTIONS.automatic.Sigma_s;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -154,7 +154,7 @@ for ii = 1:nb_clusters
     if isfield(OPTIONS.optional.clustering, 'initial_sigma')
         active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(idx_cluster) );     
     else      
-        active_var{ii} = full( OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  *  obj.GreenM2(idx_cluster,idx_cluster) * Sigma_s(idx_cluster,idx_cluster)) ;
+        active_var{ii} = OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  * Sigma_s(idx_cluster,idx_cluster) ;
     end
 
     active_var_out(idx_cluster) = diag( active_var{ii} );
