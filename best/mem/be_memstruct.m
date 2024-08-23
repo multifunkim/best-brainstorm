@@ -150,13 +150,13 @@ for ii = 1:nb_clusters
         active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(idx_cluster) );     
     else      
         if OPTIONS.model.depth_weigth_MEM > 0 
-            active_var{ii} = full( OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  *  obj.GreenM2(idx_cluster,idx_cluster) *  sparse(diag(OPTIONS.automatic.Sigma_s(idx_cluster))));
+            active_var{ii} = full( OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  *  obj.GreenM2(idx_cluster,idx_cluster) * OPTIONS.automatic.Sigma_s(idx_cluster,idx_cluster)) ;
         else
             active_var{ii} = obj.GreenM2(idx_cluster,idx_cluster) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(idx_cluster).^2 );
         end
     end
 
-    active_var_out(cID{ii}) = diag( active_var{ii} );
+    active_var_out(idx_cluster) = diag( active_var{ii} );
     
     % SIGMA0: variance of the inactive state (not relevant for the present version)
     if OPTIONS.solver.inactive_var_mult ~= 0 
