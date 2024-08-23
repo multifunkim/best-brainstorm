@@ -102,9 +102,14 @@ if OPTIONS.model.active_mean_method == 3
     GpGptinv_M = V(:,1:I) * diag(1./eigen(1:I)) * U(:,1:I)' * obj.data;
 end
 
+% When there is no deph-weighting, then sigma_s is identity
+Sigma_s = OPTIONS.automatic.Sigma_s;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the following loop goes though each of the clusters (non null clusters)
 % and initializes the parameters of the model attached to each of them
+
+
 
 for ii = 1:nb_clusters
 
@@ -149,11 +154,7 @@ for ii = 1:nb_clusters
     if isfield(OPTIONS.optional.clustering, 'initial_sigma')
         active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(idx_cluster) );     
     else      
-        if OPTIONS.model.depth_weigth_MEM > 0 
-            active_var{ii} = full( OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  *  obj.GreenM2(idx_cluster,idx_cluster) * OPTIONS.automatic.Sigma_s(idx_cluster,idx_cluster)) ;
-        else
-            active_var{ii} = obj.GreenM2(idx_cluster,idx_cluster) * OPTIONS.solver.active_var_mult * mean( obj.Jmne(idx_cluster).^2 );
-        end
+        active_var{ii} = full( OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  *  obj.GreenM2(idx_cluster,idx_cluster) * Sigma_s(idx_cluster,idx_cluster)) ;
     end
 
     active_var_out(idx_cluster) = diag( active_var{ii} );
