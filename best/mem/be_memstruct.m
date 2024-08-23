@@ -103,7 +103,7 @@ if OPTIONS.model.active_mean_method == 3
 end
 
 % When there is no deph-weighting, then sigma_s is obj.GreenM2 * speye(size(G,2)
-Sigma_s = OPTIONS.automatic.Sigma_s;
+Sigma_s = obj.Sigma_s;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the following loop goes though each of the clusters (non null clusters)

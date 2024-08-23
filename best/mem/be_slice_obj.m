@@ -51,9 +51,9 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     obj_const.nb_channels   = obj.nb_channels;
     obj_const.nb_dipoles    = obj.nb_dipoles;
 
-    obj_const.GreenM2       = obj.GreenM2;
-    obj_const.gain          = obj.gain;
 
+    obj_const.Sigma_s  = obj.Sigma_s;
+    obj_const.gain     = obj.gain;
 
     OPTIONS.automatic   = rmfield(OPTIONS.automatic,'Modality');
     OPTIONS             = rmfield(OPTIONS,'mandatory');

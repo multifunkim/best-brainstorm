@@ -115,6 +115,6 @@ if size(OPTIONS.automatic.Modality(1).covariance,3)==1
     obj.noise_var = diag( obj.noise_var );
 end
 
-if OPTIONS.optional.verbose, fprintf('\n'); end
+if OPTIONS.optional.verbose, fprintf(' done.\n'); end
 
 end
