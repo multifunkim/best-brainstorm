@@ -1,13 +1,9 @@
-function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data,obj, OPTIONS)
+function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
-    nbSmp = size(Data,2); 
-    obj_slice(nbSmp) = struct();
+    nbSmp               = size(Data,2); 
+    obj_slice(nbSmp)    = struct();
 
     for i = 1:nbSmp
-
-        obj_slice(i).SCR = obj.SCR(:,i);
-        obj_slice(i).CLS = obj.CLS(:,i);
-        obj_slice(i).ALPHA = obj.ALPHA(:,i);
 
         obj_slice(i).clusters           = obj.CLS(:,i);
         obj_slice(i).active_probability = obj.ALPHA(:,i);
@@ -28,7 +24,6 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data,obj, OPTIONS)
             obj_slice(i).noise_var = squeeze(obj.noise_var(:,:,OPTIONS.automatic.selected_samples(2,ii)) );
         
         elseif (size(obj.noise_var,3)>1) && OPTIONS.optional.baseline_shuffle == 1
-    
             tol = OPTIONS.optional.baseline_shuffle_windows / 2; 
             idx_baseline = find(obj.time(i) > OPTIONS.automatic.Modality(1).BaselineTime(1,:) & ...
                                 obj.time(i) <=  (OPTIONS.automatic.Modality(1).BaselineTime(end,:)+tol));
@@ -47,25 +42,22 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data,obj, OPTIONS)
             end
             obj_slice(i).noise_var = squeeze(obj.noise_var(:,:, idx_baseline) );
         else
-
             obj_const.noise_var = obj.noise_var;
         end
 
-
-        obj_slice(i).nb_sources  = obj.nb_sources;
-        obj_slice(i).nb_channels = obj.nb_channels;
-        obj_slice(i).nb_dipoles  = obj.nb_dipoles;
-
     end
 
-    obj_const.GreenM2  = obj.GreenM2;
-    obj_const.gain     = obj.gain;
+    obj_const.nb_sources    = obj.nb_sources;
+    obj_const.nb_channels   = obj.nb_channels;
+    obj_const.nb_dipoles    = obj.nb_dipoles;
+
+    obj_const.GreenM2       = obj.GreenM2;
+    obj_const.gain          = obj.gain;
 
 
     OPTIONS.automatic   = rmfield(OPTIONS.automatic,'Modality');
     OPTIONS             = rmfield(OPTIONS,'mandatory');
     OPTIONS.optional.TimeSegment = [];
-    OPTIONS.optional.Baseline = [];
+    OPTIONS.optional.Baseline    = [];
 
 end
-
