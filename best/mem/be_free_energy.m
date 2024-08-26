@@ -68,13 +68,12 @@ dD = M - noise_var * lambda;
 % cluster
 for ii = 1:nb_clusters
 
-    G_cluster = clusters(ii).G;
     active_probability = clusters(ii).active_probability;
     active_mean        = clusters(ii).active_mean;
-    G_active_var       = clusters(ii).G_active_var;
 
-    % xi = G_cluster' * lambda;
-    xi = (lambda_trans * G_cluster)';
+    if ~isempty(omega)
+        xi = clusters(ii).G' * lambda;
+    end
          
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Estimating dF*(xi) (before F*(xi) to optimize the computing time
@@ -82,10 +81,12 @@ for ii = 1:nb_clusters
     % dF was split into dF1a and dF1b for optimization purposes only.
     
     % Sigma (active_var) is a symetric matrix, the transpose is not necessary
-    dF1a = G_active_var * xi; 
+    % dF1a = G * active_var * xi =  G * active_var * G' * lambda. 
+    % G *active_var * G'  is precomputed and stored in G_active_var_Gt
+    dF1a = clusters(ii).G_active_var_Gt * lambda; 
 
     if ~isempty(active_mean)
-        dF1b = G_cluster * active_mean;
+        dF1b = clusters(ii).G * active_mean;
         dF1 = dF1a + dF1b;
     else
         dF1 = dF1a;
