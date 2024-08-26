@@ -153,7 +153,7 @@ for ii = 1:nb_clusters
     else
         if isempty(omega)
             % dF0 = zeros(size(dF1));   free_energy(2)  == 1
-            dF  = dF1 *  active_probability / coeffs_free_energy;
+            dF  = dF1 *  (active_probability / coeffs_free_energy);
         else
             dF0 = clusters(ii).G * omega * xi;
             dF = [ (1 - active_probability)*dF0,  active_probability*dF1] * free_energy ./ coeffs_free_energy;
