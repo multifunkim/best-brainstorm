@@ -66,10 +66,12 @@ dD = M - noise_var * lambda;
 % Third term of the equation and the derivative is substracted from
 % D(lambda) and dD(lambda) respeectively. The sum is calculated over each
 % cluster
-for ii = 1:nb_clusters
 
+isUsingActiveMean = ~isempty(clusters(1).active_mean);
+
+for ii = 1:nb_clusters
+    
     active_probability = clusters(ii).active_probability;
-    active_mean        = clusters(ii).active_mean;
 
     if ~isempty(omega)
         xi = clusters(ii).G' * lambda;
@@ -85,7 +87,9 @@ for ii = 1:nb_clusters
     % G *active_var * G'  is precomputed and stored in G_active_var_Gt
     dF1a = clusters(ii).G_active_var_Gt * lambda; 
 
-    if ~isempty(active_mean)
+    if isUsingActiveMean
+        active_mean        = clusters(ii).active_mean;
+
         dF1b = clusters(ii).G * active_mean;
         dF1 = dF1a + dF1b;
     else
@@ -108,7 +112,7 @@ for ii = 1:nb_clusters
     % optimization purposes only.
     F1a = 1/2 * lambda_trans * dF1a;
     
-    if ~isempty(active_mean)
+    if isUsingActiveMean
         F1b = lambda_trans * dF1b;
         F1 = F1a + F1b;
     else
@@ -123,10 +127,22 @@ for ii = 1:nb_clusters
     % F*(xi)  = F1 + ln( (1-alpha) exp(F0 - F1) + alpha) if F1 > F0
     % F*(xi)  = F0 + ln( (1-alpha) + alpha * exp(F1-F0) ) if F1 < F0
 
-    F_max = max(F0,F1);
-    free_energy = exp([F0;F1] - F_max);
-    coeffs_free_energy = [1-active_probability,  active_probability] *  free_energy;
-    F = F_max + log(coeffs_free_energy);
+    if isempty(omega) % we know that f_max = F1 and F0 = 0
+        F_max = F1;
+
+        % free_energy = [exp(-F_max)  ; 1 ];  we dont need to compute as we
+        % only need free_energy(2) = 1
+
+        coeffs_free_energy = (1-active_probability) * exp(-F_max)  +  active_probability;
+
+        F = F_max + log(coeffs_free_energy);
+    else
+
+        F_max = max(F0,F1);
+        free_energy = exp([F0;F1] - F_max);
+        coeffs_free_energy = [1-active_probability,  active_probability] *  free_energy;
+        F = F_max + log(coeffs_free_energy);
+    end
     
     % ERROR when coeffs_free_energy == 0
     if isinf(F)
@@ -136,8 +152,8 @@ for ii = 1:nb_clusters
 
     else
         if isempty(omega)
-            % dF0 = zeros(size(dF1));
-            dF  = active_probability * dF1 * free_energy(2) ./ coeffs_free_energy;
+            % dF0 = zeros(size(dF1));   free_energy(2)  == 1
+            dF  = dF1 *  active_probability / coeffs_free_energy;
         else
             dF0 = clusters(ii).G * omega * xi;
             dF = [ (1 - active_probability)*dF0,  active_probability*dF1] * free_energy ./ coeffs_free_energy;
