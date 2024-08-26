@@ -90,6 +90,7 @@ proba       = cell(1,nb_clusters);
 active_mean = cell(1,nb_clusters);
 inactive_var= cell(1,nb_clusters);
 active_var  = cell(1,nb_clusters);
+G_active_var= cell(1,nb_clusters);
 active_var_out = zeros(obj.nb_sources,1);
 
 % Preliminar computation (used in the minimum norm solution)
@@ -157,6 +158,7 @@ for ii = 1:nb_clusters
         active_var{ii} = OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  * Sigma_s(idx_cluster,idx_cluster) ;
     end
 
+    G_active_var{ii} = cluster_G{ii} * active_var{ii} ;
     active_var_out(idx_cluster) = diag( active_var{ii} );
     
     % SIGMA0: variance of the inactive state (not relevant for the present version)
@@ -175,6 +177,7 @@ end
 [clusters_struct.active_mean]        = active_mean{:};
 [clusters_struct.active_var]         = active_var{:};
 [clusters_struct.inactive_var]       = inactive_var{:};  
+[clusters_struct.G_active_var]       = G_active_var{:};  
 [clusters_struct.indices]            = cID{:};
 
 % Creation of the structure to solve the MEM

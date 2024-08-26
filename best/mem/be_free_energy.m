@@ -71,7 +71,7 @@ for ii = 1:nb_clusters
     G_cluster = clusters(ii).G;
     active_probability = clusters(ii).active_probability;
     active_mean        = clusters(ii).active_mean;
-    active_var         = clusters(ii).active_var;
+    G_active_var       = clusters(ii).G_active_var;
 
     % xi = G_cluster' * lambda;
     xi = (lambda_trans * G_cluster)';
@@ -82,7 +82,7 @@ for ii = 1:nb_clusters
     % dF was split into dF1a and dF1b for optimization purposes only.
     
     % Sigma (active_var) is a symetric matrix, the transpose is not necessary
-    dF1a = G_cluster * (active_var * xi);
+    dF1a = G_active_var * xi; 
 
     if ~isempty(active_mean)
         dF1b = G_cluster * active_mean;
