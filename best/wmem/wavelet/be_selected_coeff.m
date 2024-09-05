@@ -83,7 +83,7 @@ for jj = 1 : length(OPTIONS.mandatory.DataTypes)
     
     % === selection (based on the power)
         [Wgfp_sorted, I] = sort(Wgfp,'descend');
-        Ic = find(cumsum(Wgfp_sorted)>=pc_power*sum(Wgfp_sorted),1,'first');
+        Ic = find(cumsum(Wgfp_sorted)/sum(Wgfp_sorted) <= pc_power,1,'last');
         i_kept = i_kept(I(1:Ic));
         j_kept = j_kept(I(1:Ic));
         k_kept = k_kept(I(1:Ic));
@@ -116,6 +116,9 @@ tma = OPTIONS.automatic.selected_samples(6,:)+2.^(OPTIONS.automatic.selected_sam
 sl = ~((tma<t1)|(tmi>t2));
 OPTIONS.automatic.selected_samples = [OPTIONS.automatic.selected_samples ; sl];
 for ii = 1 : length(OPTIONS.mandatory.DataTypes)
+    tmi = OPTIONS.automatic.Modality(ii).selected_jk(6,:)-2.^(OPTIONS.automatic.Modality(ii).selected_jk(2,:)-1)/fs/2;
+    tma = OPTIONS.automatic.Modality(ii).selected_jk(6,:)+2.^(OPTIONS.automatic.Modality(ii).selected_jk(2,:)-1)/fs/2;
+    sl = ~((tma<t1)|(tmi>t2));
     OPTIONS.automatic.selected_values{ii} = [OPTIONS.automatic.selected_values{ii} ; sl];
 end
 

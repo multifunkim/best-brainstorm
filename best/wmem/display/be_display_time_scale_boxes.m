@@ -93,7 +93,7 @@ for ii = 1:length(OPTIONS.mandatory.DataTypes)
               'LineStyle','-', ...
               'edgecolor','k', ...
               'FaceColor',MMM(b,:));
-    pause(0.015)
+    %pause(0.015)
     end
     hold off
     
@@ -112,7 +112,7 @@ for ii = 1:length(OPTIONS.mandatory.DataTypes)
         tt = OPTIONS.automatic.Modality(ii).selected_jk(6,bj);
         vv = OPTIONS.automatic.selected_values{ii}(2,bj);
         tv = OPTIONS.automatic.selected_values{ii}(3,bj);
-        stem(tt,vv,'xk'); hold on; plot(tt(tv==1),vv(tv==1),'xr'); hold off
+        stem(ax, tt,vv,'xk'); hold on; plot(ax, tt(tv==1),vv(tv==1),'xr'); hold off
     end
     
     pause(3)

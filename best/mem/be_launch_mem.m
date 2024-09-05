@@ -41,20 +41,21 @@ elseif ~strcmp(OPTIONS.mandatory.pipeline,'wMEM')
     Data  = obj.data;
 end
 
-% time series or wavelet representation ?
+% time series or wavelet representation
 nbSmp           = size(Data,2);
-ImageSourceAmp  = zeros( length(obj.iModS), 1 );
 
 if strcmp(OPTIONS.mandatory.pipeline,'wMEM')
-    obj.time     = OPTIONS.automatic.selected_samples(6,:); % USELESS  ???
-    obj.scale    = OPTIONS.automatic.selected_samples(2,:); % USELESS ???
+    obj.time     = OPTIONS.automatic.selected_samples(6,:); 
+    obj.scale    = OPTIONS.automatic.selected_samples(2,:); 
     if ~OPTIONS.wavelet.single_box
-        ImageSourceAmp  = sparse(length(obj.iModS), size(obj.data{1},2));
+        ImageSourceAmp  = zeros(length(obj.iModS), nbSmp);
+    else
+        ImageSourceAmp  = zeros( length(obj.iModS), 1 );
     end
 else
-    obj.time        = obj.t0+(1:nbSmp)/OPTIONS.automatic.sampling_rate; % USELESS ??
-    obj.scale       = zeros(1,nbSmp); % ??????
-    ImageSourceAmp  = sparse(length(obj.iModS), nbSmp);  
+    obj.time        = obj.t0+(1:nbSmp)/OPTIONS.automatic.sampling_rate; 
+    obj.scale       = zeros(1,nbSmp); 
+    ImageSourceAmp  = zeros(length(obj.iModS), nbSmp);  
 end
 
 % fixed parameters
@@ -62,14 +63,30 @@ entropy_drop    = zeros(1,nbSmp);
 final_alpha     = cell(1,nbSmp);
 final_sigma     = cell(1,nbSmp);
 
-bst_progress('start', 'Solving MEM', 'Solving MEM', 0, nbSmp);
+
+% Pre-compute Sigma_s
+
+if OPTIONS.model.depth_weigth_MEM > 0 
+    p = OPTIONS.model.depth_weigth_MEM;
+    G = obj.gain;
+    OPTIONS.automatic.Sigma_s = power(diag(G'*G) ,-p);
+end
+
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('start', 'Solving MEM', 'Solving MEM', 0, nbSmp);
+end
+
+
 
 if OPTIONS.solver.parallel_matlab == 1
     warning off
-
-    q = parallel.pool.DataQueue;
-    afterEach(q, @(x) bst_progress('inc', 1));
     
+    
+    q = parallel.pool.DataQueue;
+    if ~OPTIONS.automatic.stand_alone
+        afterEach(q, @(x) bst_progress('inc', 1));
+    end
+
     time_it_starts = tic;
     parfor ii = 1 : nbSmp
         [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS);
@@ -78,12 +95,14 @@ if OPTIONS.solver.parallel_matlab == 1
         final_sigma{ii}     =   S;
         
         %Store in a matrix
-        ImageSourceAmp = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS );
-        send(q, 1); 
+        ImageSourceAmp(:, ii)      =  R;
+        if ~OPTIONS.automatic.stand_alone
+            send(q, 1); 
+        end
     end
     time_it_ends = toc(time_it_starts);
     if OPTIONS.optional.verbose
-        fprintf('%s, Elapsed CPU time is %5.2f seconds.\nBye.\n', OPTIONS.mandatory.pipeline, time_it_ends);
+        fprintf('%s, Elapsed CPU time is %5.2f seconds.\n', OPTIONS.mandatory.pipeline, time_it_ends);
     end
     warning on
 
@@ -100,31 +119,52 @@ else
         final_sigma{ii}     = S;
         
         % Store in matrix
-        ImageSourceAmp      = ImageSourceAmp + store_solution( R', ii, obj, OPTIONS);
-        bst_progress('inc', 1);
+        ImageSourceAmp(:, ii)      =  R;
+        if ~OPTIONS.automatic.stand_alone
+            bst_progress('inc', 1);
+        end
+        
     end
     time_it_ends = toc(time_it_starts);
     if OPTIONS.optional.verbose
-        fprintf('%s, Elapsed CPU time is %5.2f seconds.\nBye.\n', OPTIONS.mandatory.pipeline, time_it_ends);
+        fprintf('%s, Elapsed CPU time is %5.2f seconds.\n', OPTIONS.mandatory.pipeline, time_it_ends);
     end
 end
-bst_progress('stop');
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('stop');
+end
 
+% store the results where it should and Conversion from wMEM box to time-series
 if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
     ImageGridAmp = [];
     OPTIONS.automatic.wActivation   =   full(ImageSourceAmp);
-else
-    % store the results where it should:
-    ImageGridAmp = zeros( obj.nb_dipoles, size(ImageSourceAmp,2) );
 
-    if  strcmp(OPTIONS.optional.normalization,'adaptive')
-        ImageGridAmp(obj.iModS,:) = full(ImageSourceAmp)/OPTIONS.automatic.Modality(1,1).ratioAmp;
-    else
-        ImageGridAmp(obj.iModS,:) = full(ImageSourceAmp)*OPTIONS.automatic.Modality(1).units_dipoles; %Modified by JSB August 17th 2015
+elseif strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && ~OPTIONS.wavelet.single_box
+    ImageGridAmp  = zeros(obj.nb_dipoles, size(obj.data{1},2));
+    wav =   zeros( nbSmp,  size(obj.data{1},2) );
+
+    for ii = 1 : nbSmp
+        nbSmpTime   =  size(obj.data{1},2) ;
+        scale   =   OPTIONS.automatic.selected_samples(2,ii);
+        transl  =   OPTIONS.automatic.selected_samples(3,ii);
+        wav(ii,  nbSmpTime/2^scale + transl ) = 1;
     end
-    
-    clear ImageSourceAmp
+
+    proj     =   be_wavelet_inverse( wav, OPTIONS )';
+    ImageGridAmp(obj.iModS,:)     =  (proj *  ImageSourceAmp')' ;
+    ImageGridAmp = ImageGridAmp(:,obj.info_extension.start:obj.info_extension.end);
+else
+    ImageGridAmp = zeros( obj.nb_dipoles, size(ImageSourceAmp,2) );
+    ImageGridAmp(obj.iModS,:) = ImageSourceAmp;
+
 end
+
+if  strcmp(OPTIONS.optional.normalization,'adaptive')
+    ImageGridAmp = ImageGridAmp/OPTIONS.automatic.Modality(1,1).ratioAmp;
+else
+    ImageGridAmp = ImageGridAmp*OPTIONS.automatic.Modality(1).units_dipoles; %Modified by JSB August 17th 2015
+end
+
 
 OPTIONS.automatic.entropy_drops = entropy_drop;
 OPTIONS.automatic.final_alpha   = final_alpha;
@@ -138,25 +178,40 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
 
     % MEM parameters structure
     obj.ind    = ii;
-    %obj.data   = Data(obj.iModall,ii); %.*Dunits;
-    obj.data   = Data(:,ii);
-    %obj.scores = obj.SCR(:,ii);
-    
-    if strcmp(OPTIONS.optional.normalization, 'adaptive')  
-        obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii);
 
-        if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-            obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
-        end
-    end
+    obj.data   = Data(:,ii);
     
+    obj.Jmne   = OPTIONS.automatic.Modality(1).Jmne(:,ii) ;
+    obj.Jmne   = obj.Jmne  ./ max(abs(obj.Jmne));
+
+
     % check if there's a noise cov for each scale
-    if (size(obj.noise_var,3)>1)
+    if (size(obj.noise_var,3)>1) && OPTIONS.optional.baseline_shuffle ~= 1
         if OPTIONS.optional.verbose
             fprintf('%s, Noise variance at scale %i is selected\n',...
                 OPTIONS.mandatory.pipeline,OPTIONS.automatic.selected_samples(2,ii));
         end
         obj.noise_var = squeeze(obj.noise_var(:,:,OPTIONS.automatic.selected_samples(2,ii)) );
+    
+    elseif (size(obj.noise_var,3)>1) && OPTIONS.optional.baseline_shuffle == 1
+
+        tol = OPTIONS.optional.baseline_shuffle_windows / 2; 
+        idx_baseline = find(obj.time(ii) > OPTIONS.automatic.Modality(1).BaselineTime(1,:) & ...
+                            obj.time(ii) <=  (OPTIONS.automatic.Modality(1).BaselineTime(end,:)+tol));
+    
+        if isempty(idx_baseline) && obj.time(ii) > max(max(OPTIONS.automatic.Modality(1).BaselineTime))
+            idx_baseline = size(OPTIONS.automatic.Modality(1).BaselineTime,2);
+        elseif isempty(idx_baseline) && obj.time(ii) < min(min(OPTIONS.automatic.Modality(1).BaselineTime))
+            idx_baseline = 1;
+        elseif length(idx_baseline) > 1
+            idx_baseline = idx_baseline(2);
+        end
+
+        if OPTIONS.optional.verbose
+            fprintf('%s, Noise variance from baseline %i is selected\n',...
+                OPTIONS.mandatory.pipeline, idx_baseline);
+        end
+        obj.noise_var = squeeze(obj.noise_var(:,:, idx_baseline) );
     end
 
     if ~sum(obj.CLS(:,ii))
@@ -199,27 +254,5 @@ function [R, E, A, S] = MEM_mainLoop(ii, Data, obj, OPTIONS)
     A = act_proba;
     S = act_var;
     
-end
-
-function [SOL] = store_solution( vec, ii, obj, OPTIONS )
-    
-    if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
-        SOL     =   vec;
-    elseif strcmp(OPTIONS.mandatory.pipeline, 'wMEM')
-        % Construct wavelet
-        nbSmp   =   size(obj.data{1},2);
-        scale   =   OPTIONS.automatic.selected_samples(2,ii);
-        transl  =   OPTIONS.automatic.selected_samples(3,ii);
-        wav     =   zeros( 1, nbSmp );
-        wav( nbSmp/2^scale + transl ) = 1;
-        wav     =   sparse(be_wavelet_inverse( wav, OPTIONS ));
-        SOL     =   sparse(vec) * wav;
-        
-    else
-        SOL     =   sparse( obj.nb_dipoles, size(obj.data, 2) );
-        SOL(:,ii) = sparse(vec);
-        
-    end        
-        
 end
 

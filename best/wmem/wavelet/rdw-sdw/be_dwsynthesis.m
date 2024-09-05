@@ -140,9 +140,6 @@ function out = fix_vector(in, num)
     end
     
     out = zeros(sz(1),num,sz(3)); % Preallocation.
-    j = 1; % Initialisation.
-    for i =1:2:num
-        out(:,i,:) = in(:,j,:);
-        j = j+1;
-    end
+    out(:,1:2:num,:) = in(:,1:(num/2),:);
+
 end
