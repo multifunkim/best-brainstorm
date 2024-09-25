@@ -302,10 +302,10 @@ function [OPTIONS, obj] = get_ridge_data(OPTIONS, obj, ii)
     
     % Retrieve ridges infos
     if isempty(ii) && ~isempty(OPTIONS.automatic.rMEMfiles)
-        [obj]           = be_fusion_of_modalities([], obj, OPTIONS);
+        [obj]           = be_fusion_of_modalities(obj, OPTIONS);
         
     elseif isempty(ii) && isempty(OPTIONS.automatic.rMEMfiles)
-        [obj]           = be_fusion_of_modalities([], obj, OPTIONS);
+        [obj]           = be_fusion_of_modalities(obj, OPTIONS);
         
         % single precision
         [OPTIONS]       = be_switch_precision( OPTIONS, 'single' );

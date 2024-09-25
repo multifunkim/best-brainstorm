@@ -1,4 +1,4 @@
-function [obj] = be_fusion_of_modalities(data, obj, OPTIONS)
+function [obj] = be_fusion_of_modalities(obj, OPTIONS)
 %BE_FUSION_OF_MODALITIES fuses data and leadfields from EEG and MEG for
 % multimodal sources estimation using MEM
 %
