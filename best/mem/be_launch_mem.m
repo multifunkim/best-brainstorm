@@ -144,7 +144,7 @@ elseif strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && ~OPTIONS.wavelet.single_box
     wav =   zeros( nbSmp,  size(obj.data{1},2) );
 
     for ii = 1 : nbSmp
-        nbSmpTime   =  size(obj.data{1},2) ;
+        nbSmpTime   =  size(obj.data,2) ;
         scale   =   OPTIONS.automatic.selected_samples(2,ii);
         transl  =   OPTIONS.automatic.selected_samples(3,ii);
         wav(ii,  nbSmpTime/2^scale + transl ) = 1;
