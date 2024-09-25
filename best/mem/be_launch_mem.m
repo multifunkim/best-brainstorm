@@ -36,7 +36,7 @@ function [ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS)
 Data  = [];
 
 if ~isempty(OPTIONS.automatic.selected_samples)        
-    Data = [Data;obj.data{1}(:,OPTIONS.automatic.selected_samples(1,:))];                 
+    Data = obj.data(:,OPTIONS.automatic.selected_samples(1,:));                 
 elseif ~strcmp(OPTIONS.mandatory.pipeline,'wMEM')
     Data  = obj.data;
 end
