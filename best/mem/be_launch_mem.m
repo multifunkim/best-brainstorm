@@ -140,8 +140,8 @@ if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
     OPTIONS.automatic.wActivation   =   full(ImageSourceAmp);
 
 elseif strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && ~OPTIONS.wavelet.single_box
-    ImageGridAmp  = zeros(obj.nb_dipoles, size(obj.data{1},2));
-    wav =   zeros( nbSmp,  size(obj.data{1},2) );
+    ImageGridAmp  = zeros(obj.nb_dipoles, size(obj.data,2));
+    wav =   zeros( nbSmp,  size(obj.data,2) );
 
     for ii = 1 : nbSmp
         nbSmpTime   =  size(obj.data,2) ;
