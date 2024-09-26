@@ -50,15 +50,12 @@ if isfield(OPTIONS.automatic.Modality(1),'idata')
     obj.idata   = OPTIONS.automatic.Modality(1).idata;
 end
 
-% If the covariance matrix is scale dependent, no multimodality possible
-if size(OPTIONS.automatic.Modality(1).covariance,3) > 1
-    obj.noise_var = OPTIONS.automatic.Modality(1).covariance;
-else
-    obj.noise_var   = diag( OPTIONS.automatic.Modality(1).covariance );
-end
+% Initialiaze noise covariance
+obj.noise_var = OPTIONS.automatic.Modality(1).covariance;
 
-obj.baseline    = OPTIONS.automatic.Modality(1).baseline;
-obj.channels    = OPTIONS.automatic.Modality(1).channels;
+% Concatenate baseline and channels
+obj.baseline    = vertcat(OPTIONS.automatic.Modality.baseline);
+obj.channels    = vertcat(OPTIONS.automatic.Modality.channels);
 
 if length(OPTIONS.mandatory.DataTypes) > 1 % fusion of modalities if requested
     if OPTIONS.optional.verbose
@@ -71,19 +68,17 @@ if length(OPTIONS.mandatory.DataTypes) > 1 % fusion of modalities if requested
             obj.idata = [obj.idata; OPTIONS.automatic.Modality(ii).idata ]; 
         end
 
-        if size(OPTIONS.automatic.Modality(1).covariance,3) > 1 && OPTIONS.optional.baseline_shuffle
+        if size(OPTIONS.automatic.Modality(1).covariance,3) > 1 
             % we concatanate for each covariance matrix
             tmp = [];
             for ibaseline = 1:size(obj.noise_var,3)
                 tmp(:,:,ibaseline) = blkdiag(obj.noise_var(:,:,ibaseline),OPTIONS.automatic.Modality(ii).covariance(:,:,ibaseline));
             end
             obj.noise_var = tmp;
-        else
-            obj.noise_var   = [obj.noise_var; diag(OPTIONS.automatic.Modality(ii).covariance)];
-        end
 
-        obj.baseline    = [obj.baseline; OPTIONS.automatic.Modality(ii).baseline];
-        obj.channels    = [obj.channels; OPTIONS.automatic.Modality(ii).channels];
+        else
+            obj.noise_var   = blkdiag(obj.noise_var, OPTIONS.automatic.Modality(ii).covariance);
+        end
 
         if OPTIONS.optional.verbose
             fprintf('... %s found ', OPTIONS.mandatory.DataTypes{ii})
@@ -93,11 +88,6 @@ else
     if OPTIONS.optional.verbose
         fprintf('%s, No multimodalities ...',OPTIONS.mandatory.pipeline);
     end
-end
-
-% If the covariance matrix is scale dependent, noise_var is already a matrix
-if size(OPTIONS.automatic.Modality(1).covariance,3) == 1
-    obj.noise_var = diag( obj.noise_var );
 end
 
 if OPTIONS.optional.verbose, fprintf('\n'); end
