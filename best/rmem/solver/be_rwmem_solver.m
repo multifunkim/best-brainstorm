@@ -159,11 +159,9 @@ Results = struct(...
     'MEMoptions',       fuse(RealR.MEMoptions, ImagR.MEMoptions,1), ...
     'MEMdata',          fuse(RealR.MEMdata, ImagR.MEMdata,2) );
 
-return
+disp('Bye.')
 
-
-
-
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % -------------------------- HELPER FUNCTIONS --------------------------- %
@@ -211,6 +209,6 @@ function [OUT] = fuse(Real, Imag, what)
     end
             
 
-disp('Bye.')
+
 end
 
