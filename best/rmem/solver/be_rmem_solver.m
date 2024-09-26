@@ -217,7 +217,7 @@ if ~OPTIONS.automatic.stand_alone | OPTIONS.automatic.process
     fprintf('\n***\tWARNING\t***\n\tTo see the ridges and localizations, you need to reload the condition\n\tRight-click on condition -> Reload (at the bottom of the menu)\n\n');
 end
 
-return
+end
 
 
 
@@ -294,7 +294,7 @@ function [OPTIONS, Results] = save_ridges_results(obj, OPTIONS, HM, ii)
     bst_set('Study', iStudy, sStudy);
     db_save();    
               
-return
+end
 
 function [OPTIONS, obj] = get_ridge_data(OPTIONS, obj, ii)
 
