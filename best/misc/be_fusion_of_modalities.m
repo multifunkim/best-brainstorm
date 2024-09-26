@@ -1,15 +1,13 @@
 function [obj] = be_fusion_of_modalities(obj, OPTIONS)
-%BE_FUSION_OF_MODALITIES fuses data and leadfields from EEG and MEG for
-% multimodal sources estimation using MEM
+%BE_FUSION_OF_MODALITIES fuses data and leadfields from different modalities 
+% for multimodal sources estimation using MEM
 %
 %   INPUTS:
-%       -   data
 %       -   obj
 %       -   OPTIONS
 %
 %   OUTPUTS:
-%       -   OPTIONS
-%       - obj
+%       -   obj
 %
 %% ==============================================
 % Copyright (C) 2011 - LATIS Team
