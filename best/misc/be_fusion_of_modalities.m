@@ -57,7 +57,7 @@ obj.channels    = vertcat(OPTIONS.automatic.Modality.channels);
 
 if length(OPTIONS.mandatory.DataTypes) > 1 % fusion of modalities if requested
     if OPTIONS.optional.verbose
-        fprintf('%s, MULTIMODAL data ... %s ',OPTIONS.mandatory.pipeline,  OPTIONS.mandatory.DataTypes{1});
+        fprintf('%s, MULTIMODAL data ... %s found \n',OPTIONS.mandatory.pipeline, strjoin(OPTIONS.mandatory.DataTypes,', '));
     end
 
     for ii=2:length(OPTIONS.mandatory.DataTypes)
@@ -77,17 +77,13 @@ if length(OPTIONS.mandatory.DataTypes) > 1 % fusion of modalities if requested
         else
             obj.noise_var   = blkdiag(obj.noise_var, OPTIONS.automatic.Modality(ii).covariance);
         end
-
-        if OPTIONS.optional.verbose
-            fprintf('... %s found ', OPTIONS.mandatory.DataTypes{ii})
-        end
+        
     end
 else
     if OPTIONS.optional.verbose
-        fprintf('%s, No multimodalities ...',OPTIONS.mandatory.pipeline);
+        fprintf('%s, No multimodalities ... \n',OPTIONS.mandatory.pipeline);
     end
 end
 
-if OPTIONS.optional.verbose, fprintf('\n'); end
 
 end
