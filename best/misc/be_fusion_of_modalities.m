@@ -35,7 +35,7 @@ function [obj] = be_fusion_of_modalities(obj, OPTIONS)
 % Display information
 if OPTIONS.optional.verbose && length(OPTIONS.mandatory.DataTypes) > 1 
     fprintf('%s, MULTIMODAL data ... %s found \n',OPTIONS.mandatory.pipeline, strjoin(OPTIONS.mandatory.DataTypes,', '));
-elseif OPTIONS.optional.verbose &&  && length(OPTIONS.mandatory.DataTypes) == 1
+elseif OPTIONS.optional.verbose && length(OPTIONS.mandatory.DataTypes) == 1
     fprintf('%s, No multimodalities ... \n',OPTIONS.mandatory.pipeline);
 end
 
