@@ -32,6 +32,13 @@ function [obj] = be_fusion_of_modalities(obj, OPTIONS)
 % -------------------------------------------------------------------------
 
 
+% Display information
+if OPTIONS.optional.verbose && length(OPTIONS.mandatory.DataTypes) > 1 
+    fprintf('%s, MULTIMODAL data ... %s found \n',OPTIONS.mandatory.pipeline, strjoin(OPTIONS.mandatory.DataTypes,', '));
+elseif OPTIONS.optional.verbose &&  && length(OPTIONS.mandatory.DataTypes) == 1
+    fprintf('%s, No multimodalities ... \n',OPTIONS.mandatory.pipeline);
+end
+
 % Concatenate data
 if isfield(obj, 'data') % wavelet
     data = vertcat(obj.data{:});
@@ -40,50 +47,31 @@ else % Time-series
 end
 obj.data    = data;
 
+% Concatenate idata(complex data) if present
+if isfield(OPTIONS.automatic.Modality(1),'idata')
+    obj.idata   = vertcat(OPTIONS.automatic.Modality.idata);
+end
+
 % Concatenate Gain
 obj.gain = vertcat(OPTIONS.automatic.Modality.gain);
 
-% Concatenate idata if present
-if isfield(OPTIONS.automatic.Modality(1),'idata')
-    obj.idata   = OPTIONS.automatic.Modality(1).idata;
-end
+% Concatenate noise covariance
+if size(OPTIONS.automatic.Modality(1).covariance,3) > 1  % we concatanate for each covariance matrix
 
-% Initialiaze noise covariance
-obj.noise_var = OPTIONS.automatic.Modality(1).covariance;
+    obj.noise_var = OPTIONS.automatic.Modality(1).covariance;
+    for ii=2:length(OPTIONS.mandatory.DataTypes)
+        tmp = [];
+        for ibaseline = 1:size(obj.noise_var,3)
+            tmp(:,:,ibaseline) = blkdiag(obj.noise_var(:,:,ibaseline),OPTIONS.automatic.Modality(ii).covariance(:,:,ibaseline));
+        end
+        obj.noise_var = tmp;
+    end
+else
+    obj.noise_var   = blkdiag(OPTIONS.automatic.Modality.covariance);
+end
 
 % Concatenate baseline and channels
 obj.baseline    = vertcat(OPTIONS.automatic.Modality.baseline);
 obj.channels    = vertcat(OPTIONS.automatic.Modality.channels);
-
-if length(OPTIONS.mandatory.DataTypes) > 1 % fusion of modalities if requested
-    if OPTIONS.optional.verbose
-        fprintf('%s, MULTIMODAL data ... %s found \n',OPTIONS.mandatory.pipeline, strjoin(OPTIONS.mandatory.DataTypes,', '));
-    end
-
-    for ii=2:length(OPTIONS.mandatory.DataTypes)
-
-        if  isfield(OPTIONS.automatic.Modality(ii),'idata') 
-            obj.idata = [obj.idata; OPTIONS.automatic.Modality(ii).idata ]; 
-        end
-
-        if size(OPTIONS.automatic.Modality(1).covariance,3) > 1 
-            % we concatanate for each covariance matrix
-            tmp = [];
-            for ibaseline = 1:size(obj.noise_var,3)
-                tmp(:,:,ibaseline) = blkdiag(obj.noise_var(:,:,ibaseline),OPTIONS.automatic.Modality(ii).covariance(:,:,ibaseline));
-            end
-            obj.noise_var = tmp;
-
-        else
-            obj.noise_var   = blkdiag(obj.noise_var, OPTIONS.automatic.Modality(ii).covariance);
-        end
-        
-    end
-else
-    if OPTIONS.optional.verbose
-        fprintf('%s, No multimodalities ... \n',OPTIONS.mandatory.pipeline);
-    end
-end
-
 
 end
