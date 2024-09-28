@@ -33,7 +33,7 @@ function [obj, OPTIONS] = be_main_wmem(obj, OPTIONS)
 % -------------------------------------------------------------------------   
 
 	if strcmp(OPTIONS.mandatory.pipeline,'wMEM')
-        	obj = be_fusion_of_modalities(obj.data,obj,OPTIONS);
+        	obj = be_fusion_of_modalities(obj, OPTIONS);
         	[obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
             
             % si j=0, on remplace obj.data = obj.scaling_data, on corrige ? la matrice de variance covariance
