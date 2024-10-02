@@ -98,6 +98,7 @@ function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS, Results)
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline cMEM\n');
 end 
+ obj = struct('hfig', [] , 'hfigtab', [] );
 
 obj = struct();
 [obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);

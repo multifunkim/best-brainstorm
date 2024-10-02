@@ -147,6 +147,21 @@ end
 if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
     ImageGridAmp = [];
     OPTIONS.automatic.wActivation   =   full(ImageSourceAmp);
+
+elseif strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && ~OPTIONS.wavelet.single_box
+    ImageGridAmp  = zeros(obj.nb_dipoles, size(obj.data{1},2));
+    wav =   zeros( nbSmp,  size(obj.data{1},2) );
+
+    for ii = 1 : nbSmp
+        nbSmpTime   =  size(obj.data{1},2) ;
+        scale   =   OPTIONS.automatic.selected_samples(2,ii);
+        transl  =   OPTIONS.automatic.selected_samples(3,ii);
+        wav(ii,  nbSmpTime/2^scale + transl ) = 1;
+    end
+
+    proj     =   be_wavelet_inverse( wav, OPTIONS )';
+    ImageGridAmp(obj.iModS,:)     =  (proj *  ImageSourceAmp')' ;
+    ImageGridAmp = ImageGridAmp(:,obj.info_extension.start:obj.info_extension.end);
 else
     ImageGridAmp = zeros( obj.nb_dipoles, size(ImageSourceAmp,2) );
     ImageGridAmp(obj.iModS,:) = ImageSourceAmp;
