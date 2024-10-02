@@ -246,7 +246,7 @@ function [OutputF, sMat]    =   keepRDG(R, C, ii, WData, OPTIONS)
     % Fuse signals
     idCH        =   1 : size( OPTIONS.mandatory.Data,1);
     if ~OPTIONS.automatic.stand_alone || OPTIONS.automatic.process
-        FUS     =   be_fusion_of_modalities( [], [], OPTIONS );
+        FUS     =   be_fusion_of_modalities([], OPTIONS );
         OPTIONS.automatic.nb_channels
         % Get study channel info
         nChan   =   bst_get('ChannelForStudy', OPTIONS.automatic.iStudy);        

@@ -180,7 +180,7 @@ end
 
 %% ===== Fuse modalities ===== %%   
 
-obj = be_fusion_of_modalities( [], obj, OPTIONS);
+obj = be_fusion_of_modalities(obj, OPTIONS);
          	
 %% ===== Solve the MEM ===== %%
 
