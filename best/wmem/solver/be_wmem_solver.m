@@ -175,7 +175,7 @@ end
 [OPTIONS, obj.GreenM2] = be_spatial_priorw( OPTIONS, obj.VertConn);
 
 %% ===== Fuse modalities ===== %%   
-obj = be_fusion_of_modalities(obj.data,obj,OPTIONS);
+obj = be_fusion_of_modalities(obj, OPTIONS);
 
 %% ===== Solve the MEM ===== %%
 [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
