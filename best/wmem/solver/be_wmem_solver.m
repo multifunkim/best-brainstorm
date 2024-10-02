@@ -183,6 +183,26 @@ if OPTIONS.optional.display
     be_display_entropy_drops(obj,OPTIONS);
 end
 
+%% Conversion to time-series
+
+if ~OPTIONS.wavelet.single_box
+    
+    nbSmp       = size(obj.ImageGridAmp,2);
+    nbSmpTime   =  size(obj.data{1},2) ;
+    wav =   zeros( nbSmp,  nbSmpTime );
+
+    for ii = 1 : nbSmp
+        scale   =   OPTIONS.automatic.selected_samples(2,ii);
+        transl  =   OPTIONS.automatic.selected_samples(3,ii);
+        wav(ii,  nbSmpTime/2^scale + transl ) = 1;
+    end
+
+    inv_proj     =   be_wavelet_inverse( wav, OPTIONS );
+
+    ImageGridAmp =  obj.ImageGridAmp * inv_proj;
+    obj.ImageGridAmp = ImageGridAmp(:,obj.info_extension.start:obj.info_extension.end);
+end
+
 %% ===== Un-Normalization  ===== %%
 [obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
 
