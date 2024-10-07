@@ -190,7 +190,7 @@ end
 if ~OPTIONS.wavelet.single_box
     
     nbSmp       = size(obj.ImageGridAmp,2);
-    nbSmpTime   =  size(obj.data{1},2) ;
+    nbSmpTime   =  size(obj.data,2) ;
     wav =   zeros( nbSmp,  nbSmpTime );
 
     for ii = 1 : nbSmp
