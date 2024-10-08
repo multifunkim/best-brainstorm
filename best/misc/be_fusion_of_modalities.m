@@ -74,4 +74,6 @@ end
 obj.baseline    = vertcat(OPTIONS.automatic.Modality.baseline);
 obj.channels    = vertcat(OPTIONS.automatic.Modality.channels);
 
+if OPTIONS.optional.verbose, fprintf(' done.\n'); end
+
 end
