@@ -190,7 +190,7 @@ end
 if ~OPTIONS.wavelet.single_box
     
     nbSmp       = size(obj.ImageGridAmp,2);
-    nbSmpTime   =  size(obj.data{1},2) ;
+    nbSmpTime   =  size(obj.data,2) ;
     wav =   zeros( nbSmp,  nbSmpTime );
 
     for ii = 1 : nbSmp
@@ -201,7 +201,6 @@ if ~OPTIONS.wavelet.single_box
 
     inv_proj    =   be_wavelet_inverse( wav, OPTIONS );
     inv_proj    =   inv_proj(:,obj.info_extension.start:obj.info_extension.end);
-    obj.ImageGridAmp =  obj.ImageGridAmp * inv_proj;
 end
 
 %% ===== Update Comment ===== %%
@@ -220,10 +219,14 @@ OPTIONS.automatic    = struct(  'entropy_drops', OPTIONS.automatic.entropy_drops
 
 % Results (full temporal sequence)
 Results = struct(...
-    'ImageGridAmp',     obj.ImageGridAmp, ... %'ImagingPostKernel',inv_proj, ...
+    'ImageGridAmp',     [], ... 
     'ImagingKernel',    [], ...
-    'MEMoptions',       OPTIONS); 
-    %'MEMdata',          obj);
+    'nComponents',      round(size(obj.ImageGridAmp,1) / obj.nb_sources ), ...
+    'MEMoptions',       OPTIONS);
+
+% Save results as factor decomposition
+Results.ImageGridAmp = {obj.ImageGridAmp,  sparse(inv_proj)};
+
 
 disp('Bye.')
 end
