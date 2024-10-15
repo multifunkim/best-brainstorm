@@ -1,5 +1,4 @@
-function [D, dD] = be_free_energy(lambda, M, noise_var, ...
-    clusters, nb_clusters, varargin)
+function [D, dD] = be_free_energy(lambda, M, noise_var, clusters, nb_clusters, varargin)
 %CALCULATE_FREE_ENERGY gives the free energy of a system
 %   [D, dD] = CALCULATE_FREE_ENERGY(LAMBDA, M, NOISE_VAR, CLUSTERS,
 %   NB_CLUSTERS)

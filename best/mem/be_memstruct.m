@@ -109,9 +109,6 @@ Sigma_s = obj.Sigma_s;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the following loop goes though each of the clusters (non null clusters)
 % and initializes the parameters of the model attached to each of them
-
-
-
 for ii = 1:nb_clusters
 
     % CLUSTER: Extraction of the parcel-wise lead field and index of sources
@@ -187,6 +184,7 @@ mem.M                                = obj.data;
 mem.nb_sources                       = nb_sources;
 mem.nb_clusters                      = nb_clusters;
 mem.optim_algo                       = OPTIONS.solver.Optim_method;
+mem.optimoptions                     = OPTIONS.solver.optimoptions;
 
 % Lambda initialization
 switch OPTIONS.model.initial_lambda 
