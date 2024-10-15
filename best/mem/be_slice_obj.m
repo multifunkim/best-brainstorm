@@ -53,6 +53,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
 
     obj_const.Sigma_s  = obj.Sigma_s;
+    obj_const.GreenM2  = obj.GreenM2;
     obj_const.gain     = obj.gain;
 
     OPTIONS.automatic   = rmfield(OPTIONS.automatic,'Modality');

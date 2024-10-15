@@ -155,7 +155,7 @@ for ii = 1:nb_clusters
     if isfield(OPTIONS.optional.clustering, 'initial_sigma')
         active_var{ii} = diag( OPTIONS.optional.clustering.initial_sigma(idx_cluster) );     
     else      
-        active_var{ii} = OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  * Sigma_s(idx_cluster,idx_cluster) ;
+        active_var{ii} = OPTIONS.solver.active_var_mult * mean(obj.Jmne(idx_cluster).^2)  * obj.GreenM2(idx_cluster,idx_cluster)' *  Sigma_s(idx_cluster,idx_cluster) * obj.GreenM2(idx_cluster,idx_cluster) ;
     end
 
     G_active_var_Gt{ii} = cluster_G{ii} * active_var{ii} * cluster_G{ii}' ;
