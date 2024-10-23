@@ -54,7 +54,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         SUBJ        =   cellfun( @(a) strrep( bst_fileparts( bst_fileparts( a ) ), filesep, '' ), DTS, 'uni', 0 );
         [dum,STD]   =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), DTS, 'uni', 0 );
         STD         =   cell2mat( STD );
-
+        
+        ChannelTypes = inputData.ChannelTypes;  
         OPTIONS     =   OPTIONS.options.mem.Value; 
         
         if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
@@ -75,7 +76,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             [st,is] = bst_get('Study', fullfile( bst_fileparts(DTS{ii}), 'brainstormstudy.mat' ) );
             STD     = [STD is];
         end
-        
+        ChannelTypes = {};  
         OPTIONS = be_main();
     else
         % Unexpected call
@@ -83,9 +84,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         return
     end       
 
-    OPTIONS = be_struct_copy_fields(OPTIONS,be_cmem_pipelineoptions,[],0);
-    OPTIONS = be_struct_copy_fields(OPTIONS,be_wmem_pipelineoptions,[],0);
-    OPTIONS = be_struct_copy_fields(OPTIONS, be_rmem_pipelineoptions,[],0);
+    OPTIONS = be_struct_copy_fields(OPTIONS,be_cmem_pipelineoptions(ChannelTypes),[],0);
+    OPTIONS = be_struct_copy_fields(OPTIONS,be_wmem_pipelineoptions(ChannelTypes),[],0);
+    OPTIONS = be_struct_copy_fields(OPTIONS, be_rmem_pipelineoptions(ChannelTypes),[],0);
         
     % Version
     OPTIONS.automatic.version       =   '3.0.0';
@@ -1178,11 +1179,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if any(selected)
 
             if strcmp(choices(selected), 'cMEM')
-                NEW_OPTIONS = be_struct_copy_fields(OPTIONS, be_cmem_pipelineoptions,[],1);
+                NEW_OPTIONS = be_struct_copy_fields(OPTIONS, be_cmem_pipelineoptions(ChannelTypes),[],1);
             elseif strcmp(choices(selected), 'wMEM')
-                NEW_OPTIONS = be_struct_copy_fields(OPTIONS, be_wmem_pipelineoptions,[],1);
+                NEW_OPTIONS = be_struct_copy_fields(OPTIONS, be_wmem_pipelineoptions(ChannelTypes),[],1);
             elseif strcmp(choices(selected), 'rMEM')
-                NEW_OPTIONS = be_struct_copy_fields(OPTIONS, be_rmem_pipelineoptions,[],1);
+                NEW_OPTIONS = be_struct_copy_fields(OPTIONS, be_rmem_pipelineoptions(ChannelTypes),[],1);
             end
 
             %% Save options while changing the pipeline
