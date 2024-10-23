@@ -51,7 +51,7 @@ if numel(varargin) == 0
 end
 
 % ====      CALL THE PACKAGE      ==== %
-if nargout==1
+if nargout == 1
     % No calculations, just options
     Results             =   be_main_call(varargin{:});
     varargout{1}        =   Results;
@@ -62,7 +62,7 @@ else
     varargout{2}        =   OPTIONS;
 end
 
-return
+end
 
 
 % ----------------------------------------------------------------------- %
@@ -145,8 +145,9 @@ Def_OPTIONS.model.active_mean_method            = 2;
 Def_OPTIONS.model.alpha_method                  = 3; 
 Def_OPTIONS.model.alpha_threshold               = 0;
 Def_OPTIONS.model.initial_lambda                = 1;
-Def_OPTIONS.model.depth_weigth_MNE              = 0;
-Def_OPTIONS.model.depth_weigth_MEM              = 0;
+
+Def_OPTIONS.model.depth_weigth_MNE              = 0.5;
+Def_OPTIONS.model.depth_weigth_MEM              = 0.5;
 
 % MEM solver
 Def_OPTIONS.solver.NoiseCov                     = [];
@@ -159,5 +160,5 @@ Def_OPTIONS.solver.Optim_method                 = 'fminunc';
 Def_OPTIONS.solver.covariance_scale             = 1;
 Def_OPTIONS.solver.parallel_matlab              = be_canUseParallelPool();
 
-return
+end
 
