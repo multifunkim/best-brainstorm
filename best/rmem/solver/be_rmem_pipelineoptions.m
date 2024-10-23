@@ -1,4 +1,7 @@
-function DEF = be_rmem_pipelineoptions()
+function DEF = be_rmem_pipelineoptions(DataTypes)
+        if nargin < 1 || isempty(DataTypes)
+            DataTypes = {'EEG'};
+        end
 
         % clustering
         DEF.clustering.clusters_type    = 'blockwise';
