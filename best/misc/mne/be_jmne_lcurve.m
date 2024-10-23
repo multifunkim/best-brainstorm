@@ -43,41 +43,59 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
     
     fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
     
-    % Compute covariance matrices
-    Sigma_d    =   eye(size(M,1));  
-
     p       = OPTIONS.model.depth_weigth_MNE;
-    Ps = diag(power(diag(G'*G),p)); 
-    W = sqrt(Ps);
-    Sigma_s = inv(Ps);
+    % Compute covariance matrices
+    if 1 || isempty(OPTIONS.automatic.Modality(1).covariance)
+
+        Sigma_d    =   eye(size(M,1));  
+        Sigma_s = diag(power(diag(G'*G),-p)); 
+    else
+
+        Sigma_d    =   OPTIONS.automatic.Modality(1).covariance;
+        Sigma_s = diag(power(diag(G'*inv(Sigma_d)*G),-p)); 
+    end
 
 
     % Pre-compute matrix
     GSG = G * Sigma_s * G';
     SG  = Sigma_s * G';
 
+    % Note W*S*G: W = Sigma_s^-0.5 so W*Sigma_s = Sigma_s^0.5
+    wSG = sqrt(Sigma_s) * G';
 
     % Parameter for l-curve
-    param1  = [0.1:0.1:1 1:5:100 100:100:1000]; 
+    param  = [0.1:0.1:1 1:5:100 100:100:1000]; 
 
     % Scale alpha using trace(G*G')./trace(W'*W)  
-    scale   = trace(G*G')./ trace(Ps) ;       
-    alpha   = param1.*scale;
+    scale   = trace(G*G')./ trace(inv(Sigma_s));       
+    alpha   = param.*scale;
 
+    % Pre-compute data decomposition
+    [U,S]   = svd(M,'econ'); 
 
     Fit     = zeros(1,length(alpha));
     Prior   = zeros(1,length(alpha));
-
-    bst_progress('start', 'wMNE, solving MNE by L-curve ... ' , 'Solving MNE by L-curve ... ', 1, length(param1));
+    if ~OPTIONS.automatic.stand_alone
+        bst_progress('start', 'wMNE, solving MNE by L-curve ... ' , 'Solving MNE by L-curve ... ', 1, length(alpha));
+    end
     for iAlpha = 1:length(alpha)
         
-        Kermel = SG * inv( GSG  + alpha(iAlpha) * Sigma_d );
-        J = Kermel*M; 
+        inv_matrix = inv( GSG  + alpha(iAlpha) * Sigma_d );
+        
+        % Define both Kernel
+        residual_kernal = eye(size(M,1)) - GSG * inv_matrix;
+        wKernel         = wSG*inv_matrix;
+        
+        % Estimate the corresponding norm
+        R = qr(residual_kernal*U);
+        Fit(iAlpha)     = norm(R*S);
 
-        Fit(iAlpha)     = norm(M-G*J);      % Define Fit as a function of alpha
-        Prior(iAlpha)   = norm(W*J);        % Define Prior as a function of alpha
-    
-        bst_progress('inc', 1); 
+        R = qr(wKernel*U);
+        Prior(iAlpha)   = norm(R*S);
+        
+        if ~OPTIONS.automatic.stand_alone
+            bst_progress('inc', 1); 
+        end
     end
 
     % Fid alpha optimal based on l-curve
@@ -90,6 +108,9 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
         varargout{1} = alpha(Index);
     end
 
+    if ~OPTIONS.automatic.stand_alone
+        bst_progress('stop');
+    end
     fprintf('done. \n');
     
     if OPTIONS.optional.display
