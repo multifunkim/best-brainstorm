@@ -1,4 +1,4 @@
-function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
+function [J,varargout] = be_jmne_lcurve(obj, OPTIONS, sfig)
 % Compute the minimum norm estimate using the regularized pseudo-inverse formula
 % the regularization parameter is estiamted using l-curve. This approach is
 % equivalent to the MAP estimator in be_jmne_lcurve_MAP
@@ -35,12 +35,14 @@ function [J,varargout] = be_jmne_lcurve(G,M,OPTIONS, sfig)
     end
     
     % selection of the data:
+    M = obj.data;
     if ~isempty(OPTIONS.automatic.selected_samples)   
         selected_samples = OPTIONS.automatic.selected_samples(1,:);
         M = M(:,selected_samples);
     end
     
-    
+    G = obj.gain; 
+
     fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
     
     p       = OPTIONS.model.depth_weigth_MNE;
