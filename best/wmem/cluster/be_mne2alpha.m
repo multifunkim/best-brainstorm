@@ -44,23 +44,16 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
     
     if ALPHA_METHOD == 6
         OBJ_FUS         = be_fusion_of_modalities(obj, OPTIONS, 0);
-        weight_alpha    = mne_normalized(OBJ_FUS, OPTIONS);  
+        weight_alpha    = be_jmne_normalized(OBJ_FUS, OPTIONS);  
     elseif ALPHA_METHOD == 7
         weight_alpha    = OPTIONS.automatic.Modality(1).Jmne;
     end
     
-    % Progress bar
-    hmem = [];
-    if numel(varargin)
-        hmem    = varargin{1}(1);
-        st      = varargin{1}(2);
-        dr      = varargin{1}(3);
-    end
-    
+
     for jj=1:size(CLS,2)
-        clusters = CLS(:,jj);
+        clusters    = CLS(:,jj);
         nb_clusters = max(clusters);
-        curr_cls = 1;
+        curr_cls    = 1;
     
         for ii = 1:nb_clusters
             idCLS = clusters==ii;
@@ -69,14 +62,9 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
             WSjj_ii         = WSjj(idCLS); 
             alpha(idCLS,jj) = sqrt((sum(WSjj_ii) / sum(WSjj)));
                     
-            CLS(idCLS,jj) = curr_cls;
-            curr_cls = curr_cls + 1;
+            CLS(idCLS,jj)   = curr_cls;
+            curr_cls        = curr_cls + 1;
             
-            % update progress bar
-             if hmem
-                 prg = round( (st + dr * (jj - 1 + ii/nb_clusters) / (size(CLS,2))) * 100 );
-                 waitbar(prg/100, hmem, {[OPTIONS.automatic.InverseMethod, 'Step 1/2 : Running cortex parcellization ... ' num2str(prg) ' % done']});
-             end
         end
         
     end

@@ -174,7 +174,7 @@ end
 [clusters_struct.active_mean]        = active_mean{:};
 [clusters_struct.active_var]         = active_var{:};
 [clusters_struct.inactive_var]       = inactive_var{:};  
-[clusters_struct.G_active_var_Gt]       = G_active_var_Gt{:};  
+[clusters_struct.G_active_var_Gt]    = G_active_var_Gt{:};  
 [clusters_struct.indices]            = cID{:};
 
 % Creation of the structure to solve the MEM
