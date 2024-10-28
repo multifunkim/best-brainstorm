@@ -1,4 +1,4 @@
-function [alpha, CLS, OPTIONS] = be_gain2alpha(obj, CLS, OPTIONS, varargin)
+function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
 % BE_GAIN2ALPHA computes the initial probability of a parcel being active in 
 %   the MEM using the % of MNE energy within each parcels
 %
