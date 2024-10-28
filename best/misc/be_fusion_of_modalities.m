@@ -1,4 +1,4 @@
-function [obj] = be_fusion_of_modalities(obj, OPTIONS)
+function [obj] = be_fusion_of_modalities(obj, OPTIONS, isVerbose)
 %BE_FUSION_OF_MODALITIES fuses data and leadfields from different modalities 
 % for multimodal sources estimation using MEM
 %
@@ -31,11 +31,14 @@ function [obj] = be_fusion_of_modalities(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
+if nargin < 3 || isempty(isVerbose)
+    isVerbose =  OPTIONS.optional.verbose;
+end
 
 % Display information
-if OPTIONS.optional.verbose && length(OPTIONS.mandatory.DataTypes) > 1 
+if isVerbose && length(OPTIONS.mandatory.DataTypes) > 1 
     fprintf('%s, MULTIMODAL data ... %s found \n',OPTIONS.mandatory.pipeline, strjoin(OPTIONS.mandatory.DataTypes,', '));
-elseif OPTIONS.optional.verbose && length(OPTIONS.mandatory.DataTypes) == 1
+elseif isVerbose && length(OPTIONS.mandatory.DataTypes) == 1
     fprintf('%s, No multimodalities ... \n',OPTIONS.mandatory.pipeline);
 end
 
@@ -74,6 +77,6 @@ end
 obj.baseline    = vertcat(OPTIONS.automatic.Modality.baseline);
 obj.channels    = vertcat(OPTIONS.automatic.Modality.channels);
 
-if OPTIONS.optional.verbose, fprintf(' done.\n'); end
+if isVerbose, fprintf(' done.\n'); end
 
 end

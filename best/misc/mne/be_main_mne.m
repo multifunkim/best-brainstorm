@@ -12,24 +12,14 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS)
 %       -   OPTIONS
 %       -   obj
 
-%Local fusion of data and gain matrix to compute the
-%regularisation parameter (J)
     
-    % Load head model
-    G = vertcat(OPTIONS.automatic.Modality.gain);
-
-    % Load data
-    if isfield(obj, 'data') % wavelet
-        M = vertcat(obj.data{:});
-    else % Time-series
-        M = vertcat(OPTIONS.automatic.Modality.data);
-    end
+    % apply the fusion of modalities
+    OBJ_FUS = be_fusion_of_modalities(obj, OPTIONS, 0);
     
-    if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp( OPTIONS.mandatory.DataTypes,'NIRS')) 
-        
-        J   =   be_jmne_lcurve(G,M,OPTIONS, struct('hfig',obj.hfig, 'hfigtab',obj.hfigtab)); 
+    if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp( OPTIONS.mandatory.DataTypes,'NIRS'))    
+        J   =   be_jmne_lcurve(OBJ_FUS.G, OBJ_FUS.data, OPTIONS, struct('hfig',obj.hfig, 'hfigtab',obj.hfigtab)); 
     else
-        J   =   be_jmne(G,M,OPTIONS);
+        J   =   be_jmne(OBJ_FUS.G,OBJ_FUS.data, OPTIONS);
     end
     
     MNEAmp =  max(max(abs(J))); %Same for both modalities
