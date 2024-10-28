@@ -167,36 +167,38 @@ function [R, E, A, S] = MEM_mainLoop(ii, obj, obj_const, OPTIONS)
         if OPTIONS.optional.verbose
             disp(['MEM warning: The distributed dipoles could not be clusterized at sample ' num2str(ii) '. (null solution returned)']);
         end
+        
         % Save empty solution
-        J               = zeros( size(obj.iModS) );
-        entropy_drop    = NaN;
-        act_proba       = NaN;
-        act_var         = [];
-    else
-        
-        % initialize the MEM
-        [OPTIONS, mem_structure, act_var] = be_memstruct(OPTIONS,obj);
-        
-        % solve the MEM for the current time
-        [J, mem_results_struct] = be_solve_mem(mem_structure);  
-
-        nclus       = max(obj.clusters);
-        niter       = mem_results_struct.iterations;
-        entropy_drop= mem_results_struct.entropy;
-        act_proba   = mem_results_struct.active_probability;    
-
-        if OPTIONS.optional.verbose, fprintf('Sample %3d(%2d,%3.3f):',ii,obj.scale,obj.time); end
-        
-        % Print output
-        if sum(isnan(J))
-            fprintf('killed\n');
-            %mem_results_struct.intenties = zeros( size(obj.iModS) );
-            J(isnan(J)) = 0;
-        else
-             if OPTIONS.optional.verbose, fprintf('\n\t\t%3d clusters,\n\t\t%3d iter.\n\t\tEntropy drop:%4.1f\n',nclus,niter,entropy_drop); end
-        end
-        
+        R   = zeros( size(obj.iModS) );
+        E   = NaN; A   = NaN; S   = [];
+        return;
     end
+    
+        
+    % initialize the MEM
+    [OPTIONS, mem_structure, act_var] = be_memstruct(OPTIONS,obj);
+    
+    % solve the MEM for the current time
+    [J, mem_results_struct] = be_solve_mem(mem_structure);  
+
+    nclus       = max(obj.clusters);
+    niter       = mem_results_struct.iterations;
+    entropy_drop= mem_results_struct.entropy;
+    act_proba   = mem_results_struct.active_probability;    
+
+    if OPTIONS.optional.verbose, fprintf('Sample %3d(%2d,%3.3f):',ii,obj.scale,obj.time); end
+    
+    % Print output
+    if any(isnan(J))
+        fprintf('killed\n');
+        J(isnan(J)) = 0;
+
+        
+    elseif OPTIONS.optional.verbose
+        fprintf('\n\t\t%3d clusters,\n\t\t%3d iter.\n\t\tEntropy drop:%4.1f\n',nclus,niter,entropy_drop); 
+    end
+        
+    
     R = J;
     E = entropy_drop;
     A = act_proba;

@@ -44,13 +44,18 @@ end
 
 % Concatenate Gain and normalized gain
 obj.gain = vertcat(OPTIONS.automatic.Modality.gain);
-obj.gain_normalized   = vertcat(OPTIONS.automatic.Modality.gain_struct.Gn);
 
+obj.gain_normalized = [];
+if isfield(OPTIONS.automatic.Modality(1), 'gain_struct') && isfield(OPTIONS.automatic.Modality(1).gain_struct, 'Gn')
+    for ii=1:length(OPTIONS.mandatory.DataTypes)
+        obj.gain_normalized   = vertcat(obj.gain_normalized, OPTIONS.automatic.Modality(ii).gain_struct.Gn);
+    end
+end
 % Concatenate data and normalized data
 data = [];
 data_normalized = [];
 
-for ii=2:length(OPTIONS.mandatory.DataTypes)
+for ii=1:length(OPTIONS.mandatory.DataTypes)
     if isfield(obj, 'data') % wavelet
         data_mod = obj.data{ii};
     else % Time-series
@@ -61,7 +66,7 @@ for ii=2:length(OPTIONS.mandatory.DataTypes)
     data_normalized = vertcat(data_normalized, bsxfun(@rdivide, data_mod, sqrt(sum(data_mod.^2, 1))));
 end
 % remove nan from normalized data
-data_normalized(isnan(Mn)) = 0;
+data_normalized(isnan(data_normalized)) = 0;
 
 obj.data = data;
 obj.data_normalized = data_normalized;
