@@ -42,25 +42,37 @@ elseif isVerbose && length(OPTIONS.mandatory.DataTypes) == 1
     fprintf('%s, No multimodalities ... \n',OPTIONS.mandatory.pipeline);
 end
 
-% Concatenate data
-if isfield(obj, 'data') % wavelet
-    data = vertcat(obj.data{:});
-else % Time-series
-    data = vertcat(OPTIONS.automatic.Modality.data);
+% Concatenate Gain and normalized gain
+obj.gain = vertcat(OPTIONS.automatic.Modality.gain);
+obj.gain_normalized   = vertcat(OPTIONS.automatic.Modality.gain_struct.Gn);
+
+% Concatenate data and normalized data
+data = [];
+data_normalized = [];
+
+for ii=2:length(OPTIONS.mandatory.DataTypes)
+    if isfield(obj, 'data') % wavelet
+        data_mod = obj.data{ii};
+    else % Time-series
+        data_mod = OPTIONS.automatic.Modality(ii).data;
+    end
+    
+    data = vertcat(data, data_mod);
+    data_normalized = vertcat(data_normalized, bsxfun(@rdivide, data_mod, sqrt(sum(data_mod.^2, 1))));
 end
-obj.data    = data;
+% remove nan from normalized data
+data_normalized(isnan(Mn)) = 0;
+
+obj.data = data;
+obj.data_normalized = data_normalized;
 
 % Concatenate idata(complex data) if present
 if isfield(OPTIONS.automatic.Modality(1),'idata')
     obj.idata   = vertcat(OPTIONS.automatic.Modality.idata);
 end
 
-% Concatenate Gain
-obj.gain = vertcat(OPTIONS.automatic.Modality.gain);
-
 % Concatenate noise covariance
 if size(OPTIONS.automatic.Modality(1).covariance,3) > 1  % we concatanate for each covariance matrix
-
     obj.noise_var = OPTIONS.automatic.Modality(1).covariance;
     for ii=2:length(OPTIONS.mandatory.DataTypes)
         tmp = [];
