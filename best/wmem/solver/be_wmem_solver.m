@@ -188,19 +188,8 @@ end
 
 %% Conversion to time-series
 if ~OPTIONS.wavelet.single_box
-    
-    nbSmp       = size(obj.ImageGridAmp,2);
-    nbSmpTime   =  size(obj.data,2) ;
-    wav =   zeros( nbSmp,  nbSmpTime );
-
-    for ii = 1 : nbSmp
-        scale   =   OPTIONS.automatic.selected_samples(2,ii);
-        transl  =   OPTIONS.automatic.selected_samples(3,ii);
-        wav(ii,  nbSmpTime/2^scale + transl ) = 1;
-    end
-
-    inv_proj    =   be_wavelet_inverse( wav, OPTIONS );
-    inv_proj    =   inv_proj(:,obj.info_extension.start:obj.info_extension.end);
+    inv_proj = be_wavelet_inverse_projection(obj,OPTIONS);
+    obj.ImageGridAmp = {obj.ImageGridAmp, inv_proj};
 end
 
 %% ===== Update Comment ===== %%
@@ -215,17 +204,18 @@ OPTIONS.automatic    = struct(  'entropy_drops', OPTIONS.automatic.entropy_drops
                                 'selected_samples', OPTIONS.automatic.selected_samples, ... 
                                 'info_extension', obj.info_extension, ...
                                 'minimum_norm',OPTIONS.automatic.Modality(1).Jmne, ...
+                                'wActivation', OPTIONS.automatic.wActivation, ....
                                 'MSP',obj.SCR);   
 
-% Results (full temporal sequence)
+% Results
 Results = struct(...
     'ImageGridAmp',     [], ... 
     'ImagingKernel',    [], ...
-    'nComponents',      round(size(obj.ImageGridAmp,1) / obj.nb_sources ), ...
+    'nComponents',      round( length(obj.iModS) / obj.nb_sources ), ...
     'MEMoptions',       OPTIONS);
 
 % Save results as factor decomposition
-Results.ImageGridAmp = {obj.ImageGridAmp,  sparse(inv_proj)};
+Results.ImageGridAmp = obj.ImageGridAmp;
 
 
 disp('Bye.')

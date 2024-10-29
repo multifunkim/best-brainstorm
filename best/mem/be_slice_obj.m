@@ -5,7 +5,6 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
     for i = 1:nbSmp
 
-        obj_slice(i).clusters           = obj.CLS(:,i);
         obj_slice(i).active_probability = obj.ALPHA(:,i);
 
         obj_slice(i).data   = Data(:,i);
@@ -51,8 +50,18 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     obj_const.nb_channels   = obj.nb_channels;
     obj_const.nb_dipoles    = obj.nb_dipoles;
 
+    % Smooth the coveriance matrix along the cortical surface
+    if strcmp(OPTIONS.clustering.clusters_type, 'static')
+        obj_const.clusters = obj.CLS(:,1);
+        [obj_const.Sigma_s,obj_const.G_active_var_Gt]   = be_smooth_sigma_s(obj.gain, obj.Sigma_s, obj_const.clusters,  obj.GreenM2);
+    else
 
-    obj_const.Sigma_s  = obj.Sigma_s;
+        for i = 1:nbSmp
+            obj_slice(i).clusters = obj.CLS(:,i);
+            [obj_slice(i).Sigma_s, obj_slice(i).G_active_var_Gt]   = be_smooth_sigma_s(obj.gain, obj.Sigma_s, obj_slice(i).clusters,  obj.GreenM2);
+        end
+    end
+
     obj_const.GreenM2  = obj.GreenM2;
     obj_const.gain     = obj.gain;
 

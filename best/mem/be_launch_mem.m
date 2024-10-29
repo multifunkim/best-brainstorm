@@ -149,6 +149,8 @@ if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
 else
     ImageGridAmp = zeros( obj.nb_dipoles, size(ImageSourceAmp,2) );
     ImageGridAmp(obj.iModS,:) = ImageSourceAmp;
+    
+    OPTIONS.automatic.wActivation = [];
 end
 
 
