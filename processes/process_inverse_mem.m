@@ -33,12 +33,13 @@ function sProcess = GetDescription() %#ok<DEFNU>
     sProcess.FileTag     = '';
     sProcess.Category    = 'Custom';
     sProcess.SubGroup    = 'Sources';
-    sProcess.Index       = 328;
+    sProcess.Index       = 327;
     % Definition of the input accepted by this process
     sProcess.InputTypes  = {'data', 'raw'};
     sProcess.OutputTypes = {'results', 'results'};
     sProcess.nInputs     = 1;
     sProcess.nMinFiles   = 1;
+    sProcess.isSeparator = 1;
     % Options: Comment
     sProcess.options.comment.Comment = 'Comment: ';
     sProcess.options.comment.Type    = 'text';
@@ -66,20 +67,23 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
     
     % ===== GET OPTIONS =====
     % Default inverse options
-    OPTIONS = process_inverse('Compute');
+    OPTIONS = process_inverse_2018('Compute');
     % MEM options
     if ~isfield(sProcess.options.mem.Value, 'MEMpaneloptions')
         fprintf('\n\n***\tError in BEst process\t***\n\tyou MUST edit options before lauching the MEM.\n\n')
         return
     end
     OPTIONS.MEMpaneloptions =   sProcess.options.mem.Value.MEMpaneloptions;
+
     % Get options
     OPTIONS.InverseMethod   =   'mem';
-	OPTIONS.SourceOrient    =   {'fixed'};
+    OPTIONS.SourceOrient    =   {'fixed'};
+
     % Output
-	iStudies = [sInputs.iStudy];
+    iStudies = [sInputs.iStudy];
     iDatas   = [sInputs.iItem];
-	OPTIONS.ComputeKernel = 0;
+    OPTIONS.ComputeKernel = 0;
+
     % Get modalities in channel files
     AllSensorTypes = unique(cat(2, sInputs.ChannelTypes));
     AllSensorTypes = intersect(AllSensorTypes, {'MEG MAG', 'MEG GRAD', 'MEG', 'EEG', 'ECOG', 'SEEG'});
@@ -131,12 +135,12 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
     if isfield(sProcess.options, 'comment') && isfield(sProcess.options.comment, 'Value') && ~isempty(sProcess.options.comment.Value)
         OPTIONS.Comment = sProcess.options.comment.Value;
     end
-    % No messages
+
     OPTIONS.DisplayMessages = 0;
 
     % ===== START COMPUTATION =====
     % Call head modeler
-    [AllFiles, errMessage] = process_inverse('Compute', iStudies, iDatas, OPTIONS);
+    [AllFiles, errMessage] = process_inverse_2018('Compute', iStudies, iDatas, OPTIONS);
     % Report errors
     if isempty(AllFiles) && ~isempty(errMessage)
         bst_report('Error', sProcess, sInputs, errMessage);
