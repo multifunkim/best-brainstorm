@@ -33,12 +33,13 @@ function sProcess = GetDescription() %#ok<DEFNU>
     sProcess.FileTag     = '';
     sProcess.Category    = 'Custom';
     sProcess.SubGroup    = 'Sources';
-    sProcess.Index       = 328;
+    sProcess.Index       = 327;
     % Definition of the input accepted by this process
     sProcess.InputTypes  = {'data', 'raw'};
     sProcess.OutputTypes = {'results', 'results'};
     sProcess.nInputs     = 1;
     sProcess.nMinFiles   = 1;
+    sProcess.isSeparator = 1;
     % Options: Comment
     sProcess.options.comment.Comment = 'Comment: ';
     sProcess.options.comment.Type    = 'text';
