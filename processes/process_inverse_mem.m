@@ -73,15 +73,15 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
         return
     end
     OPTIONS.MEMpaneloptions =   sProcess.options.mem.Value.MEMpaneloptions;
-    
+
     % Get options
     OPTIONS.InverseMethod   =   'mem';
-	OPTIONS.SourceOrient    =   {'fixed'};
+    OPTIONS.SourceOrient    =   {'fixed'};
 
     % Output
-	iStudies = [sInputs.iStudy];
+    iStudies = [sInputs.iStudy];
     iDatas   = [sInputs.iItem];
-	OPTIONS.ComputeKernel = 0;
+    OPTIONS.ComputeKernel = 0;
 
     % Get modalities in channel files
     AllSensorTypes = unique(cat(2, sInputs.ChannelTypes));
