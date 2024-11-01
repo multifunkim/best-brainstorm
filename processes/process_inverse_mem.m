@@ -66,7 +66,7 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
     
     % ===== GET OPTIONS =====
     % Default inverse options
-    OPTIONS = bst_inverse_linear_2018();
+    OPTIONS = process_inverse_2018('Compute');
     % MEM options
     if ~isfield(sProcess.options.mem.Value, 'MEMpaneloptions')
         fprintf('\n\n***\tError in BEst process\t***\n\tyou MUST edit options before lauching the MEM.\n\n')
