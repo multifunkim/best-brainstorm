@@ -73,13 +73,16 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
         return
     end
     OPTIONS.MEMpaneloptions =   sProcess.options.mem.Value.MEMpaneloptions;
+    
     % Get options
     OPTIONS.InverseMethod   =   'mem';
 	OPTIONS.SourceOrient    =   {'fixed'};
+
     % Output
 	iStudies = [sInputs.iStudy];
     iDatas   = [sInputs.iItem];
 	OPTIONS.ComputeKernel = 0;
+
     % Get modalities in channel files
     AllSensorTypes = unique(cat(2, sInputs.ChannelTypes));
     AllSensorTypes = intersect(AllSensorTypes, {'MEG MAG', 'MEG GRAD', 'MEG', 'EEG', 'ECOG', 'SEEG'});
@@ -131,12 +134,13 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
     if isfield(sProcess.options, 'comment') && isfield(sProcess.options.comment, 'Value') && ~isempty(sProcess.options.comment.Value)
         OPTIONS.Comment = sProcess.options.comment.Value;
     end
-    % No messages
+
     OPTIONS.DisplayMessages = 0;
+    OPTIONS = struct_copy_fields(OPTIONS,bst_inverse_linear_2018(),0,1);
 
     % ===== START COMPUTATION =====
     % Call head modeler
-    [AllFiles, errMessage] = process_inverse('Compute', iStudies, iDatas, OPTIONS);
+    [AllFiles, errMessage] = process_inverse_2018('Compute', iStudies, iDatas, OPTIONS);
     % Report errors
     if isempty(AllFiles) && ~isempty(errMessage)
         bst_report('Error', sProcess, sInputs, errMessage);
