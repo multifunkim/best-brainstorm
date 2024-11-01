@@ -9,7 +9,9 @@ switch pipeline
     case 'cMEM'
 
         DEF = be_cmem_pipelineoptions();   
+    case 'cMNE'
         
+        DEF = be_cmne_pipelineoptions();   
     case 'wMEM'
         
         DEF = be_wmem_pipelineoptions();

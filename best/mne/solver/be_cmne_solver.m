@@ -101,12 +101,11 @@ end
 %% ===== Normalization ==== %% 
 % we absorb units (pT, nA) in the data, leadfields; we normalize the data
 % and the leadfields
-OPTIONS.optional.normalization = 'fixed';
 [OPTIONS] = be_normalize_and_units(OPTIONS);
 
 %% ===== Compute Minimum Norm Solution ==== %% 
-% we compute MNE (using l-curve for nirs or depth-weighted version)
-[obj, OPTIONS] = be_main_mne(obj, OPTIONS);
+mne_method = OPTIONS.solver.mne_method 
+[obj, OPTIONS] = be_main_mne(obj, OPTIONS,mne_method);
 
 %% ===== Un-Normalization  ===== %%
 [obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);

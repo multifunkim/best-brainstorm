@@ -47,14 +47,12 @@ function [J,varargout] = be_jmne_lcurve(obj, OPTIONS, sfig)
     
     p       = OPTIONS.model.depth_weigth_MNE;
     % Compute covariance matrices
-    if 1 || isempty(OPTIONS.automatic.Modality(1).covariance)
-
-        Sigma_d    =   eye(size(M,1));  
-        Sigma_s = diag(power(diag(G'*G),-p)); 
+    if OPTIONS.solver.mne_use_noiseCov && ~isempty(OPTIONS.automatic.Modality(1).covariance) && size(OPTIONS.automatic.Modality(1).covariance,3) == 1
+        Sigma_d     = OPTIONS.automatic.Modality(1).covariance;
+        Sigma_s     = diag(power(diag(G'*inv(Sigma_d)*G),-p)); 
     else
-
-        Sigma_d    =   OPTIONS.automatic.Modality(1).covariance;
-        Sigma_s = diag(power(diag(G'*inv(Sigma_d)*G),-p)); 
+        Sigma_d     = eye(size(M,1));  
+        Sigma_s     = diag(power(diag(G'*G),-p)); 
     end
 
 
