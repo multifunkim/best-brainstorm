@@ -66,7 +66,7 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
     
     % ===== GET OPTIONS =====
     % Default inverse options
-    OPTIONS = process_inverse('Compute');
+    OPTIONS = bst_inverse_linear_2018();
     % MEM options
     if ~isfield(sProcess.options.mem.Value, 'MEMpaneloptions')
         fprintf('\n\n***\tError in BEst process\t***\n\tyou MUST edit options before lauching the MEM.\n\n')
@@ -136,7 +136,6 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
     end
 
     OPTIONS.DisplayMessages = 0;
-    OPTIONS = struct_copy_fields(OPTIONS,bst_inverse_linear_2018(),0,1);
 
     % ===== START COMPUTATION =====
     % Call head modeler
