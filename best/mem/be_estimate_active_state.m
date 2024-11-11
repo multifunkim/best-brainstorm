@@ -70,17 +70,16 @@ for ii = 1 : nb_clusters
     xi_trans = xi';                              
     
     % F0 is set to a dirac by default (omega=0).
-    if isempty(omega)
-        F0=0;
-    else
+    F0 = 0;
+    if ~isempty(omega)
         F0 = 1/2 * xi_trans * omega * xi;             
     end
 
-    if isempty(mu)
-        F1 = 1/2 * xi_trans * sigma * xi;
-    else
-        F1 = 1/2 * xi_trans * sigma * xi + xi_trans * mu;
+    F1 = 1/2 * xi_trans * sigma * xi;
+    if ~isempty(mu)
+        F1 = F1 + xi_trans * mu;
     end
+    
     F = F0 - F1;
     
     % Estimating alpha*
