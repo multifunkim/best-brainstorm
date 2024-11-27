@@ -67,7 +67,11 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
     end
     
     Njs  = size(OPTIONS.automatic.scales,2);
-    Data = be_dwsynthesis(WData, Njs, filtre);
+    
+    Data = zeros(Ns,No);
+    for i = 1:Ns
+        Data(i,:) =  be_dwsynthesis(WData(i,:), Njs, filtre);
+    end
     
 
     if OPTIONS.optional.verbose
