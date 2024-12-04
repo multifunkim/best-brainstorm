@@ -66,10 +66,6 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
         % check if there's a noise cov for each scale
         if (size(obj.noise_var,3) > 1) && OPTIONS.optional.baseline_shuffle ~= 1
-            if OPTIONS.optional.verbose
-                fprintf('%s, Noise variance at scale %i is selected\n',...
-                    OPTIONS.mandatory.pipeline,OPTIONS.automatic.selected_samples(2,ii));
-            end
             obj_slice(i).noise_var = squeeze(obj.noise_var(:,:,OPTIONS.automatic.selected_samples(2,ii)) );
         
         elseif (size(obj.noise_var,3)>1) && OPTIONS.optional.baseline_shuffle == 1
@@ -85,10 +81,6 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
                 idx_baseline = idx_baseline(2);
             end
     
-            if OPTIONS.optional.verbose
-                fprintf('%s, Noise variance from baseline %i is selected\n',...
-                    OPTIONS.mandatory.pipeline, idx_baseline);
-            end
             obj_slice(i).noise_var = squeeze(obj.noise_var(:,:, idx_baseline) );
         else
             obj_const.noise_var = obj.noise_var;
