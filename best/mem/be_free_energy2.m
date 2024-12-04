@@ -71,9 +71,9 @@ end
 % Estimate dF0 and F0
 % F0 is set to a dirac by default (omega=0).
 if isUsingInactiveVar
-    dF0 = zeros(size(dF1as));
+    dF0 = zeros(size(dF1));
     F0  = zeros(size(F1));
-    for ii = 1:size(dF1b,2)
+    for ii = 1:size(dF0,2)
         xi = clusters(ii).G' * lambda;
         dF0(:,ii) = clusters(ii).G * clusters(ii).inactive_var * xi;
         F0(ii) = 1/2 * xi' * clusters(ii).inactive_var * xi;
