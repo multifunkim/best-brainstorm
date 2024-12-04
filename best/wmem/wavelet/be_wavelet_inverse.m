@@ -44,7 +44,7 @@ if strcmp(OPTIONS.wavelet.type,'RDW')
 
     Nj = fix(log2(No));
     Noff = Nj-size(OPTIONS.automatic.scales,2);
-    Data = zeros(Ns,No);
+    Data = zeros(Ns,No, 'like', WData);
     for i = 1:Ns
         Data(i,:) = IWT_PO(WData(i,:),Noff,filtre);
     end
@@ -68,9 +68,9 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
     
     Njs  = size(OPTIONS.automatic.scales,2);
     
-    Data = zeros(Ns,No);
+    Data = zeros(Ns,No, 'like', WData);
     for i = 1:Ns
-        Data(i,:) =  be_dwsynthesis(WData(i,:), Njs, filtre);
+        Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
     end
     
 
