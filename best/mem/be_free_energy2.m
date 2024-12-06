@@ -51,7 +51,7 @@ isUsingInactiveVar = ~isempty(clusters(1).inactive_var);
 
 % Estimate dF1 and F1 (separating the contribution  of the mean and
 % covariance for optimization purpose)
-dF1     = squeeze(pagemtimes(G_active_var_Gt,lambda));
+dF1     = squeeze(be_pagemtimes(G_active_var_Gt,lambda));
 F1      =  1/2 * lambda_trans*dF1; 
 
 if isUsingActiveMean
