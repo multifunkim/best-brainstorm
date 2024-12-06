@@ -1,4 +1,4 @@
-function [D, dD] = be_free_energy(lambda, M, noise_var, clusters, nb_clusters, varargin)
+function [D, dD] = be_free_energy(lambda, M, noise_var, G_active_var_Gt, clusters)
 %CALCULATE_FREE_ENERGY gives the free energy of a system
 %   [D, dD] = CALCULATE_FREE_ENERGY(LAMBDA, M, NOISE_VAR, CLUSTERS,
 %   NB_CLUSTERS)
@@ -44,132 +44,76 @@ function [D, dD] = be_free_energy(lambda, M, noise_var, clusters, nb_clusters, v
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-%warning off
-if ~isempty(varargin)
-    omega=varargin{1};
-else
-    omega=[];
+lambda_trans = lambda';      
+isUsingActiveMean  = ~isempty(clusters(1).active_mean);
+isUsingInactiveVar = ~isempty(clusters(1).inactive_var);
+
+
+% Estimate dF1 and F1 (separating the contribution  of the mean and
+% covariance for optimization purpose)
+dF1     = squeeze(be_pagemtimes(G_active_var_Gt,lambda));
+F1      =  1/2 * lambda_trans*dF1; 
+
+if isUsingActiveMean
+
+    dF1b = zeros(size(dF1));
+    for ii = 1:size(dF1b,2)
+
+        active_mean = clusters(ii).active_mean;
+        dF1b(:,ii)  = clusters(ii).G * active_mean;
+
+    end
+    dF1 = dF1 + dF1b;
+    F1  = F1 + lambda_trans * dF1b;
+
 end
 
-% variable change to reflect the notation in the reference paper
-
-% SOLVING THE EQUATIONS
-% Ref. eq (19) from Amblard's paper. Second term is noise term assuming
-% Normal law distribution.
-lambda_trans = lambda';      
-D = lambda_trans * M - (1/2) * lambda_trans * noise_var * lambda;
-
-%Same for derivative wrt lambda
-dD = M - noise_var * lambda;
-
-% Third term of the equation and the derivative is substracted from
-% D(lambda) and dD(lambda) respeectively. The sum is calculated over each
-% cluster
-
-isUsingActiveMean = ~isempty(clusters(1).active_mean);
-
-for ii = 1:nb_clusters
-    
-    active_probability = clusters(ii).active_probability;
-
-    if ~isempty(omega)
+% Estimate dF0 and F0
+% F0 is set to a dirac by default (omega=0).
+if isUsingInactiveVar
+    dF0 = zeros(size(dF1));
+    F0  = zeros(size(F1));
+    for ii = 1:size(dF0,2)
         xi = clusters(ii).G' * lambda;
+        dF0(:,ii) = clusters(ii).G * clusters(ii).inactive_var * xi;
+        F0(ii) = 1/2 * xi' * clusters(ii).inactive_var * xi;
     end
-         
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Estimating dF*(xi) (before F*(xi) to optimize the computing time
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % dF was split into dF1a and dF1b for optimization purposes only.
-    
-    % Sigma (active_var) is a symetric matrix, the transpose is not necessary
-    % dF1a = G * active_var * xi =  G * active_var * G' * lambda. 
-    % G *active_var * G'  is precomputed and stored in G_active_var_Gt
-    dF1a = clusters(ii).G_active_var_Gt * lambda; 
+end
 
-    if isUsingActiveMean
-        active_mean        = clusters(ii).active_mean;
+p = [clusters.active_probability];
 
-        dF1b = clusters(ii).G * active_mean;
-        dF1 = dF1a + dF1b;
-    else
-        dF1 = dF1a;
-    end
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Estimating F*(xi)
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    % F0 is set to a dirac by default (omega=0).
-    if isempty(omega)
-        F0=0;
-    else
-        F0 = 1/2 * xi' * omega * xi;
+% Finally estimate dF and F
+% We separate the case where mu_k = 0 and Dirac for inactive parcel for
+% optimization purpose
+if ~isUsingActiveMean && ~isUsingInactiveVar
+
+    coeffs_free_energy  = (1-p) .* exp(-F1)  +  p;
+    s1   = p ./ coeffs_free_energy;
+
+    F = F1 + log(coeffs_free_energy);
+    dF  = s1 .* dF1;
+else 
+    if  ~isUsingInactiveVar
+        dF0 = zeros(size(dF1));
+        F0  = zeros(size(F1));
     end
     
+    F_max = max(F0,F1);
     
-    % F1 is split into F1a and F1b and added on a separate line for
-    % optimization purposes only.
-    F1a = 1/2 * lambda_trans * dF1a;
+    free_energy = exp([F0;F1] - F_max);
+    coeffs_free_energy = (1-p) .* free_energy(1,:) +  p .*  free_energy(2,:);
     
-    if isUsingActiveMean
-        F1b = lambda_trans * dF1b;
-        F1 = F1a + F1b;
-    else
-        F1 = F1a;
-    end
+    F = F_max + log(coeffs_free_energy);
 
-    % This equation can be unstable
-    % F = ln((1-alpha(ii)) * exp(F0) + alpha(ii) * exp(F1));
-    
-    %TO CHECK: not sure how it's more stable...
-    % Reorganizing the equations for better results yields:
-    % F*(xi)  = F1 + ln( (1-alpha) exp(F0 - F1) + alpha) if F1 > F0
-    % F*(xi)  = F0 + ln( (1-alpha) + alpha * exp(F1-F0) ) if F1 < F0
+    s0   = (1-p) ./ coeffs_free_energy ;
+    s1   =    p  ./ coeffs_free_energy ;
 
-    if isempty(omega) % we know that f_max = F1 and F0 = 0
-        F_max = F1;
-
-        % free_energy = [exp(-F_max)  ; 1 ];  we dont need to compute as we
-        % only need free_energy(2) = 1
-
-        coeffs_free_energy = (1-active_probability) * exp(-F_max)  +  active_probability;
-
-        F = F_max + log(coeffs_free_energy);
-    else
-
-        F_max = max(F0,F1);
-        free_energy = exp([F0;F1] - F_max);
-        coeffs_free_energy = [1-active_probability,  active_probability] *  free_energy;
-        F = F_max + log(coeffs_free_energy);
-    end
-    
-    % ERROR when coeffs_free_energy == 0
-    if isinf(F)
-
-        F = F_max;
-        dF = 0;
-
-    else
-        if isempty(omega)
-            % dF0 = zeros(size(dF1));   free_energy(2)  == 1
-            dF  = dF1 *  (active_probability / coeffs_free_energy);
-        else
-            dF0 = clusters(ii).G * omega * xi;
-            dF = [ (1 - active_probability)*dF0,  active_probability*dF1] * free_energy ./ coeffs_free_energy;
-        end
-    
-    end
-
-    % Substracting from D(lambda)
-    D = D - F;  % Eq. (19) from paper
-
-    % Substracting from dD(lambda)
-    dD = dD - dF;
+    dF = s0 .* dF0 +  s1.* dF1;
 end
 
 % The outcome of the equations produces a strictly convex function
 % (with a maximum).
-D = -D;
-dD = -dD;
+dD  = -(               M - sum(dF,2)                     - noise_var * lambda);
+D   = -(lambda_trans * M - sum(F) - (1/2) * lambda_trans * noise_var * lambda);
 
 end
