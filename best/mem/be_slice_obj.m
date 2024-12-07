@@ -146,9 +146,35 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     OPTIONS.optional.Baseline    = [];
 
     MAX_ITER = 10000;  % The maximum number of itterations
-    OPTIONS.solver.optimoptions =   optimoptions('fminunc','GradObj', 'on', ...
-                                                'MaxIter', MAX_ITER, ...
-                                                'MaxFunEvals', MAX_ITER, ...
-                                                'algorithm', 'quasi-newton',... % 'quasi-newton' trust-region'
-                                                'Display', 'off' );
+
+    if strcmpi(OPTIONS.solver.Optim_method, 'fminunc') && ...
+       license('test', 'Optimization_Toolbox') && ...
+       exist('fminunc', 'file')
+
+        OPTIONS.solver.optimoptions =   optimoptions('fminunc','GradObj', 'on', ...
+                                                    'MaxIter', MAX_ITER, ...
+                                                    'MaxFunEvals', MAX_ITER, ...
+                                                    'algorithm', 'quasi-newton',... % 'quasi-newton' trust-region'
+                                                    'Display', 'off' );
+    else
+
+        if strcmpi(OPTIONS.solver.Optim_method, 'fminunc')
+            disp(['BEst> No license found for the Optimization Toolbox or ', ...
+                'missing the function ''fminunc''.'])
+            disp('BEst> Using alternate optimization routine...')
+
+            OPTIONS.solver.Optim_method = 'minfuncnm';
+        end
+    
+        options = [];
+        options.MaxIter = MAX_ITER;
+        options.MaxFunEvals = MAX_ITER;
+        options.Display = 'off';
+        if strcmpi(OPTIONS.solver.Optim_method, 'minfuncnm')
+            options.useMex = 0;
+        end
+
+        OPTIONS.solver.optimoptions = options;
+    end
+
 end

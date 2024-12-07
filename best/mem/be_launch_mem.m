@@ -93,7 +93,6 @@ if OPTIONS.solver.parallel_matlab == 1
     end
 
     time_it_starts = tic;
-    ticBytes(gcp);
     parfor ii = 1 : nbSmp
         
         [R, E, A, S] = MEM_mainLoop(ii, obj_slice(ii), obj_const, OPTIONS_litle);
@@ -106,7 +105,6 @@ if OPTIONS.solver.parallel_matlab == 1
             send(q, 1); 
         end
     end
-    tocBytes(gcp);
     time_it_ends = toc(time_it_starts);
     if isVerbose
         fprintf('%s, Elapsed CPU time is %5.2f seconds.\n', OPTIONS.mandatory.pipeline, time_it_ends);
