@@ -88,9 +88,12 @@ function [J,varargout] = be_jmne_lcurve(obj, OPTIONS, sfig)
         
         % Estimate the corresponding norm
         R = qr(residual_kernal*U);
+        R = triu(R); % BUGFIX for old version of matlab (<2022a).
+
         Fit(iAlpha)     = norm(R*S);
 
         R = qr(wKernel*U);
+        R = triu(R); % BUGFIX for old version of matlab (<2022a).
         Prior(iAlpha)   = norm(R*S);
         
         if ~OPTIONS.automatic.stand_alone
