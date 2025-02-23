@@ -3,7 +3,7 @@ function OPT = be_pipelineoptions(OPT, pipeline, DataTypes)
 if nargin == 1
     pipeline = OPT.mandatory.pipeline;
 end
-if nargin < 2
+if nargin < 3
     DataTypes = [];
 end
 
