@@ -142,7 +142,7 @@ end
 %% ===== Normalization ==== %% 
 % we absorb units (pT, nA) in the data, leadfields; we normalize the data
 % and the leadfields
-[OPTIONS] = be_normalize_and_units(OPTIONS);
+[OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
 %% ===== Null hypothesis (for the threshold for the msp scores)
 % from the baseline, compute the distribution of the msp scores. 

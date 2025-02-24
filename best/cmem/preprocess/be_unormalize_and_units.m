@@ -22,13 +22,14 @@ function [obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS)
 % -------------------------------------------------------------------------
 
 
-if  strcmp(OPTIONS.optional.normalization,'adaptive')
-    obj.ImageGridAmp = obj.ImageGridAmp/OPTIONS.automatic.Modality(1,1).ratioAmp;
-else
-    obj.ImageGridAmp = obj.ImageGridAmp*OPTIONS.automatic.Modality(1).units_dipoles; %Modified by JSB August 17th 2015
-end
-
-OPTIONS.automatic.Modality(1).Jmne = OPTIONS.automatic.Modality(1).Jmne * OPTIONS.automatic.Modality(1).MNEAmp;
-
+    if  strcmp(OPTIONS.optional.normalization,'adaptive')
+        obj.ImageGridAmp = obj.ImageGridAmp/OPTIONS.automatic.Modality(1,1).ratioAmp;
+    else
+        obj.ImageGridAmp = obj.ImageGridAmp*OPTIONS.automatic.Modality(1).units_dipoles; %Modified by JSB August 17th 2015
+    end
+    
+    if isfield(OPTIONS.automatic.Modality(1), 'MNEAmp')
+        OPTIONS.automatic.Modality(1).Jmne = OPTIONS.automatic.Modality(1).Jmne * OPTIONS.automatic.Modality(1).MNEAmp;
+    end
 
 end

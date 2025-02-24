@@ -1,12 +1,11 @@
 function [obj, OPTIONS] = be_main_mne(obj, OPTIONS, method)
-% BE_MAIN_MEM sets the appropriate options for the MNE 
-% accroding to the chosen MEM pipeline. Populate the fields
-%   OPTIONS.automatic.Modality(ii).Jmne = J * ratioAmp;
-%   OPTIONS.automatic.Modality(ii).ratioAmp = ratioAmp; with ratioAmp =  1 / max(max(abs(J))); 
+% Compute the MNE solition based on the choosen method and store the result
+% in OPTIONS.automatic.Modality(ii).Jmne
 %
 %   INPUTS:
 %       -   obj
 %       -   OPTIONS
+%       -   method
 %
 %   OUTPUTS:
 %       -   OPTIONS
@@ -32,11 +31,8 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS, method)
             J   =   be_jmne_normalized(OBJ_FUS, OPTIONS);  
     end
 
-    
-    MNEAmp =  max(max(abs(J))); %Same for both modalities
     for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)
-        OPTIONS.automatic.Modality(ii).Jmne = J / MNEAmp;
-        OPTIONS.automatic.Modality(ii).MNEAmp = MNEAmp;
+        OPTIONS.automatic.Modality(ii).Jmne = J ;
     end
-    
+
 end
