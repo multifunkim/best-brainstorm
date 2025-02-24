@@ -30,7 +30,7 @@ function [J,varargout] = be_jmne_lcurve(obj, OPTIONS, sfig)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-    if nargin < 4 
+    if nargin < 3 
         sfig = struct('hfig', [], 'hfigtab', []);
     end
     
