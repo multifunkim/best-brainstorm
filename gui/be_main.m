@@ -160,5 +160,9 @@ Def_OPTIONS.solver.Optim_method                 = 'fminunc';
 Def_OPTIONS.solver.covariance_scale             = 1;
 Def_OPTIONS.solver.parallel_matlab              = be_canUseParallelPool();
 
+% output options
+
+Def_OPTIONS.output.save_factor                  =  1;
+
 end
 

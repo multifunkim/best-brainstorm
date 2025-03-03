@@ -95,6 +95,9 @@ if ~stand_alone && isfield( OPTIONS, 'MEMpaneloptions' )
     if OPTIONS.MEMpaneloptions.solver.NoiseCov_recompute
         MEMoptions.solver.NoiseCov = []; 
     end
+
+    MEMoptions = be_struct_copy_fields( MEMoptions, Def_OPTIONS, [] );
+
 else
     MEMoptions = be_struct_copy_fields( OPTIONS, Def_OPTIONS, [] );
     MEMoptions.automatic.stand_alone    =   1;
@@ -168,11 +171,10 @@ if (nargout==2) && ~FLAG
     end
     
 elseif (nargout==1)
-    Results = MEMoptions;
-    
+    Results = MEMoptions;    
 end
 
-return
+end
 
 
 % ----------------------------------------------------------------------- %
@@ -267,4 +269,7 @@ Def_OPTIONS.solver.Optim_method                 = 'fminunc';
 Def_OPTIONS.solver.covariance_scale             = 1;
 Def_OPTIONS.solver.parallel_matlab              = false;
 
-return
+% output options
+Def_OPTIONS.output.save_factor                  =  1;
+
+end

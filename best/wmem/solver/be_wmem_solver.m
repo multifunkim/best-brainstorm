@@ -189,7 +189,12 @@ end
 %% Conversion to time-series
 if ~OPTIONS.wavelet.single_box
     inv_proj = be_wavelet_inverse_projection(obj,OPTIONS);
-    obj.ImageGridAmp = {obj.ImageGridAmp, inv_proj};
+
+    if OPTIONS.output.save_factor
+        obj.ImageGridAmp = {obj.ImageGridAmp, inv_proj};
+    else
+        obj.ImageGridAmp = obj.ImageGridAmp * inv_proj;
+    end
 end
 
 %% ===== Update Comment ===== %%
@@ -214,7 +219,6 @@ Results = struct(...
     'nComponents',      round( length(obj.iModS) / obj.nb_sources ), ...
     'MEMoptions',       OPTIONS);
 
-% Save results as factor decomposition
 Results.ImageGridAmp = obj.ImageGridAmp;
 
 

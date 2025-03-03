@@ -56,8 +56,13 @@ elseif size(obj.ImageGridAmp,2) <  numel(OPTIONS.mandatory.DataTime)% - expand r
     for i = 1:length(idx_time)
         nr(i, idx_time(i)) = 1;
     end
-
-    obj.ImageGridAmp =  { obj.ImageGridAmp ,  sparse(nr)};
+    
+    if OPTIONS.output.save_factor
+        obj.ImageGridAmp =  { obj.ImageGridAmp ,  sparse(nr)};
+    else
+        obj.ImageGridAmp = obj.ImageGridAmp * nr;
+    end
+    
 end
 
 end
