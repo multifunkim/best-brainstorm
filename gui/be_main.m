@@ -58,6 +58,8 @@ if nargout == 1
 else
     % Calculations
     [Results, OPTIONS]  =   be_main_call(varargin{:});
+
+    
     varargout{1}        =   Results;
     varargout{2}        =   OPTIONS;
 end
@@ -163,6 +165,7 @@ Def_OPTIONS.solver.parallel_matlab              = be_canUseParallelPool();
 % output options
 
 Def_OPTIONS.output.save_factor                  =  1;
+Def_OPTIONS.output.save_extra_information       =  0;
 
 end
 

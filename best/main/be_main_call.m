@@ -157,13 +157,8 @@ if (nargout==2) && ~FLAG
     end
     
     % THE CODE STARTS HERE:    
-    [Results, MEMoptions]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions, Results );
-    OPTIONS.TimeSegment     = MEMoptions.mandatory.DataTime([1 end]);
-    OPTIONS.BaselineSegment = MEMoptions.optional.BaselineSegment([1 end]);
-    OPTIONS.ResultFile      = MEMoptions.optional.ResultFile;
-    OPTIONS.DataFile        = MEMoptions.optional.DataFile;
-    OPTIONS.Comment         = MEMoptions.automatic.Comment;
-    OPTIONS.DataTime        = MEMoptions.mandatory.DataTime;
+    [Results, OPTIONS]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions, Results );
+
     
     % Initialize parallel computing
     if MEMoptions.solver.parallel_matlab && close_pool
@@ -271,5 +266,6 @@ Def_OPTIONS.solver.parallel_matlab              = false;
 
 % output options
 Def_OPTIONS.output.save_factor                  =  1;
+Def_OPTIONS.output.save_extra_information       =  0;
 
 end
