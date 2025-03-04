@@ -98,17 +98,8 @@ end
 obj = struct('ImageGridAmp', []);
 [obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
 
-if ~isfield(HeadModel, 'vertex_connectivity')
-    [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
-else
-    obj.VertConn = HeadModel.vertex_connectivity;
-end
-
-if isempty(OPTIONS.optional.clustering) && ( isempty(obj.VertConn) || diff(size(obj.VertConn)) ) % CETTE PARTIE N'EST PAS CORRECTE: || size(obj.VertConn,1)~=size(HeadModel.Gain,2)
-    fprintf('wMEM solver error : no vertex con.nectivity matrix available.\n');
-    return
-end
-
+%% Retrieve vertex connectivity - needed for clustering
+[OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;

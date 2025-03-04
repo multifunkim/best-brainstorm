@@ -34,15 +34,18 @@ function [obj, OPTIONS] = be_main_MEM(obj, OPTIONS)
 
 
 	if strcmp(OPTIONS.mandatory.pipeline,'rMEM')
+            obj.data = OPTIONS.mandatory.Data;
         	new_obj                     =   be_fusion_of_modalities(obj, OPTIONS);
             new_obj.noise_var           =   real(new_obj.noise_var);
         	[obj.ImageGridAmp, OPTIONS] =   be_launch_mem(new_obj, OPTIONS); 
+
         	% - imaginary part 
-        	if ~isempty(new_obj.idata)
+            if ~isempty(new_obj.idata)
             	new_obj                 =   be_fusion_of_modalities(obj, OPTIONS);
                 if ~isreal( new_obj.noise_var )
                     new_obj.noise_var  	=   imag(new_obj.noise_var);
                 end
+
                 new_obj.data            =   new_obj.idata;
             	obj.ImageGridAmp        =   obj.ImageGridAmp + 1i * be_launch_mem(new_obj, OPTIONS);
             end

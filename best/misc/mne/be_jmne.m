@@ -39,7 +39,7 @@ G = obj.gain;
 
 % selection of the data:
 M = obj.data;
-if ~isempty(OPTIONS.automatic.selected_samples)   
+if ~isempty(OPTIONS.automatic.selected_samples)  && ~strcmp(OPTIONS.mandatory.pipeline,'rMEM')
     selected_samples = OPTIONS.automatic.selected_samples(1,:);
     M = M(:,selected_samples);
 end
