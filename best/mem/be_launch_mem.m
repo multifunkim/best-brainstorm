@@ -32,46 +32,37 @@ function [ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-% All samples or a selection?
-Data  = [];
 
 if ~isempty(OPTIONS.automatic.selected_samples)        
     Data = obj.data(:,OPTIONS.automatic.selected_samples(1,:));                 
-elseif ~strcmp(OPTIONS.mandatory.pipeline,'wMEM')
+else
     Data  = obj.data;
 end
 
 % time series or wavelet representation
 nbSmp           = size(Data,2);
+ImageSourceAmp  = zeros(length(obj.iModS), nbSmp);
 
 if strcmp(OPTIONS.mandatory.pipeline,'wMEM')
     obj.time     = OPTIONS.automatic.selected_samples(6,:); 
     obj.scale    = OPTIONS.automatic.selected_samples(2,:); 
-    if ~OPTIONS.wavelet.single_box
-        ImageSourceAmp  = zeros(length(obj.iModS), nbSmp);
-    else
-        ImageSourceAmp  = zeros( length(obj.iModS), 1 );
-    end
 else
     obj.time        = obj.t0+(1:nbSmp)/OPTIONS.automatic.sampling_rate; 
-    obj.scale       = zeros(1,nbSmp); 
-    ImageSourceAmp  = zeros(length(obj.iModS), nbSmp);  
+    obj.scale       = zeros(1, nbSmp); 
 end
 
 % fixed parameters
 entropy_drop    = zeros(1,nbSmp);
-final_alpha     = cell(1,nbSmp);
-final_sigma     = cell(1,nbSmp);
+final_alpha     = cell(1, nbSmp);
+final_sigma     = cell(1, nbSmp);
 
 
 % Pre-compute Sigma_s
 G = obj.gain;
 if OPTIONS.model.depth_weigth_MEM > 0 
-
     p = OPTIONS.model.depth_weigth_MEM;
     obj.Sigma_s  = sparse(diag(power(diag(G'*G) ,-p))) ;
 else
-
     obj.Sigma_s  = speye(size(G,2)) ; 
 end
 
