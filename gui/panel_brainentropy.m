@@ -89,7 +89,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     OPTIONS = be_struct_copy_fields(OPTIONS, be_rmem_pipelineoptions(ChannelTypes),[],0);
         
     % Version
-    OPTIONS.automatic.version       =   '3.0.0';
+    OPTIONS.automatic.version       =   be_versions();
     OPTIONS.automatic.last_update   =   '';
 
     jTXTver =   JTextField(OPTIONS.automatic.version);
@@ -240,6 +240,13 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     % ==== Ridges
     [jPanel, ctrl_tmp] = CreatePanelRidge();
+    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
+    c.gridy = gridyRR;
+    jPanelRightRight.add(jPanel, c);
+    gridyRR = gridyRR + 1;
+
+    % ===== Output settings =====
+    [jPanel, ctrl_tmp] = CreatePanelOutput();
     ctrl = struct_copy_fields(ctrl,ctrl_tmp);
     c.gridy = gridyRR;
     jPanelRightRight.add(jPanel, c);
@@ -979,7 +986,30 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                       'jParallel',   jBoxPara);
 
     end
+
+    function [jPanel, ctrl] = CreatePanelOutput()
+       jPanel = gui_river([1,1], [0, 6, 6, 6], 'Output options');
+
+        % Display
+        jSaveExtra  = JCheckBox( 'Save extra information' );
+        jSaveExtra.setSelected( OPTIONS.output.save_extra_information );   
+        jPanel.add('p left', jSaveExtra);
+
+
+        % Parallel computing
+        jSaveFactor  = JCheckBox( 'Save map as factors' );
+        jSaveFactor.setSelected(OPTIONS.output.save_factor);
+
+        jPanel.add('p left', jSaveFactor);
+        % Separator
+        jPanel.add('br', JLabel(''));
+
+
+        ctrl = struct('jPanelOutput', jPanel ,...
+                      'jSaveExtra',   jSaveExtra, ...
+                      'jSaveFactor',  jSaveFactor);
     
+    end
     function setOptions(OPTIONS)
 
         choices = {'cMEM', 'wMEM', 'rMEM'};
@@ -1120,6 +1150,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ctrl.jParallel.setSelected(OPTIONS.solver.parallel_matlab);
         ctrl.jNewCOV.setSelected(OPTIONS.solver.NoiseCov_recompute);
         ctrl.jVarCovar.setText(num2str(OPTIONS.solver.NoiseCov_method) );
+
+        % OPTIONS from CreatePanelOutput
+        ctrl.jSaveFactor.setSelected(OPTIONS.output.save_factor);
+        ctrl.jSaveExtra.setSelected(OPTIONS.output.save_extra_information);
+
     end
 
 
@@ -1143,8 +1178,14 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         end
     end
 
-    function SetAllExpertPanelsVisiblity(visibility)
-        panels = [ctrl.JPanelCLSType, ctrl.jPanelModP, ctrl.JPanelDepth , ctrl.jPanelWAV, ctrl.jPanelRDG];
+    function SetAllExpertPanelsVisiblity(pipeline, visibility)
+
+        switch(pipeline)
+            case 'cMEM'
+                panels = [ctrl.JPanelCLSType, ctrl.jPanelModP, ctrl.JPanelDepth , ctrl.jPanelOutput];
+            case {'wMEM', 'rMEM'}
+                panels = [ctrl.JPanelCLSType, ctrl.jPanelModP, ctrl.JPanelDepth , ctrl.jPanelWAV, ctrl.jPanelRDG, ctrl.jPanelOutput];
+        end
 
         for iPanel = 1:length(panels)
             panels(iPanel).setVisible(visibility);
@@ -1265,9 +1306,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.jPanelWAV.setVisible(0);
             ctrl.jPanelRDG.setVisible(0);
             ctrl.jPanelSensC.setVisible(0);
+            ctrl.jPanelOutput.setVisible(0);
         else
 
-            SetAllExpertPanelsVisiblity(OPTIONS.automatic.MEMexpert);
+            SetAllExpertPanelsVisiblity(choices{selected}, OPTIONS.automatic.MEMexpert);
 
             ctrl.JPanelData.setPreferredSize(java_scaled('dimension', 320, 270));
             ctrl.JPanelref.setVisible(0);
@@ -1772,9 +1814,6 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
         end
     end
 
-
-
-
     % Get clustering options
 
     MEMpaneloptions.clustering.neighborhood_order     = str2double(char(ctrl.jTextNeighbor.getText()));
@@ -1825,6 +1864,9 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.optional.display            = ctrl.jBoxShow.isSelected();
     MEMpaneloptions.solver.NoiseCov_recompute   = double( ctrl.jNewCOV.isSelected() );
     MEMpaneloptions.solver.NoiseCov_method    	= str2double( ctrl.jVarCovar.getText() );
+
+    MEMpaneloptions.output.save_factor    	    = double( ctrl.jSaveFactor.isSelected() );
+    MEMpaneloptions.output.save_extra_information  = double( ctrl.jSaveExtra.isSelected() );
 
     if any( strcmp(MEMpaneloptions.mandatory.pipeline, {'wMEM','rMEM'}) )
         MEMpaneloptions.wavelet.type            = char( ctrl.jWavType.getText() );
