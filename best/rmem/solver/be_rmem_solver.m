@@ -194,7 +194,7 @@ if OPTIONS.optional.waitbar
     pause(.5); close(obj.hmem);
 end
 
-if ~OPTIONS.automatic.stand_alone || OPTIONS.automatic.process                                 
+if ~OPTIONS.automatic.stand_alone | OPTIONS.automatic.process                                 
 	
  	% If added to a 'default_study' node: need to update results links12 30
 	OPTIONS.automatic           =   OPTIONS2.automatic;
@@ -203,9 +203,6 @@ if ~OPTIONS.automatic.stand_alone || OPTIONS.automatic.process
     
     fprintf('\n***\tWARNING\t***\n\tTo see the ridges and localizations, you need to reload the condition\n\tRight-click on condition -> Reload (at the bottom of the menu)\n\n');
 end
-OPTIONS                 = be_cleanup_options(obj, OPTIONS);
-
-disp('Bye.')
 
 end
 
@@ -331,14 +328,9 @@ function [OPTIONS, obj] = get_ridge_data(OPTIONS, obj, ii)
         iDc     = OPTIONS.automatic.GoodChannel;
         STd     = be_closest( OPTIONS.optional.TimeSegment(1), DT.Time );
         NDd     = be_closest( OPTIONS.optional.TimeSegment(end), DT.Time );
-
-        % TODO : FIXME
         OPTIONS.mandatory.Data              =   DT.F( iDc, STd:NDd );
-        obj.Data                            =   OPTIONS.mandatory.Data;
-
         OPTIONS.optional.iData              =   DT.Fi( iDc, STd:NDd );  
-        obj.iData                            =   OPTIONS.optional.iData;
-
+        
         % Fill optional field : BASELINE
         OPTIONS.optional.Baseline           =   DT.Baseline(iDc, :);
         noise_covariance                    =   [];
@@ -392,5 +384,7 @@ function [OPTIONS, obj] = get_ridge_data(OPTIONS, obj, ii)
         OPTIONS.solver.NoiseCov_recompute       =   0;
         
     end
+    
+disp('Bye.')
 end
 

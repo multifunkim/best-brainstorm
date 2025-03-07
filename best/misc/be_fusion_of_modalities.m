@@ -56,10 +56,8 @@ data = [];
 data_normalized = [];
 
 for ii=1:length(OPTIONS.mandatory.DataTypes)
-    if isfield(obj, 'data') && iscell(obj.data) % wavelet (wMEM)
+    if isfield(obj, 'data') % wavelet
         data_mod = obj.data{ii};
-    elseif isfield(obj, 'data') && strcmp(OPTIONS.mandatory.pipeline,'rMEM')% rMEM
-        data_mod = obj.data;
     else % Time-series
         data_mod = OPTIONS.automatic.Modality(ii).data;
     end
