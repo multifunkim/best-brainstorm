@@ -31,13 +31,14 @@ function OPTIONS = be_cleanup_options(obj, OPTIONS)
            
     end
     
-    if isfield( OPTIONS.automatic, 'selected_samples')
+    if isfield( OPTIONS.automatic, 'selected_samples') && ~isempty(OPTIONS.automatic.selected_samples)
         automatic.selected_samples = OPTIONS.automatic.selected_samples;
     end
-    if isfield( OPTIONS.automatic, 'info_extension')
+
+    if isfield( OPTIONS.automatic, 'info_extension') && ~isempty(OPTIONS.automatic.info_extension)
         automatic.info_extension = OPTIONS.automatic.info_extension;
     end    
-    if isfield( OPTIONS.automatic, 'wActivation')
+    if isfield( OPTIONS.automatic, 'wActivation') && ~isempty(OPTIONS.automatic.wActivation)
         automatic.wActivation = OPTIONS.automatic.wActivation;
     end
     OPTIONS.automatic = automatic;

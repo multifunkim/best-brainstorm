@@ -110,15 +110,15 @@ end
 [obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
 
 %% ===== Results  ===== %%
-obj.ImageGridAmp =  OPTIONS.automatic.Modality(1).Jmne;
-[OPTIONS, obj] = be_apply_window( OPTIONS, obj );
 
-             
-% Results (full temporal sequence)                  
-Results = struct(...
-    'ImageGridAmp',     obj.ImageGridAmp, ...
-    'ImagingKernel',    [], ...
-    'MEMoptions',       OPTIONS);
+obj.ImageGridAmp =  OPTIONS.automatic.Modality(1).Jmne;
+[OPTIONS, obj]   = be_apply_window( OPTIONS, obj );
+
+Results = struct();
+Results.ImageGridAmp  = obj.ImageGridAmp;
+Results.ImagingKernel = [];
+
+OPTIONS        = be_cleanup_options(obj, OPTIONS);
 
 disp('Bye.')
 end
