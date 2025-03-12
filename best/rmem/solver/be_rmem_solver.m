@@ -93,6 +93,7 @@ function [Results, OPTIONS] = be_rmem_solver(HeadModel, OPTIONS, Results)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%% END OF TO DO LIST %%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+obj.ImageGridAmp = []; 
 
 % Display progress
 if OPTIONS.optional.waitbar
@@ -101,22 +102,8 @@ end
 
 
 %% Retrieve vertex connectivity - needed for clustering
-if ~OPTIONS.automatic.stand_alone
-    [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
-elseif isempty(OPTIONS.optional.clustering.clusters) % we consider a stand-alone version (outside the BrainStorm env.) 
-    obj.VertConn = HeadModel.vertex_connectivity;
-end
-obj.ImageGridAmp = []; 
+[OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 
-if isempty(OPTIONS.optional.clustering) && isempty(obj.VertConn) || diff(size(obj.VertConn)) 
-    fprintf('MEM error : no vertex connectivity matrix available.\n');
-    return
-end
-
-% if OPTIONS.optional.waitbar
-%     % Display progress
-%     waitbar(0.1, obj.hmem, {'Step 1/2 : Preparing MEM routine ... head files loaded'});
-% end
 
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
@@ -161,7 +148,7 @@ for ii = 1 : nNEWdata
     %% ===== Normalization ==== %% 
     % we absorb units (pT, nA) in the data, leadfields; we normalize the data
     % and the leadfields
-    [OPTIONS2] = be_normalize_and_units(OPTIONS2);
+    [OPTIONS2] = be_normalize_and_units(obj, OPTIONS2);
 
     %% ===== Noise estimation ===== %%   
 
@@ -191,12 +178,12 @@ for ii = 1 : nNEWdata
     [rep, base, ext] = be_fileparts(OPTIONS2.optional.ResultFile);
     OPTIONS2.optional.ResultFile = be_fullfile(rep, [base, '_', num2str(ii), ext]);
     
-    if OPTIONS2.automatic.stand_alone & ~OPTIONS2.automatic.process
+    if OPTIONS2.automatic.stand_alone && ~OPTIONS2.automatic.process
         Results(ii).ImageGridAmp    =   obj.ImageGridAmp;
         Results(ii).ImagingKernel   =   [];
         Results(ii).MEMoptions      =   OPTIONS2;
         Results(ii).MEMdata         =   rmfield(obj, 'ImageGridAmp');
-    elseif ii<nNEWdata 
+    elseif ii < nNEWdata 
         [OPTIONS2] = save_ridges_results(obj, OPTIONS2, HeadModel, ii);
     else
         [OPTIONS2, Results] = save_ridges_results(obj, OPTIONS2, HeadModel, ii);
@@ -204,7 +191,7 @@ for ii = 1 : nNEWdata
 end
 
 if OPTIONS.optional.waitbar
-    pause(.5); close(obj.hmem)
+    pause(.5); close(obj.hmem);
 end
 
 if ~OPTIONS.automatic.stand_alone | OPTIONS.automatic.process                                 

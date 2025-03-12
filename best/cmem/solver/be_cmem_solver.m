@@ -98,7 +98,9 @@ function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS, Results)
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline cMEM\n');
 end 
- obj = struct('hfig', [] , 'hfigtab', [] );
+
+obj = struct();
+[obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
 
 %% Retrieve vertex connectivity - needed for clustering
 [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
@@ -145,16 +147,10 @@ end
 % check for a time segment to be localized
 [OPTIONS] = be_apply_window( OPTIONS, [] );
 
-%% ===== Compute Minimum Norm Solution ==== %% 
-% we compute MNE (using l-curve for nirs or depth-weighted version)
-[obj, OPTIONS] = be_main_mne(obj, OPTIONS);
-
 %% ===== Normalization ==== %% 
 % we absorb units (pT, nA) in the data, leadfields; we normalize the data
 % and the leadfields
-[OPTIONS] = be_normalize_and_units(OPTIONS);
-
-
+[OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
 %% ===== Double precision to single  ===== %%
 % relax the double precision for the msp (leadfield and data)
@@ -184,27 +180,27 @@ obj = be_fusion_of_modalities(obj, OPTIONS);
 %% ===== Solve the MEM ===== %%
 
 [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
+if OPTIONS.optional.display
+    be_display_entropy_drops(obj,OPTIONS);
+end
+
+%% ===== Un-Normalization  ===== %%
+[obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
 
 
 %% ===== Inverse temporal data window  ===== %%
 
 [OPTIONS, obj] = be_apply_window( OPTIONS, obj );
 
-% Clean up options
-OPTIONS.automatic    = struct(  'entropy_drops', OPTIONS.automatic.entropy_drops, ... 
-                                'final_alpha', {OPTIONS.automatic.final_alpha}, ...
-                                'Comment', OPTIONS.automatic.Comment, ...
-                                'initial_alpha', obj.ALPHA, ...
-                                'clusters', obj.CLS, ...
-                                'minimum_norm',OPTIONS.automatic.Modality(1).Jmne, ...
-                                'MSP',obj.SCR);     
-                   
-% Results (full temporal sequence)                  
-Results = struct(...
-    'ImageGridAmp',     obj.ImageGridAmp, ...
-    'ImagingKernel',    [], ...
-    'MEMoptions',       OPTIONS); % ...
-     %'MEMdata',          obj);
+
+%% ===== Prepare output  ===== %%
+Results = struct();
+Results.ImagingKernel   = [];
+Results.ImageGridAmp    =  obj.ImageGridAmp;
+Results.nComponents     = round( length(obj.iModS) / obj.nb_sources );
+
+OPTIONS                 = be_cleanup_options(obj, OPTIONS);
+
 
 disp('Bye.')
 end

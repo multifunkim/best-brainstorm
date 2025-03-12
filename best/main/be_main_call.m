@@ -95,6 +95,9 @@ if ~stand_alone && isfield( OPTIONS, 'MEMpaneloptions' )
     if OPTIONS.MEMpaneloptions.solver.NoiseCov_recompute
         MEMoptions.solver.NoiseCov = []; 
     end
+
+    MEMoptions = be_struct_copy_fields( MEMoptions, Def_OPTIONS, [] );
+
 else
     MEMoptions = be_struct_copy_fields( OPTIONS, Def_OPTIONS, [] );
     MEMoptions.automatic.stand_alone    =   1;
@@ -154,13 +157,8 @@ if (nargout==2) && ~FLAG
     end
     
     % THE CODE STARTS HERE:    
-    [Results, MEMoptions]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions, Results );
-    OPTIONS.TimeSegment     = MEMoptions.mandatory.DataTime([1 end]);
-    OPTIONS.BaselineSegment = MEMoptions.optional.BaselineSegment([1 end]);
-    OPTIONS.ResultFile      = MEMoptions.optional.ResultFile;
-    OPTIONS.DataFile        = MEMoptions.optional.DataFile;
-    OPTIONS.Comment         = MEMoptions.automatic.Comment;
-    OPTIONS.DataTime        = MEMoptions.mandatory.DataTime;
+    [Results, OPTIONS]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions, Results );
+
     
     % Initialize parallel computing
     if MEMoptions.solver.parallel_matlab && close_pool
@@ -168,11 +166,10 @@ if (nargout==2) && ~FLAG
     end
     
 elseif (nargout==1)
-    Results = MEMoptions;
-    
+    Results = MEMoptions;    
 end
 
-return
+end
 
 
 % ----------------------------------------------------------------------- %
@@ -258,6 +255,7 @@ Def_OPTIONS.model.depth_weigth_MEM              = 0;
 % MEM solver
 Def_OPTIONS.solver.NoiseCov                     = [];
 Def_OPTIONS.solver.NoiseCov_method              = [];
+Def_OPTIONS.solver.mne_use_noiseCov             = 0;
 Def_OPTIONS.solver.NoiseCov_recompute           = 1;
 Def_OPTIONS.solver.spatial_smoothing            = 0.6;
 Def_OPTIONS.solver.active_var_mult              = 0.05;
@@ -266,4 +264,8 @@ Def_OPTIONS.solver.Optim_method                 = 'fminunc';
 Def_OPTIONS.solver.covariance_scale             = 1;
 Def_OPTIONS.solver.parallel_matlab              = false;
 
-return
+% output options
+Def_OPTIONS.output.save_factor                  =  1;
+Def_OPTIONS.output.save_extra_information       =  0;
+
+end

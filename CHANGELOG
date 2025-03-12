@@ -1,3 +1,6 @@
+% 12-003-2025 - v3.1.0
+- MEM: performance improvement.
+
 % 11-07-2024 - v3
 - wMEM: Support of depth-weighting
 - wMEM: stable parcellation in time

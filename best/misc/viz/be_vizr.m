@@ -55,7 +55,7 @@ if isfield(vizData, 'hpar')
     hpar = vizData.hpar;
     delete( get(hpar, 'Children') )
     TF = vizData.TF;
-    TFfile = vizData.TF.TFfile;
+    %TFfile = vizData.TF.TFfile;
 else
     hpar = figure('DeleteFcn', 'clear global vizData');
     vizData.hpar = hpar;
