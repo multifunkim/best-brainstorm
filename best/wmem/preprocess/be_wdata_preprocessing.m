@@ -106,7 +106,7 @@ else
             
         else
         	fprintf('%s, No baseline nor covariance matrix provided. Covariance set to identity\n',OPTIONS.mandatory.pipeline);
-            OPTIONS.automatic.Modality(ii).baseline             =   eye(OPTIONS.automatic.Modality(ii).channels);
+            OPTIONS.automatic.Modality(ii).baseline             =   eye(length(OPTIONS.automatic.Modality(ii).channels));
             OPTIONS.solver.NoiseCov_method                      =   0;
         end
         
