@@ -66,7 +66,7 @@ switch OPTIONS.optional.normalization
     
     case 'fixed'
         if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-            units_dipoles = 1; 
+            units_dipoles = 1/100;
         else
             units_dipoles = 1e-9; % nAm
         end
