@@ -298,7 +298,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     
         jTypeRMEM = gui_component('radio', jPanel, [], 'rMEM', jButtonGroupMemType, [], @(h,ev)SwitchPipeline(), []);
         jTypeRMEM.setToolTipText('<HTML><B>ridge-MEM</B>:<BR>targets strong synchronous souce activity<BR>(MEM on ridge signals of AWT)</HTML>');
-        
+        jTypeRMEM.setEnabled(false);
         
        ctrl = struct('JPanelMemType',jPanel , ....
                     'jMEMdef',              jTypeCMEM, ...
