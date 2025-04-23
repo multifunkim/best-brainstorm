@@ -1255,33 +1255,35 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if ~any(selected)
             return;
         end
+    
+        clean_bsl_info();
 
-       if strcmp( choices(selected), 'within-data') 
+        if strcmp( choices(selected), 'within-data') 
            ctrl.jBaselineTimeSelect.setVisible(1);
            ctrl.jBaselineWithinBst.setVisible(0);
            ctrl.jBaselineExternal.setVisible(0);
            ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
 
           check_time('bsl', '', '', 'checkOK');
-       elseif strcmp( choices(selected), 'within-brainstorm') 
+        elseif strcmp( choices(selected), 'within-brainstorm') 
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(1);
             ctrl.jBaselineExternal.setVisible(0);
             ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
 
-       elseif strcmp( choices(selected), 'external') 
+        elseif strcmp( choices(selected), 'external') 
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(0);
             ctrl.jBaselineExternal.setVisible(1);
             ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
 
-       elseif strcmp( choices(selected), 'all-data')  
+        elseif strcmp( choices(selected), 'all-data')  
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(0);
             ctrl.jBaselineExternal.setVisible(0);
             ctrl.jBaselineShuffleWindowsSelect.setVisible(1);
             check_time('bsl', '', '', 'checkOK');
-       end
+        end
     end
 
     function switchDepth(varargin)
@@ -1634,7 +1636,13 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ctrl.jBaselineTimeSelect.setVisible(1);
     end
 
+    function clean_bsl_info()
 
+        if isfield(MEMglobal,'BSLinfo')
+            MEMglobal = rmfield(MEMglobal, 'BSLinfo');
+        end
+
+    end
     function success = load_auto_bsl()
     % Look in the database for a recording with a given substring
     success = false;
@@ -1685,7 +1693,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     subjectNames    = subjectNames(idx);
     conditionNames  = conditionNames(idx);
     
-    K = find(cellfun(@(k) ~isempty(k), strfind({S.Comment}, bsl_name)));
+    K = find(cellfun(@(k) ~isempty(k), strfind(lower({S.Comment}), lower(bsl_name))));
     
     % User should check the baseline name, beware case sensitivity
     if isempty(K)
@@ -1718,6 +1726,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     disp('BEst> Selecting the baseline file:')
     disp(['BEst>    ''', S(K(1)).FileName, ''''])
     
+    ctrl.jTextLoadAutoBsl.setText(S(K(1)).Comment);
+
     % This should be revisited, only file paths should be returned, not the file
     % contents. 'be_main_call.m' should be able to load files.
     MEMglobal.BSLinfo.comment = S(K(1)).Comment;
