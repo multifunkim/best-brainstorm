@@ -52,7 +52,6 @@ for ii = 1 : numel(OPTIONS.mandatory.DataTypes) %For every Modality (Data Type)
     OPTIONS.automatic.Modality(ii).covariance   =   OPTIONS.automatic.Modality(ii).covariance/(MSD^2);
 end
 
-
 if strcmp(OPTIONS.optional.normalization,'adaptive') ||  strcmp(OPTIONS.mandatory.pipeline, 'cMEM')
     %% ===== Compute Minimum Norm Solution ==== %% 
     % we compute MNE (using l-curve for nirs or depth-weighted version)
@@ -62,11 +61,12 @@ if strcmp(OPTIONS.optional.normalization,'adaptive') ||  strcmp(OPTIONS.mandator
 end
 
 %% Normalization on units
+    
 switch OPTIONS.optional.normalization
     
     case 'fixed'
         if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-            units_dipoles = 1/100; % dOD is % changes
+            units_dipoles = 5/100; % dOD is % changes
         else
             units_dipoles = 1e-9; % nAm
         end
