@@ -52,7 +52,6 @@ for ii = 1 : numel(OPTIONS.mandatory.DataTypes) %For every Modality (Data Type)
     OPTIONS.automatic.Modality(ii).covariance   =   OPTIONS.automatic.Modality(ii).covariance/(MSD^2);
 end
 
-
 if strcmp(OPTIONS.optional.normalization,'adaptive') ||  strcmp(OPTIONS.mandatory.pipeline, 'cMEM')
     %% ===== Compute Minimum Norm Solution ==== %% 
     % we compute MNE (using l-curve for nirs or depth-weighted version)
@@ -62,75 +61,56 @@ if strcmp(OPTIONS.optional.normalization,'adaptive') ||  strcmp(OPTIONS.mandator
 end
 
 %% Normalization on units
+    
 switch OPTIONS.optional.normalization
     
     case 'fixed'
         if any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-            units_dipoles = 1; 
+            units_dipoles = 5/100; % dOD is % changes
         else
             units_dipoles = 1e-9; % nAm
         end
 
-        for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
-            ratioG  =   1/max( max(OPTIONS.automatic.Modality(ii).gain) );
-            OPTIONS.automatic.Modality(ii).units.Gain_units     =   ratioG;
-            OPTIONS.automatic.Modality(ii).units.Data_units     =   ratioG/(units_dipoles);
-            OPTIONS.automatic.Modality(ii).units.Cov_units      =   (ratioG/(units_dipoles))^2;
-            OPTIONS.automatic.Modality(ii).units_dipoles        =   units_dipoles;
-        end
     case 'adaptive'
+        %Same for every modalities
 
-        MNEAmp =  max(max(abs(OPTIONS.automatic.Modality(1).Jmne))); %Same for both modalities
-        for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)
+        MNEAmp =  max(max(abs(OPTIONS.automatic.Modality(1).Jmne))); 
+        units_dipoles    =  MNEAmp; 
 
-            OPTIONS.automatic.Modality(ii).Jmne = OPTIONS.automatic.Modality(ii).Jmne / MNEAmp;
-            OPTIONS.automatic.Modality(ii).MNEAmp = MNEAmp;
-        
-            ratioAmp    = 1 / OPTIONS.automatic.Modality(ii).MNEAmp; %Same for every modalities
-            ratioG      = 1 / max(max(OPTIONS.automatic.Modality(ii).gain));
-
-            OPTIONS.automatic.Modality(ii).units.Data_units = ratioAmp*ratioG;
-            OPTIONS.automatic.Modality(ii).units.Cov_units = (ratioAmp*ratioG)^2;
-            OPTIONS.automatic.Modality(ii).units.Gain_units = ratioG;
-            OPTIONS.automatic.Modality(ii).ratioAmp = ratioAmp;
-            
-        end
 end
+
+for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
+    ratioG  =   1 / max( max(OPTIONS.automatic.Modality(ii).gain) );
+
+    OPTIONS.automatic.Modality(ii).units.Gain_units     =   ratioG;
+    OPTIONS.automatic.Modality(ii).units.Data_units     =   ratioG  / units_dipoles;
+    OPTIONS.automatic.Modality(ii).units.Cov_units      =   (ratioG / units_dipoles)^2;
+    OPTIONS.automatic.Modality(ii).units_dipoles        =   units_dipoles;
+end
+
 
 %% Now, we normalize:
 % - the leadfields and data
 for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
-    OPTIONS.automatic.Modality(ii).gain = ...
-        OPTIONS.automatic.Modality(ii).gain*OPTIONS.automatic.Modality(ii).units.Gain_units;
-    OPTIONS.automatic.Modality(ii).data = ...
-        OPTIONS.automatic.Modality(ii).data*OPTIONS.automatic.Modality(ii).units.Data_units;
-    OPTIONS.automatic.Modality(ii).baseline = ...
-        OPTIONS.automatic.Modality(ii).baseline*OPTIONS.automatic.Modality(ii).units.Data_units;
+    OPTIONS.automatic.Modality(ii).gain =       OPTIONS.automatic.Modality(ii).gain * OPTIONS.automatic.Modality(ii).units.Gain_units;
+    OPTIONS.automatic.Modality(ii).data =       OPTIONS.automatic.Modality(ii).data * OPTIONS.automatic.Modality(ii).units.Data_units;
+    OPTIONS.automatic.Modality(ii).baseline =   OPTIONS.automatic.Modality(ii).baseline * OPTIONS.automatic.Modality(ii).units.Data_units;
     
     % we check for the presence of empty room data
     if isfield(OPTIONS.automatic, 'Emptyroom_data')
-        OPTIONS.automatic.Modality(ii).emptyroom = ...
-            OPTIONS.automatic.Modality(ii).emptyroom*OPTIONS.automatic.Modality(ii).units.Data_units;
+        OPTIONS.automatic.Modality(ii).emptyroom =  OPTIONS.automatic.Modality(ii).emptyroom * OPTIONS.automatic.Modality(ii).units.Data_units;
     end
-    
-    % we check the existence of a covariance matrix:
-    if ~isempty(OPTIONS.automatic.Modality(ii).covariance) && (OPTIONS.solver.NoiseCov_recompute==0)
-        OPTIONS.automatic.Modality(ii).covariance   =   OPTIONS.automatic.Modality(ii).covariance * ...     % BUG FIX (YZ, 29-09-2016)
-            OPTIONS.automatic.Modality(ii).units.Cov_units;
-%           NbjNoiseCov = size(OPTIONS.automatic.Modality(ii).covariance,3);
-%         for i_sc = 1: NbjNoiseCov
-%             OPTIONS.automatic.Modality(ii).covariance(:,:,i_sc) = ...
-%                 OPTIONS.automatic.Modality(ii).covariance(OPTIONS.automatic.Modality(ii).channels,...
-%                 OPTIONS.automatic.Modality(ii).channels,i_sc) * ...
-%                 OPTIONS.automatic.Modality(ii).units.Cov_units;
-%         end
-    end
-    
-    % we check the existence of imaginary signal part:
+   % we check the existence of imaginary signal part:
     if isfield(OPTIONS.automatic.Modality(ii), 'idata') && ~isempty(OPTIONS.automatic.Modality(ii).idata)
-        OPTIONS.automatic.Modality(ii).idata = ...
-            OPTIONS.automatic.Modality(ii).idata*OPTIONS.automatic.Modality(ii).units.Data_units;
+        OPTIONS.automatic.Modality(ii).idata =  OPTIONS.automatic.Modality(ii).idata * OPTIONS.automatic.Modality(ii).units.Data_units;
     end
+
+
+    % we check the existence of a covariance matrix:
+    if ~isempty(OPTIONS.automatic.Modality(ii).covariance) && ~OPTIONS.solver.NoiseCov_recompute
+        OPTIONS.automatic.Modality(ii).covariance   =   OPTIONS.automatic.Modality(ii).covariance *  OPTIONS.automatic.Modality(ii).units.Cov_units;
+    end
+   
 end
 
-return
+end
