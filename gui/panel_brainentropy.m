@@ -1523,6 +1523,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                             Time = getfield(load(MEMglobal.Baseline, 'Time'), 'Time');   
                     end
 
+                    if isempty(Time)
+                        return
+                    end
+
                 case 'set_scales'
                     set_scales(Time);
                     return;
@@ -1641,18 +1645,23 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if isfield(MEMglobal,'BSLinfo')
             MEMglobal = rmfield(MEMglobal, 'BSLinfo');
         end
+        ctrl.jButOk.setEnabled(0);
 
     end
+
     function success = load_auto_bsl()
     % Look in the database for a recording with a given substring
     success = false;
     bsl_name = char(ctrl.jTextLoadAutoBsl.getText());
-    % This global variable should be removed, kept here for compatibility with
-    % previous code
     
-    if isfield(MEMglobal,'BSLinfo')  &&  isfield(MEMglobal.BSLinfo,'comment') && ~isempty(MEMglobal.BSLinfo.comment)
-        success = true;
-        return;
+    if isfield(MEMglobal,'BSLinfo')  &&  isfield(MEMglobal.BSLinfo,'comment') && ~isempty(MEMglobal.BSLinfo.comment) 
+
+        if strcmp(bsl_name, MEMglobal.BSLinfo.comment)
+            success = true;
+            return;
+        else
+            SwitchBaseline();
+        end
     end
     
     
