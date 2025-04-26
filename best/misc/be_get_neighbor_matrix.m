@@ -1,4 +1,4 @@
-function N = get_neighbor_matrix(nb_vertices, faces)
+function N = be_get_neighbor_matrix(nb_vertices, faces)
 %GET_NEIGHBOR_MATRIX computes the neighborhood matrix from a surface mesh
 %
 %   INPUTS:

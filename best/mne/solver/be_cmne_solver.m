@@ -58,12 +58,6 @@ obj = struct('hfig', [] , 'hfigtab', [] );
  %% Retrieve vertex connectivity - needed for clustering
 [OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 
-if isempty(OPTIONS.optional.clustering) && isempty(obj.VertConn) || diff(size(obj.VertConn))
-    fprintf('MEM error : no vertex connectivity matrix available.\n');
-    return
-end
-
-
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   'cMNE';
 
