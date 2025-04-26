@@ -1,4 +1,9 @@
 function [OPTIONS, VertConn] = be_vertex_connectivity(HeadModel, OPTIONS)
+% be_vertex_connectivity. Extract the vertex connectivity matrix from
+% HeadModel (either HeadModel.VertConn or HeadModel.vertex_connectivity). 
+% If neither field are present, try to load the vertex connectivity matrix
+% from Brainstorm. 
+
 
     % Option 1.  VertConn is provided in the headmodel 
 
