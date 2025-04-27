@@ -55,13 +55,14 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         [dum,STD]   =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), DTS, 'uni', 0 );
         STD         =   cell2mat( STD );
         
-        ChannelTypes = inputData.ChannelTypes;  
-        ChannelFile  = inputData.ChannelFile; 
+        ChannelTypes = inputData(1).ChannelTypes;  
+        ChannelFile  = inputData(1).ChannelFile; 
         OPTIONS      = OPTIONS.options.mem.Value; 
         
         if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
             OPTIONS = OPTIONS.MEMpaneloptions;
         end
+
         OPTIONS = be_struct_copy_fields(OPTIONS,be_main,[],0);
 
     elseif numel(varargin)==0
@@ -556,7 +557,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanel.add('tab hfill', jBoxWAVsc);
 
 
-        JViewOscillation = gui_component('button', jPanel, [], 'Visuaize Time-Frequency', [], [], @(~,~) VisualizeOscillation(), []);
+        JViewOscillation = gui_component('button', jPanel, [], 'Visualize Time-Frequency', [], [], @(~,~) VisualizeOscillation(), []);
 
 
         ctrl = struct('JPanelnwav',jPanel,...
@@ -1769,74 +1770,78 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     function VisualizeOscillation()
     
-        drawnow;
-        pause(0.01);
+        for iData = 1:length(MEMglobal.DataToProcess)
 
-        sInput = in_bst_data(MEMglobal.DataToProcess{1});
-        sChannel = in_bst_channel(ChannelFile);
+            sInput = in_bst_data(MEMglobal.DataToProcess{iData});
+            sChannel = in_bst_channel(ChannelFile);
+    
+            OPTIONS_wav  = struct();
+            OPTIONS_wav.mandatory.pipeline  = 'wMEM';
+            OPTIONS_wav.mandatory.DataTime  = sInput.Time;
 
-        OPTIONS_wav  = struct();
-        OPTIONS_wav.mandatory.pipeline  = 'wMEM';
-        OPTIONS_wav.mandatory.DataTime  = sInput.Time;
-        OPTIONS_wav.mandatory.DataTypes = ChannelTypes;
-        OPTIONS_wav.mandatory.DataTypes = intersect(OPTIONS_wav.mandatory.DataTypes,{'EEG', 'MEG', 'SEEG', 'NIRS'});
-        
-        OPTIONS_wav.wavelet.type            = 'rdw';
-        OPTIONS_wav.wavelet.nb_levels       = str2double( ctrl.jWavLevels.getText() );
-        OPTIONS_wav.wavelet.order           = str2double( ctrl.jWavOrder.getText() );
-        OPTIONS_wav.wavelet.vanish_moments  = str2double( ctrl.jWavVanish.getText() );
-        OPTIONS_wav.wavelet.shrinkage       = str2double( ctrl.jWavShrinkage.getText() );
-        
-        SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
-
-        if any( strcmpi( SCL, {'all','0'} ) )|| isempty(SCL)
-            nSC = ctrl.jWavScales.getItemCount();
-            OPTIONS_wav.wavelet.selected_scales  = 1 : nSC-2;                
-        else                
-            id1 = find(SCL=='(');
-            id2 = find(SCL==')');
-            for ii = 1: numel(id1)
-                SCL(id1(ii):id2(ii)) = '';
+            AllSensorTypes = intersect(ChannelTypes, {'MEG MAG', 'MEG GRAD', 'MEG', 'EEG', 'ECOG', 'SEEG', 'NIRS'});
+            if any(ismember(AllSensorTypes, {'MEG MAG', 'MEG GRAD'}))
+                AllSensorTypes = setdiff(AllSensorTypes, 'MEG');
             end
-             OPTIONS_wav.wavelet.selected_scales  = eval(['[' SCL ']']);
-        end
-
-        OPTIONS_wav.wavelet.single_box      = false;
-        OPTIONS_wav.optional.TimeSegment    = [str2double(char(ctrl.jTextTimeStart.getText())) ...
-                                               str2double(char(ctrl.jTextTimeStop.getText()))];
-
-        OPTIONS_wav.optional.BaselineTime   = [];
-        OPTIONS_wav.optional.verbose        = true;
-        OPTIONS_wav.optional.display        = 1;
-        OPTIONS_wav.solver.NoiseCov         = [];
-        OPTIONS_wav.automatic.sampling_rate = 1 / (sInput.Time(2) - sInput.Time(1));
-        OPTIONS_wav.output.save_extra_information = 0;
+            OPTIONS_wav.mandatory.DataTypes = AllSensorTypes;
+            
+            OPTIONS_wav.wavelet.type            = char( ctrl.jWavType.getText() );
+            OPTIONS_wav.wavelet.nb_levels       = str2double( ctrl.jWavLevels.getText() );
+            OPTIONS_wav.wavelet.order           = str2double( ctrl.jWavOrder.getText() );
+            OPTIONS_wav.wavelet.vanish_moments  = str2double( ctrl.jWavVanish.getText() );
+            OPTIONS_wav.wavelet.shrinkage       = str2double( ctrl.jWavShrinkage.getText() );
+            
+            SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
     
-    
-        n0 = 0;
-        for iMod = 1:length( OPTIONS_wav.mandatory.DataTypes)
-            iData = good_channel(sChannel.Channel, sInput.ChannelFlag, OPTIONS_wav.mandatory.DataTypes{iMod});
-    
-            if isempty(iData)
-                continue
+            if any( strcmpi( SCL, {'all','0'} ) )|| isempty(SCL)
+                nSC = ctrl.jWavScales.getItemCount();
+                OPTIONS_wav.wavelet.selected_scales  = 1 : nSC-2;                
+            else                
+                id1 = find(SCL=='(');
+                id2 = find(SCL==')');
+                for ii = 1: numel(id1)
+                    SCL(id1(ii):id2(ii)) = '';
+                end
+                 OPTIONS_wav.wavelet.selected_scales  = eval(['[' SCL ']']);
             end
     
-            OPTIONS_wav.automatic.Modality(iMod) = struct('idx_data', iData, 'data', sInput.F(iData, :), 'baseline', [], 'emptyroom', [], 'channels', n0 + (1:length(iData)));
-            n0 = n0 + length(iData);
+            OPTIONS_wav.wavelet.single_box      = false;
+            OPTIONS_wav.optional.TimeSegment    = [str2double(char(ctrl.jTextTimeStart.getText())) ...
+                                                   str2double(char(ctrl.jTextTimeStop.getText()))];
+    
+            OPTIONS_wav.optional.BaselineTime   = [];
+            OPTIONS_wav.optional.verbose        = true;
+            OPTIONS_wav.optional.display        = 1;
+            OPTIONS_wav.solver.NoiseCov         = [];
+            OPTIONS_wav.automatic.sampling_rate = 1 / (sInput.Time(2) - sInput.Time(1));
+            OPTIONS_wav.output.save_extra_information = 0;
+        
+        
+            n0 = 0;
+            for iMod = 1:length( OPTIONS_wav.mandatory.DataTypes)
+                iData = good_channel(sChannel.Channel, sInput.ChannelFlag, OPTIONS_wav.mandatory.DataTypes{iMod});
+        
+                if isempty(iData)
+                    continue
+                end
+        
+                OPTIONS_wav.automatic.Modality(iMod) = struct('idx_data', iData, 'data', sInput.F(iData, :), 'baseline', [], 'emptyroom', [], 'channels', n0 + (1:length(iData)));
+                n0 = n0 + length(iData);
+            end
+            
+            obj = struct('ImageGridAmp', []);
+    
+            obj.hfig = uifigure("Name", "Time-Frequency Representation", "Position", [725 198 560 420]);
+            obj.hfigtab = uitabgroup(obj.hfig, "Position",[0 0 obj.hfig.Position(3) obj.hfig.Position(4)]); 
+    
+            focus(obj.hfig)
+            
+            [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
+            be_display_time_scale_boxes(obj, OPTIONS_wav);
+    
+            drawnow; % force event queue to process
+            pause(1)
         end
-        
-        obj = struct('ImageGridAmp', []);
-
-        obj.hfig = uifigure("Name", "Time-Frequency Representation", "Position", [725 198 560 420]);
-        obj.hfigtab = uitabgroup(obj.hfig, "Position",[0 0 obj.hfig.Position(3) obj.hfig.Position(4)]); 
-
-        focus(obj.hfig)
-        
-        [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
-        be_display_time_scale_boxes(obj, OPTIONS_wav);
-
-        drawnow; % force event queue to process
-        pause(1)
 
     end
 
