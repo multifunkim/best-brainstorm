@@ -56,8 +56,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         STD         =   cell2mat( STD );
         
         ChannelTypes = inputData.ChannelTypes;  
-        ChannelFile  = 'TODO'; 
-        OPTIONS      =   OPTIONS.options.mem.Value; 
+        ChannelFile  = inputData.ChannelFile; 
+        OPTIONS      = OPTIONS.options.mem.Value; 
         
         if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
             OPTIONS = OPTIONS.MEMpaneloptions;
