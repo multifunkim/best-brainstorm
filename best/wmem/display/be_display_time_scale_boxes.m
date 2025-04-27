@@ -113,9 +113,12 @@ for ii = 1:length(OPTIONS.mandatory.DataTypes)
         tt = OPTIONS.automatic.Modality(ii).selected_jk(6,bj);
         vv = OPTIONS.automatic.selected_values{ii}(2,bj);
         tv = OPTIONS.automatic.selected_values{ii}(3,bj);
-        stem(ax, tt,vv,'xk'); hold on; plot(ax, tt(tv==1),vv(tv==1),'xr'); hold off
+        hold(ax,'on')
+        stem(ax, tt,vv,'xk','filled','markersize',8); 
+        plot(ax, tt(tv==1),vv(tv==1),'xr'); 
+        hold(ax,'off')
     end
-    
+    drawnow
     pause(3)
 end
 
