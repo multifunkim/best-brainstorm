@@ -82,7 +82,7 @@ for ii = 1:length(OPTIONS.mandatory.DataTypes)
     xlabel(ax,'time (s)'); 
     ylabel(ax,'scale j'); 
     hold on
-    MMM = colormap(gray(size(OPTIONS.automatic.selected_values{ii},2)));
+    MMM = colormap(jet(size(OPTIONS.automatic.selected_values{ii},2)));
 
     selection=OPTIONS.automatic.Modality(ii).selected_jk;
 
@@ -93,7 +93,7 @@ for ii = 1:length(OPTIONS.mandatory.DataTypes)
               'LineWidth',1, ...
               'LineStyle','-', ...
               'edgecolor','k', ...
-              'FaceColor',MMM(b,:));
+              'FaceColor',MMM(b,end:-1:1));
     %pause(0.015)
     end
     hold off
