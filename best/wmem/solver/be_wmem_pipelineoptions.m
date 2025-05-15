@@ -12,7 +12,13 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         % model
         DEF.model.alpha_threshold       = 0;
         DEF.model.active_mean_method    = 2;
-        DEF.model.alpha_method          = 6;
+
+        if any(ismember( 'NIRS', DataTypes))
+            DEF.model.alpha_method      = 7;
+        else
+            DEF.model.alpha_method      = 6;
+        end
+
 
         if any(ismember( 'NIRS', DataTypes))
             DEF.model.depth_weigth_MNE          = 0.3;
@@ -46,7 +52,12 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         DEF.solver.mne_use_noiseCov     = 0;
 
         % optional
-        DEF.optional.normalization      = 'fixed'; 
+        if any(ismember( 'NIRS', DataTypes))
+            DEF.optional.normalization      = 'adaptive'; 
+        else
+            DEF.optional.normalization      = 'fixed'; 
+        end
+        
         DEF.optional.baseline_shuffle   = 0;
         DEF.optional.baseline_shuffle_windows = 1; % in seconds
 
