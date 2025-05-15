@@ -70,7 +70,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
         
         elseif (size(obj.noise_var,3)>1) && OPTIONS.optional.baseline_shuffle == 1
             tol = OPTIONS.optional.baseline_shuffle_windows / 2; 
-            idx_baseline = find(obj.time(i) > OPTIONS.automatic.Modality(1).BaselineTime(1,:) & ...
+            idx_baseline = find(obj.time(i) >= OPTIONS.automatic.Modality(1).BaselineTime(1,:) & ...
                                 obj.time(i) <=  (OPTIONS.automatic.Modality(1).BaselineTime(end,:)+tol));
         
             if isempty(idx_baseline) && obj.time(i) > max(max(OPTIONS.automatic.Modality(1).BaselineTime))
