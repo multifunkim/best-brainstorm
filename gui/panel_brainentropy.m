@@ -1829,15 +1829,35 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 if isempty(iData)
                     continue
                 end
-                
+
                 OPTIONS_wav.mandatory.DataTypes = AllSensorTypes(iMod);
-                OPTIONS_wav.automatic.Modality = struct('idx_data', iData, 'data', sInput.F(iData, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iData)));
-                n0 = n0 + length(iData);
-            
-                obj = struct('ImageGridAmp', [], 'hfig', hfig , 'hfigtab', hfigtab);
-                [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
-                be_display_time_scale_boxes(obj, OPTIONS_wav);
-        
+                
+                if strcmp(OPTIONS_wav.mandatory.DataTypes, 'NIRS')
+
+                    groups = unique ({sChannel.Channel(iData).Group});
+                    
+                    for iGroup = 1:length(groups)
+                        
+                        iData_group = channel_find(sChannel.Channel, groups{iGroup});
+                        iData_group = intersect(iData, iData_group);
+
+                        OPTIONS_wav.automatic.Modality = struct('idx_data', iData_group, 'data', sInput.F(iData_group, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iData_group)));                    
+                    
+                        obj = struct('ImageGridAmp', [], 'hfig', hfig , 'hfigtab', hfigtab);
+                        [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
+                        be_display_time_scale_boxes(obj, OPTIONS_wav);
+                    end
+
+
+
+                else
+                    OPTIONS_wav.automatic.Modality = struct('idx_data', iData, 'data', sInput.F(iData, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iData)));
+                    n0 = n0 + length(iData);
+                
+                    obj = struct('ImageGridAmp', [], 'hfig', hfig , 'hfigtab', hfigtab);
+                    [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
+                    be_display_time_scale_boxes(obj, OPTIONS_wav);
+                end
                 drawnow; % force event queue to process
                 pause(1)
             end

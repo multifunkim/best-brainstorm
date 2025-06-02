@@ -49,12 +49,10 @@ if ~strcmp(obj.data_type,'discrete_wavelet')
     disp('NO WAVELET DISPLAY');
     return
 end
+
 for ii = 1:length(OPTIONS.mandatory.DataTypes)
 
     onglet{ii} = uitab(hptab,'title',OPTIONS.mandatory.DataTypes{ii});
-%    values = [];
-%    values = sqrt(sum(obj.WData{ii}(:,OPTIONS.selected_samples(1,:)).^2,1)/size(obj.WData{ii},1));
-%    values = (values-min(values))/(max(values)-min(values)); 
 
     Tmin = obj.t0 - (obj.info_extension.start-1)/OPTIONS.automatic.sampling_rate;
     Tmax = Tmin + (size(obj.data{ii},2)-1)/OPTIONS.automatic.sampling_rate;
@@ -76,16 +74,17 @@ for ii = 1:length(OPTIONS.mandatory.DataTypes)
                'YTick', 0.5:J-0.5, ...
                'YTickLabel', num2cell(1:J));
 
-    axis(ax,'fill'); 
+    axis(ax, 'fill'); 
     box(ax,'on'); 
     xlim(ax,[Tmin Tmax]); 
     ylim(ax,[0 J]); 
     xlabel(ax,'time (s)'); 
     ylabel(ax,'scale j'); 
-    hold on
-    MMM = colormap(jet(size(OPTIONS.automatic.selected_values{ii},2)));
+    
+    hold(ax, 'on');
 
-    selection=OPTIONS.automatic.Modality(ii).selected_jk;
+    MMM         = colormap(jet(size(OPTIONS.automatic.selected_values{ii},2)));
+    selection   = OPTIONS.automatic.Modality(ii).selected_jk;
 
     for b=1:length(OPTIONS.automatic.selected_values{ii})
         l = T/N*2^selection(2,b);
