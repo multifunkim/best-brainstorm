@@ -1769,8 +1769,14 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function VisualizeOscillation()
-    
+
         for iData = 1:length(MEMglobal.DataToProcess)
+            obj = struct('ImageGridAmp', []);
+        
+            hfig = uifigure("Name", "Time-Frequency Representation", "Position", [725 198 560 420]);
+            hfigtab = uitabgroup(hfig, "Position",[0 0 hfig.Position(3) hfig.Position(4)]); 
+        
+            focus(hfig)
 
             sInput = in_bst_data(MEMglobal.DataToProcess{iData});
             sChannel = in_bst_channel(ChannelFile);
@@ -1783,7 +1789,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             if any(ismember(AllSensorTypes, {'MEG MAG', 'MEG GRAD'}))
                 AllSensorTypes = setdiff(AllSensorTypes, 'MEG');
             end
-            OPTIONS_wav.mandatory.DataTypes = AllSensorTypes;
             
             OPTIONS_wav.wavelet.type            = char( ctrl.jWavType.getText() );
             OPTIONS_wav.wavelet.nb_levels       = str2double( ctrl.jWavLevels.getText() );
@@ -1818,29 +1823,25 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         
         
             n0 = 0;
-            for iMod = 1:length( OPTIONS_wav.mandatory.DataTypes)
-                iData = good_channel(sChannel.Channel, sInput.ChannelFlag, OPTIONS_wav.mandatory.DataTypes{iMod});
+            for iMod = 1:length(AllSensorTypes)
+                iData = good_channel(sChannel.Channel, sInput.ChannelFlag, AllSensorTypes{iMod});
         
                 if isempty(iData)
                     continue
                 end
-        
-                OPTIONS_wav.automatic.Modality(iMod) = struct('idx_data', iData, 'data', sInput.F(iData, :), 'baseline', [], 'emptyroom', [], 'channels', n0 + (1:length(iData)));
+                
+                OPTIONS_wav.mandatory.DataTypes = AllSensorTypes(iMod);
+                OPTIONS_wav.automatic.Modality = struct('idx_data', iData, 'data', sInput.F(iData, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iData)));
                 n0 = n0 + length(iData);
+            
+                obj = struct('ImageGridAmp', [], 'hfig', hfig , 'hfigtab', hfigtab);
+                [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
+                be_display_time_scale_boxes(obj, OPTIONS_wav);
+        
+                drawnow; % force event queue to process
+                pause(1)
             end
-            
-            obj = struct('ImageGridAmp', []);
-    
-            obj.hfig = uifigure("Name", "Time-Frequency Representation", "Position", [725 198 560 420]);
-            obj.hfigtab = uitabgroup(obj.hfig, "Position",[0 0 obj.hfig.Position(3) obj.hfig.Position(4)]); 
-    
-            focus(obj.hfig)
-            
-            [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
-            be_display_time_scale_boxes(obj, OPTIONS_wav);
-    
-            drawnow; % force event queue to process
-            pause(1)
+
         end
 
     end
