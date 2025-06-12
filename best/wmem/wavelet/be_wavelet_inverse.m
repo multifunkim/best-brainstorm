@@ -30,6 +30,10 @@ function [Data, OPTIONS] = be_wavelet_inverse(WData,OPTIONS)
 % -------------------------------------------------------------------------   
 [Ns,No] = size(WData);
 
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('start', 'wMNE, Computing inverse wavelet transform... ' , 'Computing inverse wavelet transform.... ', 1, Ns);
+end
+
 if strcmp(OPTIONS.wavelet.type,'RDW')
     
     if OPTIONS.optional.verbose
@@ -47,13 +51,13 @@ if strcmp(OPTIONS.wavelet.type,'RDW')
     Data = zeros(Ns,No, 'like', WData);
     for i = 1:Ns
         Data(i,:) = IWT_PO(WData(i,:),Noff,filtre);
-    end
-    
-    if OPTIONS.optional.verbose
-        fprintf(' done.\n');
-    end
-    
 
+        if ~OPTIONS.automatic.stand_alone
+            bst_progress('inc', 1); 
+        end
+
+    end
+    
 elseif strcmp(OPTIONS.wavelet.type,'rdw')
     
     if OPTIONS.optional.verbose
@@ -71,11 +75,20 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
     Data = zeros(Ns,No, 'like', WData);
     for i = 1:Ns
         Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
-    end
-    
 
-    if OPTIONS.optional.verbose
-        fprintf(' done.\n');
+        if ~OPTIONS.automatic.stand_alone
+            bst_progress('inc', 1); 
+        end
     end
     
 end    
+
+if OPTIONS.optional.verbose
+    fprintf(' done.\n');
+end
+
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('stop');
+end
+
+end
