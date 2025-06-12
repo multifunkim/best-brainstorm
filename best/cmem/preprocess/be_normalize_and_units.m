@@ -132,9 +132,21 @@ function max_value = be_estimate_max_mne(obj, OPTIONS)
         M = M(:,selected_samples);
     end
 
-    
     kernel = OPTIONS.automatic.Modality(1).MneKernel;
 
-    max_value =  max(max(abs(kernel * M))); 
+    window_length   = 500; % in sample
+    nWindow  = ceil(size(M,2)/window_length);
+    max_value       = 0;
+
+
+    for k=0:(nWindow-1)
+        idx = (1+ k*window_length):(window_length*(k+1));
+        idx = idx( idx <= size(M,2));
+
+        max_window  = max(max(abs(kernel * M(:,idx))));
+        if max_window > max_value
+            max_value = max_window;
+        end
+    end
 
 end

@@ -24,14 +24,13 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS, method)
     
     switch(method)
         case 'mne_lcurve'
-            [Kernel, J]   =   be_jmne_lcurve(OBJ_FUS, OPTIONS, struct('hfig',obj.hfig, 'hfigtab',obj.hfigtab)); 
+            Kernel   =   be_jmne_lcurve(OBJ_FUS, OPTIONS, struct('hfig',obj.hfig, 'hfigtab',obj.hfigtab)); 
         case 'mne'
             Kernel   =   be_jmne(OBJ_FUS, OPTIONS);
     end
 
     for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)
         OPTIONS.automatic.Modality(ii).MneKernel = Kernel;
-        OPTIONS.automatic.Modality(ii).jMNE = J;
     end
 
 end

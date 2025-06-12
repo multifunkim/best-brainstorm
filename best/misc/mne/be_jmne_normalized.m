@@ -39,7 +39,7 @@ function [J, alpha] = be_jmne_normalized(obj, OPTIONS)
     Kernel  = Gn'*pinv(Gn*Gn');
     J   = Kernel * Mn;
 
-    if nargout >= 3
+    if nargout >= 2
         alpha =  0;
     end
 
