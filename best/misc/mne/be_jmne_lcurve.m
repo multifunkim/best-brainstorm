@@ -71,7 +71,22 @@ function [Kermel, J, alpha] = be_jmne_lcurve(obj, OPTIONS, sfig)
     alpha   = param.*scale;
 
     % Pre-compute data decomposition
-    [U,S]   = svd(M,'econ'); 
+    try
+        [U,S]   = svd(M,'econ'); 
+    catch 
+        current_pool = gcp('nocreate');
+        isPoolOpen = ~isempty(current_pool);
+        % If the data cant fit in memory, use a tall array
+        [U,S]   = svd(tall(M),'econ');
+        
+        % Compute the result
+        U = gather(U);
+        S = gather(S);
+        
+        if ~isPoolOpen && ~isempty(gcp('nocreate'))
+            delete(gcp('nocreate'))
+        end
+    end
 
     Fit     = zeros(1,length(alpha));
     Prior   = zeros(1,length(alpha));

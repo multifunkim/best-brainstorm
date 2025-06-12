@@ -5,8 +5,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
     obj_slice(nbSmp)    = struct();
 
-
-
+    fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
 
     for i = 1:nbSmp
         
@@ -188,5 +187,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
         OPTIONS.solver.optimoptions = options;
     end
+
+    fprintf('done. \n');
 
 end
