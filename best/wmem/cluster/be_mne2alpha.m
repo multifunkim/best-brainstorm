@@ -41,24 +41,36 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
                                                 
     alpha = zeros(size(CLS));
     ALPHA_METHOD = OPTIONS.model.alpha_method;
-    
+
+    OBJ_FUS         = be_fusion_of_modalities(obj, OPTIONS, 0);
+
+    % selection of the data:
+    M = OBJ_FUS.data;
+    if ~isempty(OPTIONS.automatic.selected_samples)   
+        selected_samples = OPTIONS.automatic.selected_samples(1,:);
+        M = M(:,selected_samples);
+    end
+
     if ALPHA_METHOD == 6
-        OBJ_FUS         = be_fusion_of_modalities(obj, OPTIONS, 0);
-        weight_alpha    = be_jmne_normalized(OBJ_FUS, OPTIONS);  
-    elseif ALPHA_METHOD == 7
-        weight_alpha    = OPTIONS.automatic.Modality(1).Jmne;
+        weight_alphas    = be_jmne_normalized(OBJ_FUS, OPTIONS);  
     end
     
-
     for jj=1:size(CLS,2)
         clusters    = CLS(:,jj);
         nb_clusters = max(clusters);
         curr_cls    = 1;
+
+        if ALPHA_METHOD == 6
+            weight_alpha    = weight_alphas(:, jj);  
+        elseif ALPHA_METHOD == 7
+            weight_alpha    = OPTIONS.automatic.Modality(1).MneKernel * M(:,jj);
+        end
+
     
         for ii = 1:nb_clusters
             idCLS = clusters==ii;
     
-            WSjj            = weight_alpha(:,jj).^2;
+            WSjj            = weight_alpha.^2;
             WSjj_ii         = WSjj(idCLS); 
             alpha(idCLS,jj) = sqrt((sum(WSjj_ii) / sum(WSjj)));
                     
