@@ -80,8 +80,7 @@ function [Kermel, J, alpha] = be_jmne_lcurve(obj, OPTIONS, sfig)
         [U,S]   = svd(tall(M),'econ');
         
         % Compute the result
-        U = gather(U);
-        S = gather(S);
+        [U, S] = gather(U, S);
         
         if ~isPoolOpen && ~isempty(gcp('nocreate'))
             delete(gcp('nocreate'))
