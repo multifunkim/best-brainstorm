@@ -1,12 +1,12 @@
-function out = be_convsynthesereal(in_V, in_W, H, G, n, Jcase)
+function out = be_convsynthesereal(in_V, in_W, H, G)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Project Name: EOG Correction Artifact
-% Filename:     ConvSynthese.m
+% Filename:     be_convsynthesereal.m
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Modified by:  Xavier Leturc
 % Created on:   July 21st, 2008
-% Revised on:   July 1st, 2014
+% Revised on:   June 13,  2025
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Notes:        Cette fonction permet de faire la convolution entre les
 %               donnees et les filtres reels ou complexes.
@@ -23,31 +23,51 @@ function out = be_convsynthesereal(in_V, in_W, H, G, n, Jcase)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%START.
-    sz1 = size(in_V);    sz2 = size(H);
+    sz1 = size(in_V);  sz2 = size(H);
+
     if (size(sz1,2) == 2)
         sz1(3) = 1;
     end
-   
-    %sum1 = zeros(sz1(1),n+2*sz2(2)-1,sz1(3));
-    %sum2 = zeros(sz1(1),n+2*sz2(2)-1,sz1(3));   
-    n1 = sz1(2);
-    n2 = size(in_W,2);
-    p  = length(H);
+
+    if all(in_V == 0) && all(in_W == 0)
+        out = 0;
+        return;
+    end
+
     
+    p  = length(H);
+    n1 = sz1(2); idx_n1 = n1+1-p:n1;
+    n2 = size(in_W,2); idx_n2 = 1:n2-1;
+
+    % Precompute filter coefficients once (no need to reverse in each iteration)
+    H_rev = H(end:-1:1);
+    G_rev = G(end:-1:1);
+
+    % Preallocate all arrays
+    sum1 = zeros(sz1(1), n1 + length(idx_n1), sz1(3));
+    sum2 = zeros(sz1(1), n1 + length(idx_n1), sz1(3));
+    
+    % Preallocate temp arrays outside the loop to avoid memory allocation overhead
+    tempV = zeros(sz1(1), n1 + length(idx_n1));
+    tempW = zeros(sz1(1), 1 + length(idx_n2) + p );
+
     for j = 1:sz1(3)
-        % On ajoute des donnees avant et apres la serie pour preparer les
-        % donnees pour la convolution. La longueur des donnees ajoutees varie
-        % selon les moments nulles de "Jcase".
-      
-        tempV= [in_V(:,n1+1-p:n1,j) in_V(:,:,j)];
-        tempW= [in_W(:,n2,j) in_W(:,1:n2-1,j)];
-        tempW=[tempW(:,:,j) tempW(:,1:p,j)];
-            
-        for i = 1:sz1(1)
-            sum1(i,:,j) = filter(H(end:-1:1),1,tempV(i,:));
-            sum2(i,:,j) = filter(G(end:-1:1),1,tempW(i,:));
+
+        if any(in_V)
+            tempV(:, 1:p)       = in_V(:, idx_n1, j);
+            tempV(:, p+1:end)   = in_V(:, :, j);
+
+            sum1(:, :, j)       = filter(H_rev, 1, tempV, [], 2);        % filtering across time (dim 2)
         end
+
+        if any(in_W)
+            tempW(:, 1)         = in_W(:, n2, j);
+            tempW(:, 2:n2)      = in_W(:, idx_n2, j);
+            tempW(:, n2+1:n2+p) = tempW(:, 1:p);
+    
+            sum2(:, :, j)       = filter(G_rev, 1, tempW, [], 2);
+        end
+
     end
  
     out = sum1(:, p+1:n1+p,:)...
