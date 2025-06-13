@@ -33,6 +33,7 @@ function [Data, OPTIONS] = be_wavelet_inverse(WData,OPTIONS)
 if ~OPTIONS.automatic.stand_alone
     bst_progress('start', 'wMNE, Computing inverse wavelet transform... ' , 'Computing inverse wavelet transform.... ', 1, Ns);
 end
+time_it_starts = tic();
 
 if strcmp(OPTIONS.wavelet.type,'RDW')
     
@@ -82,9 +83,10 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
     end
     
 end    
+time_it_ends = toc(time_it_starts);
 
 if OPTIONS.optional.verbose
-    fprintf(' done.\n');
+    fprintf(' done in %5.2f seconds.\n',time_it_ends);
 end
 
 if ~OPTIONS.automatic.stand_alone
