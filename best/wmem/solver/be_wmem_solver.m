@@ -93,6 +93,7 @@ global MEMglobal
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline wMEM\n');
 end        
+time_it_starts = tic();
         
 %% Useful variables
 obj = struct('ImageGridAmp', []);
@@ -198,8 +199,10 @@ Results.nComponents     = round( length(obj.iModS) / obj.nb_sources );
 
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
 
+time_it_ends = toc(time_it_starts);
+fprintf('Bye. (Elapsed CPU time is %5.2f seconds.) \n', time_it_ends)
 
-disp('Bye.')
+
 end
 
 

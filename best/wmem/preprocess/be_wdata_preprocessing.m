@@ -48,10 +48,19 @@ end
         % normalization/wavelet/denoise
         [obj, OPTIONS] = be_discrete_wavelet_preprocessing(obj, OPTIONS);
 
+        if isempty(OPTIONS.solver.NoiseCov)
+            if ~isempty( OPTIONS.automatic.Modality(1).emptyroom )
+                fprintf('%s, New noise covariance is computed using empty room data\n',OPTIONS.mandatory.pipeline);
+            elseif ~isempty( OPTIONS.automatic.Modality(1).baseline)
+               fprintf('%s, %d New noise covariance is computed using baseline\n',OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.Modality(1).baseline,3));
+            else
+        	    fprintf('%s, No baseline nor covariance matrix provided. Covariance set to identity\n',OPTIONS.mandatory.pipeline);
+            end
+        end
+
         for iii=1:size(OPTIONS.automatic.Modality(1).baseline,3)
             noise_var(:,:,iii) = covariance_processing(OPTIONS,iii);
         end
-        %[noise_var] = covariance_processing(OPTIONS);
 
         % The number of j decomposition in the noise_var
         % noise_var:[NbSensors x NbSensors x Nbj]
@@ -90,7 +99,6 @@ else
             OPTIONS.automatic.Modality(ii).baseline          	= 0;
             OPTIONS.automatic.Modality(ii).data             	= OPTIONS.automatic.Modality(ii).emptyroom;
             OPTIONS.mandatory.DataTime                       	= OPTIONS.automatic.Emptyroom_time;
-            fprintf('%s, New noise covariance is computed using empty room data\n',OPTIONS.mandatory.pipeline);
             
         elseif ~isempty( OPTIONS.automatic.Modality(ii).baseline(:,:,iii) )
             idNb = any(isnan(OPTIONS.automatic.Modality(ii).baseline(:,:,iii)));
@@ -102,10 +110,8 @@ else
                 TLM                                             =   be_closest(OPTIONS.optional.BaselineSegment([1 end]), OPTIONS.mandatory.DataTime);
                 OPTIONS.mandatory.DataTime                      = OPTIONS.mandatory.DataTime( TLM(1):TLM(end) );      
             end
-            fprintf('%s, New noise covariance is computed using baseline\n',OPTIONS.mandatory.pipeline);
             
         else
-        	fprintf('%s, No baseline nor covariance matrix provided. Covariance set to identity\n',OPTIONS.mandatory.pipeline);
             OPTIONS.automatic.Modality(ii).baseline             =   eye(length(OPTIONS.automatic.Modality(ii).channels));
             OPTIONS.solver.NoiseCov_method                      =   0;
         end

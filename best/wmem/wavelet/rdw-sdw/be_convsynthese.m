@@ -1,4 +1,4 @@
-function out = ConvSynthese(in_V, in_W, H, G, n, Jcase)
+function out = be_convsynthese(in_V, in_W, H, G, n, Jcase)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Project Name: EOG Correction Artifact

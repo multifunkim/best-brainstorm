@@ -25,17 +25,12 @@ function [analF, analG, synF, synG, Jcase] = be_makeqfbreal(filtre)
 % -------------------------------------------------------------------------   
    
     load(['be_' filtre]);
-    Jcase=filtre.J;
-    filter_length = 2*filtre.J+2;
-    %analF = zeros(1,filter_length);
-    analG = zeros(1,filter_length);
-    synF  = zeros(1,filter_length);
-    synG  = zeros(1,filter_length);
+
+    Jcase   = filtre.J;
     
-    analF=filtre.H;
-   
-    analG=- ((-1).^(1:length(filtre.H))).*filtre.H;
-    analF=filtre.H(end:-1:1);
-    synF=analF;
-    synG=analG;
+    analG   = - ((-1).^(1:length(filtre.H))).*filtre.H;
+    analF   = filtre.H(end:-1:1);
+    synF    = analF;
+    synG    = analG;
+    
 end

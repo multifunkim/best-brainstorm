@@ -1,4 +1,4 @@
-function [J,varargout] = be_jmne_lcurve(obj, OPTIONS, sfig)
+function [Kermel, J, alpha] = be_jmne_lcurve(obj, OPTIONS, sfig)
 % Compute the minimum norm estimate using the regularized pseudo-inverse formula
 % the regularization parameter is estiamted using l-curve. This approach is
 % equivalent to the MAP estimator in be_jmne_lcurve_MAP
@@ -71,7 +71,21 @@ function [J,varargout] = be_jmne_lcurve(obj, OPTIONS, sfig)
     alpha   = param.*scale;
 
     % Pre-compute data decomposition
-    [U,S]   = svd(M,'econ'); 
+    try
+        [U,S]   = svd(M,'econ'); 
+    catch 
+        current_pool = gcp('nocreate');
+        isPoolOpen = ~isempty(current_pool);
+        % If the data cant fit in memory, use a tall array
+        [U,S]   = svd(tall(M),'econ');
+        
+        % Compute the result
+        [U, S] = gather(U, S);
+        
+        if ~isPoolOpen && ~isempty(gcp('nocreate'))
+            delete(gcp('nocreate'))
+        end
+    end
 
     Fit     = zeros(1,length(alpha));
     Prior   = zeros(1,length(alpha));
@@ -105,10 +119,14 @@ function [J,varargout] = be_jmne_lcurve(obj, OPTIONS, sfig)
     [~,Index] = min(Fit/max(Fit)+Prior/max(Prior)); 
     
     Kermel = SG * inv( GSG  + alpha(Index) * Sigma_d );
-    J = Kermel*M; 
 
-    if nargout > 1
-        varargout{1} = alpha(Index);
+    if nargout >= 2
+        % Only compute J if needed
+        J = Kermel*M; 
+    end
+
+    if nargout >= 3
+        alpha  = alpha(Index);
     end
 
     if ~OPTIONS.automatic.stand_alone

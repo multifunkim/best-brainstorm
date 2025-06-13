@@ -72,9 +72,8 @@ switch OPTIONS.optional.normalization
         end
 
     case 'adaptive'
-        %Same for every modalities
 
-        MNEAmp =  max(max(abs(OPTIONS.automatic.Modality(1).Jmne))); 
+        MNEAmp =   be_estimate_max_mne(obj,  OPTIONS);
         units_dipoles    =  MNEAmp; 
 
 end
@@ -112,5 +111,42 @@ for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
     end
    
 end
+
+end
+
+
+
+
+function max_value = be_estimate_max_mne(obj, OPTIONS)
+% Estimate the maximum value of the MNE solution: max(max(abs(kernel*M))).
+% Using a window approach to not save the entire solution Kernel*M in
+% memory
+
+
+    %Same for every modalities
+    obj = be_fusion_of_modalities(obj, OPTIONS, 0);
+    % selection of the data:
+    M = obj.data;
+    if ~isempty(OPTIONS.automatic.selected_samples)   
+        selected_samples = OPTIONS.automatic.selected_samples(1,:);
+        M = M(:,selected_samples);
+    end
+
+    kernel = OPTIONS.automatic.Modality(1).MneKernel;
+
+    window_length   = 500; % in sample
+    nWindow  = ceil(size(M,2)/window_length);
+    max_value       = 0;
+
+
+    for k=0:(nWindow-1)
+        idx = (1+ k*window_length):(window_length*(k+1));
+        idx = idx( idx <= size(M,2));
+
+        max_window  = max(max(abs(kernel * M(:,idx))));
+        if max_window > max_value
+            max_value = max_window;
+        end
+    end
 
 end

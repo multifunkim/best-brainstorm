@@ -37,9 +37,9 @@ end
 
 % Display information
 if isVerbose && length(OPTIONS.mandatory.DataTypes) > 1 
-    fprintf('%s, MULTIMODAL data ... %s found \n',OPTIONS.mandatory.pipeline, strjoin(OPTIONS.mandatory.DataTypes,', '));
+    fprintf('%s, MULTIMODAL data ... %s found ... ',OPTIONS.mandatory.pipeline, strjoin(OPTIONS.mandatory.DataTypes,', '));
 elseif isVerbose && length(OPTIONS.mandatory.DataTypes) == 1
-    fprintf('%s, No multimodalities ... \n',OPTIONS.mandatory.pipeline);
+    fprintf('%s, No multimodalities ... ',OPTIONS.mandatory.pipeline);
 end
 
 % Concatenate Gain and normalized gain

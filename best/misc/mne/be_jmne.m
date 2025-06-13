@@ -1,4 +1,4 @@
-function [J,varargout] = be_jmne(obj, OPTIONS)
+function [Kernel, J, alpha] = be_jmne(obj, OPTIONS)
 % Compute the regularisation parameter based on what brainstorm already
 % do. Note that this function replace be_solve_l_curve:
 % BAYESEST2 solves the inverse problem by estimating the maximal posterior probability (MAP estimator).
@@ -53,10 +53,14 @@ ratio = TrG/n_capt;
 param1 = 1/9; %This parameter is the same as used in brainstorm
 alpha  = param1*ratio;
 
-invG = G'*( GG + alpha.*eye(n_capt))^-1;
-J = invG*M; %Regularisation parameter
+Kernel = G'*( GG + alpha.*eye(n_capt))^-1;
 
-if nargout > 1
-    varargout{1} = param1;
+if nargout >= 2
+    J = Kernel*M; %Regularisation parameter
 end
+
+if nargout >= 3
+    alpha = param1;
+end
+
 end

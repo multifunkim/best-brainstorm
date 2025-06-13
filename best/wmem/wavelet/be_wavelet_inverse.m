@@ -30,6 +30,11 @@ function [Data, OPTIONS] = be_wavelet_inverse(WData,OPTIONS)
 % -------------------------------------------------------------------------   
 [Ns,No] = size(WData);
 
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('start', 'wMNE, Computing inverse wavelet transform... ' , 'Computing inverse wavelet transform.... ', 1, 100);
+end
+time_it_starts = tic();
+
 if strcmp(OPTIONS.wavelet.type,'RDW')
     
     if OPTIONS.optional.verbose
@@ -47,13 +52,13 @@ if strcmp(OPTIONS.wavelet.type,'RDW')
     Data = zeros(Ns,No, 'like', WData);
     for i = 1:Ns
         Data(i,:) = IWT_PO(WData(i,:),Noff,filtre);
-    end
-    
-    if OPTIONS.optional.verbose
-        fprintf(' done.\n');
-    end
-    
 
+        if ~OPTIONS.automatic.stand_alone
+            bst_progress('inc', 1); 
+        end
+
+    end
+    
 elseif strcmp(OPTIONS.wavelet.type,'rdw')
     
     if OPTIONS.optional.verbose
@@ -67,15 +72,28 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
     end
     
     Njs  = size(OPTIONS.automatic.scales,2);
-    
     Data = zeros(Ns,No, 'like', WData);
+
+    filtre = be_get_filter(filtre);
+    
+    freq_update_progress_bar = round(Ns / 10);
     for i = 1:Ns
         Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
-    end
-    
 
-    if OPTIONS.optional.verbose
-        fprintf(' done.\n');
+        if ~OPTIONS.automatic.stand_alone && mod(i, freq_update_progress_bar) == 0
+            bst_progress('inc', 10); 
+        end
     end
     
 end    
+time_it_ends = toc(time_it_starts);
+
+if OPTIONS.optional.verbose
+    fprintf(' done in %5.2f seconds.\n',time_it_ends);
+end
+
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('stop');
+end
+
+end

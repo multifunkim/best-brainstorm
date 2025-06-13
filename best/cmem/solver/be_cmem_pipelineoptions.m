@@ -6,6 +6,7 @@ function DEF = be_cmem_pipelineoptions(DataTypes)
 
         % clustering
         DEF.clustering.clusters_type     	= 'static';
+        DEF.clustering.neighborhood_order   = 4;                       
         DEF.clustering.MSP_window         	= 1;
         DEF.clustering.MSP_scores_threshold = 0.0;
         

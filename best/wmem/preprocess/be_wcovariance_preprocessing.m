@@ -1,4 +1,4 @@
-function [OPTIONS, obj] = be_Wcov_preprocessing(obj, OPTIONS)
+function [OPTIONS, obj] = be_wcovariance_preprocessing(obj, OPTIONS)
 % BE_MAIN_DATA_PROCESSING sets the covariance units 
 % accroding to the wMEM pipeline
 %
