@@ -29,7 +29,7 @@ function out = be_convsynthesereal(in_V, in_W, H, G)
         sz1(3) = 1;
     end
 
-    if all(in_V == 0) && all(in_W == 0)
+    if ~ (any(in_V) || any(in_W))
         out = 0;
         return;
     end

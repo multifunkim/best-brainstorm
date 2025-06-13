@@ -15,5 +15,6 @@ function inv_proj = be_wavelet_inverse_projection(obj,OPTIONS)
 
     inv_proj    =   be_wavelet_inverse( wav, OPTIONS );
     inv_proj    =   inv_proj(:,obj.info_extension.start:obj.info_extension.end);
+    
 end
 

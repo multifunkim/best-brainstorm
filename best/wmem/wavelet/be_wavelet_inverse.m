@@ -31,7 +31,7 @@ function [Data, OPTIONS] = be_wavelet_inverse(WData,OPTIONS)
 [Ns,No] = size(WData);
 
 if ~OPTIONS.automatic.stand_alone
-    bst_progress('start', 'wMNE, Computing inverse wavelet transform... ' , 'Computing inverse wavelet transform.... ', 1, Ns);
+    bst_progress('start', 'wMNE, Computing inverse wavelet transform... ' , 'Computing inverse wavelet transform.... ', 1, 100);
 end
 time_it_starts = tic();
 
@@ -72,13 +72,16 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
     end
     
     Njs  = size(OPTIONS.automatic.scales,2);
-    
     Data = zeros(Ns,No, 'like', WData);
+
+    filtre = be_get_filter(filtre);
+    
+    freq_update_progress_bar = round(Ns / 10);
     for i = 1:Ns
         Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
 
-        if ~OPTIONS.automatic.stand_alone
-            bst_progress('inc', 1); 
+        if ~OPTIONS.automatic.stand_alone && mod(i, freq_update_progress_bar) == 0
+            bst_progress('inc', 10); 
         end
     end
     

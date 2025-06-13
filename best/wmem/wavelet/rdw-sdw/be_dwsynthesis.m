@@ -35,31 +35,16 @@ function [out]= be_dwsynthesis(in_SDW, Nb_Level, filter)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-reel_fil=0;
-be_what_filter_list;
 
-if ~ismember(filter,filter_list)
-    if filter(1)=='r'
-        disp('!! invalid real filter: we use rdw2')
-        filter = 'rdw2';
-    elseif filter(1)=='s'
-        disp('!! invalid complex filter: we use sdw2')
-        filter = 'sdw2';
-    else
-        disp('!! invalid filter: we use rdw2')
-        filter = 'rdw2';
-    end
+if ~isstruct(filter) && (ischar(filter) || isstring(filter))
+    filter = be_get_filter(filter);
 end
 
-if filter(1)=='r' % Cas reel
-    reel_fil=1;
-end
+reel_fil    =   filter.reel_fil;
+H0          =   filter.H0;
+G0          =   filter.G0;
+Jcase       =   filter.Jcase;
 
-if reel_fil == 1
-    [H0, G0, synF, synG, Jcase] = be_makeqfbreal(filter);
-else
-    [var1, var2, H0, G0, Jcase] = be_makeqfb(filter);
-end
 % data are 1xN or NcxN with N = power of 2
 flip = 0;
 if size(in_SDW,2)==1
