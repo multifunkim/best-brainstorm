@@ -47,7 +47,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     bstPanelNew     =   [];
     
     % Check caller and Load data
-    if isfield(OPTIONS, 'Comment') & strcmp(OPTIONS.Comment,'Compute sources: BEst')
+    if isfield(OPTIONS, 'Comment') && strcmp(OPTIONS.Comment,'Compute sources: BEst')
         % Call from the process
         inputData   =   varargin{1};
         DTS         =   {inputData.FileName};
@@ -1502,7 +1502,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         % Checks input 
         Tm = {};
         for ii = 1 : numel(iS)
-            data = in_bst(fullfile(iP.STUDIES, iS{ii})); % load( fullfile(iP.STUDIES, iS{ii}), 'Time' );
+            data = in_bst_data(fullfile(iP.STUDIES, iS{ii}), 'Time'); % load( fullfile(iP.STUDIES, iS{ii}), 'Time' );
             Tm{ii} = data.Time;
         end
         sf = cellfun(@(a) round(1/diff(a([1 2]))), Tm, 'uni', false);
@@ -1549,8 +1549,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         
             switch varargin{3}
                 case 'true'
-                    hndlst.setText('-9999')
-                    hndlnd.setText('9999')
+                    hndlst.setText('-9999999999')
+                    hndlnd.setText('999999999')
             end
         
             ST  = str2double( char( hndlst.getText()) ); 

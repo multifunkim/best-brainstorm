@@ -41,24 +41,41 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
                                                 
     alpha = zeros(size(CLS));
     ALPHA_METHOD = OPTIONS.model.alpha_method;
-    
+
+    OBJ_FUS         = be_fusion_of_modalities(obj, OPTIONS, 0);
+
+    % selection of the Kernel:
     if ALPHA_METHOD == 6
-        OBJ_FUS         = be_fusion_of_modalities(obj, OPTIONS, 0);
-        weight_alpha    = be_jmne_normalized(OBJ_FUS, OPTIONS);  
+        kernel    = be_jmne_normalized(OBJ_FUS, OPTIONS);  
     elseif ALPHA_METHOD == 7
-        weight_alpha    = OPTIONS.automatic.Modality(1).Jmne;
+        kernel = OPTIONS.automatic.Modality(1).MneKernel;
+    else
+        error('Uknown alpha method: %d', ALPHA_METHOD)
     end
-    
+
+    % selection of the data:
+    if ALPHA_METHOD == 6
+        M = OBJ_FUS.data_normalized;
+    else
+        M = OBJ_FUS.data;
+    end
+
+    if ~isempty(OPTIONS.automatic.selected_samples)   
+        selected_samples = OPTIONS.automatic.selected_samples(1,:);
+        M = M(:,selected_samples);
+    end
 
     for jj=1:size(CLS,2)
         clusters    = CLS(:,jj);
         nb_clusters = max(clusters);
         curr_cls    = 1;
+
+        weight_alpha    = kernel * M(:,jj);
     
         for ii = 1:nb_clusters
             idCLS = clusters==ii;
     
-            WSjj            = weight_alpha(:,jj).^2;
+            WSjj            = weight_alpha.^2;
             WSjj_ii         = WSjj(idCLS); 
             alpha(idCLS,jj) = sqrt((sum(WSjj_ii) / sum(WSjj)));
                     

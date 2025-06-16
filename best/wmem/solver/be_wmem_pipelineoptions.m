@@ -6,6 +6,12 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
 
         % clustering
         DEF.clustering.clusters_type        = 'static';
+        if any(ismember( 'NIRS', DataTypes))
+            DEF.clustering.neighborhood_order       = 6;                       
+        else
+            DEF.clustering.neighborhood_order       = 4;                       
+        end
+
         DEF.clustering.MSP_window         	= 1;
         DEF.clustering.MSP_scores_threshold = 0;
 

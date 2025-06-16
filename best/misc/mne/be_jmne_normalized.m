@@ -1,4 +1,4 @@
-function [J, varargout] = be_jmne_normalized(obj, OPTIONS)
+function [Kernel, J, alpha] = be_jmne_normalized(obj, OPTIONS)
 % Compute the MNE solution on the normalized data.
 % Similar to be_jme with a regularization parameter of 0; applied on the
 % normalized data
@@ -36,11 +36,14 @@ function [J, varargout] = be_jmne_normalized(obj, OPTIONS)
     end
     
     
-    Op  = Gn'*pinv(Gn*Gn');
-    J   = Op * Mn;
+    Kernel  = Gn'*pinv(Gn*Gn');
 
-    if nargout > 1
-        varargout{1} =  0;
+    if nargout >= 2
+        J   = Kernel * Mn;
+    end
+
+    if nargout >= 3
+        alpha =  0;
     end
 
 end
