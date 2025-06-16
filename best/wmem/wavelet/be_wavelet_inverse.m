@@ -30,8 +30,11 @@ function [Data, OPTIONS] = be_wavelet_inverse(WData,OPTIONS)
 % -------------------------------------------------------------------------   
 [Ns,No] = size(WData);
 
-if ~OPTIONS.automatic.stand_alone
-    bst_progress('start', 'wMNE, Computing inverse wavelet transform... ' , 'Computing inverse wavelet transform.... ', 1, 100);
+isVerbose       = OPTIONS.optional.verbose;
+isStandAlone    = OPTIONS.automatic.stand_alone;
+
+if ~isStandAlone
+    bst_progress('start', 'wMNE, Computing inverse wavelet transform... ' , 'Computing inverse wavelet transform.... ', 1, Ns);
 end
 time_it_starts = tic();
 
@@ -76,12 +79,50 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
 
     filtre = be_get_filter(filtre);
     
-    freq_update_progress_bar = round(Ns / 10);
-    for i = 1:Ns
-        Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
+    if OPTIONS.solver.parallel_matlab || ( be_canUseParallelPool()  && Ns > 1000)
+        
+        try 
 
-        if ~OPTIONS.automatic.stand_alone && mod(i, freq_update_progress_bar) == 0
-            bst_progress('inc', 10); 
+            current_pool = gcp('nocreate');
+            isPoolOpen = ~isempty(current_pool);
+            
+            if ~isPoolOpen
+                parpool();
+            end
+            
+            q = parallel.pool.DataQueue;
+            if ~OPTIONS.automatic.stand_alone
+                afterEach(q, @(x) bst_progress('inc', 1));
+            end
+    
+            parfor i = 1:Ns
+                Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
+        
+                if ~isStandAlone
+                    send(q, 1); 
+                end
+            end
+
+            if ~isPoolOpen && ~isempty(gcp('nocreate'))
+                delete(gcp('nocreate'))
+            end
+
+        catch
+            for i = 1:Ns
+                Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
+        
+                if ~isStandAlone
+                    bst_progress('inc', 1)
+                end
+            end
+        end
+    else
+        for i = 1:Ns
+            Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
+    
+            if ~isStandAlone
+                bst_progress('inc', 1)
+            end
         end
     end
     
