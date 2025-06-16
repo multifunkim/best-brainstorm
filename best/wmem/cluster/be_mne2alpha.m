@@ -55,7 +55,7 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
 
     % selection of the data:
     if ALPHA_METHOD == 6
-        M = obj.data_normalized;
+        M = OBJ_FUS.data_normalized;
     else
         M = OBJ_FUS.data;
     end
