@@ -1770,14 +1770,16 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     function VisualizeOscillation()
 
-        for iData = 1:length(MEMglobal.DataToProcess)
-            obj = struct('ImageGridAmp', []);
-        
+        for iData = 1:length(MEMglobal.DataToProcess)        
             hfig = uifigure("Name", "Time-Frequency Representation", "Position", [725 198 560 420]);
             hfigtab = uitabgroup(hfig, "Position",[0 0 hfig.Position(3) hfig.Position(4)]); 
-        
-            focus(hfig)
-
+            
+            try 
+                focus(hfig)
+            catch
+                figure(hfig);
+            end
+            
             sInput = in_bst_data(MEMglobal.DataToProcess{iData});
             sChannel = in_bst_channel(ChannelFile);
     
