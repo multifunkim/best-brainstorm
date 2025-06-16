@@ -30,6 +30,14 @@ function [Data, OPTIONS] = be_wavelet_inverse(WData,OPTIONS)
 % -------------------------------------------------------------------------   
 [Ns,No] = size(WData);
 
+isVerbose       = OPTIONS.optional.verbose;
+isStandAlone    = OPTIONS.automatic.stand_alone;
+
+if ~isStandAlone
+    bst_progress('start', 'wMNE, Computing inverse wavelet transform... ' , 'Computing inverse wavelet transform.... ', 1, Ns);
+end
+time_it_starts = tic();
+
 if strcmp(OPTIONS.wavelet.type,'RDW')
     
     if OPTIONS.optional.verbose
@@ -47,13 +55,13 @@ if strcmp(OPTIONS.wavelet.type,'RDW')
     Data = zeros(Ns,No, 'like', WData);
     for i = 1:Ns
         Data(i,:) = IWT_PO(WData(i,:),Noff,filtre);
-    end
-    
-    if OPTIONS.optional.verbose
-        fprintf(' done.\n');
-    end
-    
 
+        if ~OPTIONS.automatic.stand_alone
+            bst_progress('inc', 1); 
+        end
+
+    end
+    
 elseif strcmp(OPTIONS.wavelet.type,'rdw')
     
     if OPTIONS.optional.verbose
@@ -67,15 +75,66 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
     end
     
     Njs  = size(OPTIONS.automatic.scales,2);
-    
     Data = zeros(Ns,No, 'like', WData);
-    for i = 1:Ns
-        Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
-    end
-    
 
-    if OPTIONS.optional.verbose
-        fprintf(' done.\n');
+    filtre = be_get_filter(filtre);
+    
+    if OPTIONS.solver.parallel_matlab || ( be_canUseParallelPool()  && Ns > 1000)
+        
+        try 
+
+            current_pool = gcp('nocreate');
+            isPoolOpen = ~isempty(current_pool);
+            
+            if ~isPoolOpen
+                parpool();
+            end
+            
+            q = parallel.pool.DataQueue;
+            if ~OPTIONS.automatic.stand_alone
+                afterEach(q, @(x) bst_progress('inc', 1));
+            end
+    
+            parfor i = 1:Ns
+                Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
+        
+                if ~isStandAlone
+                    send(q, 1); 
+                end
+            end
+
+            if ~isPoolOpen && ~isempty(gcp('nocreate'))
+                delete(gcp('nocreate'))
+            end
+
+        catch
+            for i = 1:Ns
+                Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
+        
+                if ~isStandAlone
+                    bst_progress('inc', 1)
+                end
+            end
+        end
+    else
+        for i = 1:Ns
+            Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
+    
+            if ~isStandAlone
+                bst_progress('inc', 1)
+            end
+        end
     end
     
 end    
+time_it_ends = toc(time_it_starts);
+
+if OPTIONS.optional.verbose
+    fprintf(' done in %5.2f seconds.\n',time_it_ends);
+end
+
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('stop');
+end
+
+end

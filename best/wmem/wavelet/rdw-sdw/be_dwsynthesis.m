@@ -35,72 +35,58 @@ function [out]= be_dwsynthesis(in_SDW, Nb_Level, filter)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-reel_fil=0;
-be_what_filter_list;
 
-if ~ismember(filter,filter_list)
-    if filter(1)=='r'
-        disp('!! invalid real filter: we use rdw2')
-        filter = 'rdw2';
-    elseif filter(1)=='s'
-        disp('!! invalid complex filter: we use sdw2')
-        filter = 'sdw2';
-    else
-        disp('!! invalid filter: we use rdw2')
-        filter = 'rdw2';
-    end
+if ~isstruct(filter) && (ischar(filter) || isstring(filter))
+    filter = be_get_filter(filter);
 end
 
-if filter(1)=='r' % Cas reel
-    reel_fil=1;
-end
+reel_fil    =   filter.reel_fil;
+H0          =   filter.H0;
+G0          =   filter.G0;
+Jcase       =   filter.Jcase;
 
-if reel_fil==1
-    [H0, G0, synF, synG, Jcase] = be_makeqfbreal(filter);
-else
-    [var1, var2, H0, G0, Jcase] = be_makeqfb(filter);
-end
 % data are 1xN or NcxN with N = power of 2
 flip = 0;
 if size(in_SDW,2)==1
     in_SDW = in_SDW'; flip = 1;
 end
 
-
-[Nb_line extend trial] = size(in_SDW);  % Dimensions of the input.
+[Nb_line, extend, trial] = size(in_SDW);  % Dimensions of the input.
 
 %Division des parties reelles et imaginaires.
-in_re = real(in_SDW); in_im = imag(in_SDW);
-H_re = real(H0);    H_im = imag(H0);
-G_re = real(G0);    G_im = imag(G0);
+in_re   = real(in_SDW); in_im   = imag(in_SDW);
+H_re    = real(H0);     H_im    = imag(H0);
+G_re    = real(G0);     G_im    = imag(G0);
 
-scale = bitshift(1,Nb_Level);   % (1 << Nb_Level);
-n = extend/scale;                    % taille de V
+scale   = bitshift(1,Nb_Level);   % (1 << Nb_Level);
+n       = extend/scale;                    % taille de V
 out_re = in_re; out_im = in_im;         % Initialisation.
-j = n;
+j       = n;
 
 if reel_fil == 1
+
     for ii = 1:Nb_Level
         n = bitshift(n,1);
         
         temp_a  = fix_vector(out_im, n);
         temp_b  = fix_vector(in_im(:,j+1:n,:), n);
-        temp_im = be_convsynthesereal(temp_a, temp_b, H_re, G_re, n, Jcase);
-        temp_re = be_convsynthesereal(temp_a, temp_b, H_im, G_im, n, Jcase);
+
+        temp_im = be_convsynthesereal(temp_a, temp_b, H_re, G_re);
+        temp_re = be_convsynthesereal(temp_a, temp_b, H_im, G_im);
         
         temp_a  = fix_vector(out_re, n);
         temp_b  = fix_vector(in_re(:,j+1:n,:), n);
-        out_im  = be_convsynthesereal(temp_a, temp_b, H_im, G_im, n, Jcase);
+
+        out_im  = be_convsynthesereal(temp_a, temp_b, H_im, G_im);
+        out_re_2  = be_convsynthesereal(temp_a, temp_b, H_re, G_re);
         
         
-        out_re_2  = be_convsynthesereal(temp_a, temp_b, H_re, G_re, n, Jcase);
-        
-        
-        out_re(:,1:n,:) = out_re_2- temp_re;
-        out_im(:,1:n,:) = out_im + temp_im;
+        out_re(:,1:n,:) = out_re_2 - temp_re;
+        out_im(:,1:n,:) = out_im   + temp_im;
         
         j = bitshift(j,1);  % left shifting "j <<= 1".
     end
+
 else
     
     for ii = 1:Nb_Level

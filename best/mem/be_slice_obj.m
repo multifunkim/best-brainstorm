@@ -5,10 +5,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
     obj_slice(nbSmp)    = struct();
 
-    % Normalize MNE at each time-point
-    Jmne = OPTIONS.automatic.Modality(1).Jmne;
-    Jmne = Jmne ./ max(abs(Jmne));
-
+    fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
 
     for i = 1:nbSmp
         
@@ -46,6 +43,10 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
         if OPTIONS.model.active_mean_method ~= 2 % active mean == 0
             active_mean = zeros(nb_clusters,1);
+
+            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
+            Jmne = Jmne  ./ max(abs(Jmne));
+
             for ii = 1:nb_clusters
                 idx_cluster     = find(clusters == ii);
                 switch OPTIONS.model.active_mean_method
@@ -56,7 +57,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
                     case 3  % Methode 3 (Minimum Norm regularized without null parcel)
                         active_mean(ii) = mean( obj.gain(:,idx_cluster)'*GpGptinv_M);
                     case 4
-                        active_mean(ii) = mean( Jmne(idx_cluster,i));
+                        active_mean(ii) = mean( Jmne(idx_cluster));
                     otherwise
                         error('Wrong MU Method')
                 end
@@ -115,20 +116,30 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     % Multiply Signa_s by 5% of the MNE solution
     if strcmp(OPTIONS.clustering.clusters_type, 'static')
         clusters = obj.CLS(:,1);
-        energy = zeros(max(clusters),nbSmp);
-        for ii = 1:max(clusters)
-            energy(ii,:)  = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii,:).^2);
-        end
-
+        
         for i = 1:nbSmp
-            obj_slice(i).mne_energy = energy(:,i);            
+
+            energy = zeros(max(clusters), 1);
+
+            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
+            Jmne = Jmne  ./ max(abs(Jmne));
+    
+            for ii = 1:max(clusters)
+                energy(ii)  = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii).^2);
+            end
+
+            obj_slice(i).mne_energy = energy;            
         end
     else
         for i = 1:nbSmp
             clusters = obj.CLS(:,i);
             energy = zeros(max(clusters),1);
+
+            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
+            Jmne = Jmne  ./ max(abs(Jmne));
+
             for ii = 1:max(clusters)
-                energy(ii) = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii,i).^2);        
+                energy(ii) = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii).^2);        
             end
             obj_slice(i).mne_energy = energy;
         end
@@ -176,5 +187,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
         OPTIONS.solver.optimoptions = options;
     end
+
+    fprintf('done. \n');
 
 end
