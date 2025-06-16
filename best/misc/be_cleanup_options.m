@@ -44,12 +44,19 @@ function OPTIONS = be_cleanup_options(obj, OPTIONS)
     OPTIONS.automatic = automatic;
 
     % 3. Clean OPTIONS.optional
-    OPTIONS.ResultFile      = OPTIONS.optional.ResultFile;
     OPTIONS.DataFile        = OPTIONS.optional.DataFile;
+    
+    if length(OPTIONS.optional.BaselineHistory) == 3
+        OPTIONS.BaselineFile    = OPTIONS.optional.BaselineHistory{3};
+    else
+        OPTIONS.BaselineFile    = OPTIONS.optional.DataFile;
+    end
+
     OPTIONS.BaselineSegment = OPTIONS.optional.BaselineSegment([1 end]);
-    OPTIONS.TimeSegment     = OPTIONS.mandatory.DataTime([1 end]);
+    OPTIONS.TimeSegment     = OPTIONS.optional.TimeSegment([1,end]);
     OPTIONS.DataTime        = OPTIONS.mandatory.DataTime;
 
+    OPTIONS.mandatory = rmfield(OPTIONS.mandatory, 'DataTime');
     OPTIONS = rmfield(OPTIONS,'optional');
 
 end

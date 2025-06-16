@@ -55,13 +55,16 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         [dum,STD]   =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), DTS, 'uni', 0 );
         STD         =   cell2mat( STD );
         
-        ChannelTypes = inputData.ChannelTypes;  
-        OPTIONS     =   OPTIONS.options.mem.Value; 
+        ChannelTypes = inputData(1).ChannelTypes;  
+        ChannelFile  = inputData(1).ChannelFile; 
+        OPTIONS      = OPTIONS.options.mem.Value; 
         
         if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
             OPTIONS = OPTIONS.MEMpaneloptions;
         end
+
         OPTIONS = be_struct_copy_fields(OPTIONS,be_main,[],0);
+
     elseif numel(varargin)==0
         % Call from the GUI
         bstPanel        = bst_get('Panel', 'Protocols');
@@ -76,7 +79,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             [st,is] = bst_get('Study', fullfile( bst_fileparts(DTS{ii}), 'brainstormstudy.mat' ) );
             STD     = [STD is];
         end
-        ChannelTypes = {};  
+
+
+        ChannelTypes = st.Channel.Modalities; 
+        ChannelFile  = st.Channel.FileName; 
         OPTIONS = be_main();
     else
         % Unexpected call
@@ -540,6 +546,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelOscillation()
+
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Oscillations options');
         % Scales
         jBoxWAVsc  = JComboBox({''});
@@ -549,8 +556,13 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanel.add('p left', JLabel('Scales analyzed') );
         jPanel.add('tab hfill', jBoxWAVsc);
 
+
+        JViewOscillation = gui_component('button', jPanel, [], 'Visualize Time-Frequency', [], [], @(~,~) VisualizeOscillation(), []);
+
+
         ctrl = struct('JPanelnwav',jPanel,...
                      'jBoxWAVsc', jBoxWAVsc, ...
+                     'JViewOscillation', JViewOscillation, ...
                      'jWavScales', jBoxWAVsc);
     end
 
@@ -1390,7 +1402,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     function set_scales(time)
         
-        if numel(time)>127 && ~ (isfield(MEMglobal, 'selected_scale_index') && MEMglobal.selected_scale_index > 0)
+        if numel(time) > 127 && ~ (isfield(MEMglobal, 'selected_scale_index') && MEMglobal.selected_scale_index > 0)
     
             if ~isfield(MEMglobal, 'available_scales')
                 Nj      = fix( log2(numel(time)) );
@@ -1572,6 +1584,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         
         
     end
+
+
     function import_baseline( Lst,Frmt  )
         
         DefaultFormats = bst_get('DefaultFormats');
@@ -1650,108 +1664,208 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function success = load_auto_bsl()
-    % Look in the database for a recording with a given substring
-    success = false;
-    bsl_name = char(ctrl.jTextLoadAutoBsl.getText());
+        % Look in the database for a recording with a given substring
+        success = false;
+        bsl_name = char(ctrl.jTextLoadAutoBsl.getText());
+        
+        if isfield(MEMglobal,'BSLinfo')  &&  isfield(MEMglobal.BSLinfo,'comment') && ~isempty(MEMglobal.BSLinfo.comment) 
     
-    if isfield(MEMglobal,'BSLinfo')  &&  isfield(MEMglobal.BSLinfo,'comment') && ~isempty(MEMglobal.BSLinfo.comment) 
-
-        if strcmp(bsl_name, MEMglobal.BSLinfo.comment)
-            success = true;
-            return;
-        else
-            SwitchBaseline();
+            if strcmp(bsl_name, MEMglobal.BSLinfo.comment)
+                success = true;
+                return;
+            else
+                SwitchBaseline();
+            end
         end
-    end
-    
-    
-    MEMglobal.BSLinfo.comment = '';
-    MEMglobal.BSLinfo.file = '';
-    
-    % Nothing to do
-    if isempty(bsl_name)
-        disp('BEst> No baseline to find')
-        disp(['BEst> Type in a substring contained in the name of the ', ...
-            'baseline file to load and tick the "find" button.'])
-        return
-    end
-    
-    % Look through the studies of the current protocol
-    % (why not giving precedence to the studies currently selected for analyses?)
-    S = getfield(bst_get('ProtocolStudies'), 'Study');
-    S = [S.Data];
-    
-    % This should never happen
-    if isempty(S)
-        disp('BEst> No study with recordings found in the current protocol.')
-        return
-    end
-    
-    
-    tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
-    subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
-    conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
-    
-    idx = false(size(subjectNames));
-    for iSubject = 1:length(MEMglobal.SubjToProcess)
-        idx = idx | strcmp(subjectNames,MEMglobal.SubjToProcess{iSubject});
-    end
-    idx = idx & strcmp({S.DataType}, 'recordings');
-    
-    S               = S(idx);
-    subjectNames    = subjectNames(idx);
-    conditionNames  = conditionNames(idx);
-    
-    K = find(cellfun(@(k) ~isempty(k), strfind(lower({S.Comment}), lower(bsl_name))));
-    
-    % User should check the baseline name, beware case sensitivity
-    if isempty(K)
-        disp(['BEst> No recording with ''', bsl_name, ''' in their name was ', ...
-            'found in the current protocol.'])
-        return
-    end
-    
-    % A baseline has been found
-    success = true;
-    
-    % Warning if multiple recordings are valid
-    if (nnz(K) > 1)
-        potentials_baseline = S(K);
-    
-        names = strcat(subjectNames(K)', {' /  '},conditionNames(K)' ,{' /  '} , {potentials_baseline.Comment}');
-        try
-            ChanSelected = java_dialog('radio', 'Select baseline to use:', 'Baseline selection', [], names);
-        catch 
-            disp(['BEst> No baseline selected'])
+        
+        
+        MEMglobal.BSLinfo.comment = '';
+        MEMglobal.BSLinfo.file = '';
+        
+        % Nothing to do
+        if isempty(bsl_name)
+            disp('BEst> No baseline to find')
+            disp(['BEst> Type in a substring contained in the name of the ', ...
+                'baseline file to load and tick the "find" button.'])
             return
         end
-        if isempty(ChanSelected)
-            disp(['BEst> No baseline selected'])
+        
+        % Look through the studies of the current protocol
+        % (why not giving precedence to the studies currently selected for analyses?)
+        S = getfield(bst_get('ProtocolStudies'), 'Study');
+        S = [S.Data];
+        
+        % This should never happen
+        if isempty(S)
+            disp('BEst> No study with recordings found in the current protocol.')
             return
         end
-        K = K(ChanSelected);
+        
+        
+        tmp = cellfun(@(x) strsplit(x,'/'), {S.FileName}, 'UniformOutput', false);
+        subjectNames = cellfun(@(x) x{1}, tmp, 'UniformOutput', false);
+        conditionNames = cellfun(@(x) x{2}, tmp, 'UniformOutput', false);
+        
+        idx = false(size(subjectNames));
+        for iSubject = 1:length(MEMglobal.SubjToProcess)
+            idx = idx | strcmp(subjectNames,MEMglobal.SubjToProcess{iSubject});
+        end
+        idx = idx & strcmp({S.DataType}, 'recordings');
+        
+        S               = S(idx);
+        subjectNames    = subjectNames(idx);
+        conditionNames  = conditionNames(idx);
+        
+        K = find(cellfun(@(k) ~isempty(k), strfind(lower({S.Comment}), lower(bsl_name))));
+        
+        % User should check the baseline name, beware case sensitivity
+        if isempty(K)
+            disp(['BEst> No recording with ''', bsl_name, ''' in their name was ', ...
+                'found in the current protocol.'])
+            return
+        end
+        
+        % A baseline has been found
+        success = true;
+        
+        % Warning if multiple recordings are valid
+        if (nnz(K) > 1)
+            potentials_baseline = S(K);
+        
+            names = strcat(subjectNames(K)', {' /  '},conditionNames(K)' ,{' /  '} , {potentials_baseline.Comment}');
+            try
+                ChanSelected = java_dialog('radio', 'Select baseline to use:', 'Baseline selection', [], names);
+            catch 
+                disp(['BEst> No baseline selected'])
+                return
+            end
+            if isempty(ChanSelected)
+                disp(['BEst> No baseline selected'])
+                return
+            end
+            K = K(ChanSelected);
+        end
+        
+        disp('BEst> Selecting the baseline file:')
+        disp(['BEst>    ''', S(K(1)).FileName, ''''])
+        
+        ctrl.jTextLoadAutoBsl.setText(S(K(1)).Comment);
+    
+        % This should be revisited, only file paths should be returned, not the file
+        % contents. 'be_main_call.m' should be able to load files.
+        MEMglobal.BSLinfo.comment = S(K(1)).Comment;
+        MEMglobal.BSLinfo.file = S(K(1)).FileName;
+        if ~isfield(MEMglobal, 'BaselineHistory') || ~strcmp(MEMglobal.BSLinfo.file, ...
+                MEMglobal.BaselineHistory{3})
+            MEMglobal.Baseline = file_fullpath(MEMglobal.BSLinfo.file);
+            MEMglobal.BaselineChannels = file_fullpath(bst_get(...
+                'ChannelFileForStudy', MEMglobal.BSLinfo.file));
+            MEMglobal.BaselineHistory{1} = 'auto';
+            MEMglobal.BaselineHistory{2} = MEMglobal.BSLinfo.comment;
+            MEMglobal.BaselineHistory{3} = MEMglobal.BSLinfo.file;
+        end
+        check_time('bsl', 'auto', 'true', 'checkOK');
+        ctrl.jBaselineTimeSelect.setVisible(1);
     end
-    
-    disp('BEst> Selecting the baseline file:')
-    disp(['BEst>    ''', S(K(1)).FileName, ''''])
-    
-    ctrl.jTextLoadAutoBsl.setText(S(K(1)).Comment);
 
-    % This should be revisited, only file paths should be returned, not the file
-    % contents. 'be_main_call.m' should be able to load files.
-    MEMglobal.BSLinfo.comment = S(K(1)).Comment;
-    MEMglobal.BSLinfo.file = S(K(1)).FileName;
-    if ~isfield(MEMglobal, 'BaselineHistory') || ~strcmp(MEMglobal.BSLinfo.file, ...
-            MEMglobal.BaselineHistory{3})
-        MEMglobal.Baseline = file_fullpath(MEMglobal.BSLinfo.file);
-        MEMglobal.BaselineChannels = file_fullpath(bst_get(...
-            'ChannelFileForStudy', MEMglobal.BSLinfo.file));
-        MEMglobal.BaselineHistory{1} = 'auto';
-        MEMglobal.BaselineHistory{2} = MEMglobal.BSLinfo.comment;
-        MEMglobal.BaselineHistory{3} = MEMglobal.BSLinfo.file;
-    end
-    check_time('bsl', 'auto', 'true', 'checkOK');
-    ctrl.jBaselineTimeSelect.setVisible(1);
+    function VisualizeOscillation()
+
+        for iData = 1:length(MEMglobal.DataToProcess)        
+            hfig = uifigure("Name", "Time-Frequency Representation", "Position", [725 198 560 420]);
+            hfigtab = uitabgroup(hfig, "Position",[0 0 hfig.Position(3) hfig.Position(4)]); 
+            
+            try 
+                focus(hfig)
+            catch
+                figure(hfig);
+            end
+            
+            sInput = in_bst_data(MEMglobal.DataToProcess{iData});
+            sChannel = in_bst_channel(ChannelFile);
+    
+            OPTIONS_wav  = struct();
+            OPTIONS_wav.mandatory.pipeline  = 'wMEM';
+            OPTIONS_wav.mandatory.DataTime  = sInput.Time;
+
+            AllSensorTypes = intersect(ChannelTypes, {'MEG MAG', 'MEG GRAD', 'MEG', 'EEG', 'ECOG', 'SEEG', 'NIRS'});
+            if any(ismember(AllSensorTypes, {'MEG MAG', 'MEG GRAD'}))
+                AllSensorTypes = setdiff(AllSensorTypes, 'MEG');
+            end
+            
+            OPTIONS_wav.wavelet.type            = char( ctrl.jWavType.getText() );
+            OPTIONS_wav.wavelet.nb_levels       = str2double( ctrl.jWavLevels.getText() );
+            OPTIONS_wav.wavelet.order           = str2double( ctrl.jWavOrder.getText() );
+            OPTIONS_wav.wavelet.vanish_moments  = str2double( ctrl.jWavVanish.getText() );
+            OPTIONS_wav.wavelet.shrinkage       = str2double( ctrl.jWavShrinkage.getText() );
+            
+            SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
+    
+            if any( strcmpi( SCL, {'all','0'} ) )|| isempty(SCL)
+                nSC = ctrl.jWavScales.getItemCount();
+                OPTIONS_wav.wavelet.selected_scales  = 1 : nSC-2;                
+            else                
+                id1 = find(SCL=='(');
+                id2 = find(SCL==')');
+                for ii = 1: numel(id1)
+                    SCL(id1(ii):id2(ii)) = '';
+                end
+                 OPTIONS_wav.wavelet.selected_scales  = eval(['[' SCL ']']);
+            end
+    
+            OPTIONS_wav.wavelet.single_box      = false;
+            OPTIONS_wav.optional.TimeSegment    = [str2double(char(ctrl.jTextTimeStart.getText())) ...
+                                                   str2double(char(ctrl.jTextTimeStop.getText()))];
+    
+            OPTIONS_wav.optional.BaselineTime   = [];
+            OPTIONS_wav.optional.verbose        = true;
+            OPTIONS_wav.optional.display        = 1;
+            OPTIONS_wav.solver.NoiseCov         = [];
+            OPTIONS_wav.automatic.sampling_rate = 1 / (sInput.Time(2) - sInput.Time(1));
+            OPTIONS_wav.output.save_extra_information = 0;
+        
+        
+            n0 = 0;
+            for iMod = 1:length(AllSensorTypes)
+                iData = good_channel(sChannel.Channel, sInput.ChannelFlag, AllSensorTypes{iMod});
+        
+                if isempty(iData)
+                    continue
+                end
+
+                OPTIONS_wav.mandatory.DataTypes = AllSensorTypes(iMod);
+                
+                if strcmp(OPTIONS_wav.mandatory.DataTypes, 'NIRS')
+
+                    groups = unique ({sChannel.Channel(iData).Group});
+                    
+                    for iGroup = 1:length(groups)
+                        
+                        iData_group = channel_find(sChannel.Channel, groups{iGroup});
+                        iData_group = intersect(iData, iData_group);
+
+                        OPTIONS_wav.automatic.Modality = struct('idx_data', iData_group, 'data', sInput.F(iData_group, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iData_group)));                    
+                    
+                        obj = struct('ImageGridAmp', [], 'hfig', hfig , 'hfigtab', hfigtab);
+                        [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
+                        be_display_time_scale_boxes(obj, OPTIONS_wav);
+                    end
+
+
+
+                else
+                    OPTIONS_wav.automatic.Modality = struct('idx_data', iData, 'data', sInput.F(iData, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iData)));
+                    n0 = n0 + length(iData);
+                
+                    obj = struct('ImageGridAmp', [], 'hfig', hfig , 'hfigtab', hfigtab);
+                    [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
+                    be_display_time_scale_boxes(obj, OPTIONS_wav);
+                end
+                drawnow; % force event queue to process
+                pause(1)
+            end
+
+        end
+
     end
 
 end
@@ -1900,7 +2014,7 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
         
         % process scales
         SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
-        if any( strcmpi( SCL, {'all','0'} ) )||isempty(SCL)
+        if any( strcmpi( SCL, {'all','0'} ) )|| isempty(SCL)
             nSC = ctrl.jWavScales.getItemCount();
             MEMpaneloptions.wavelet.selected_scales = 1 : nSC-2;                
         
@@ -1986,3 +2100,5 @@ function adjust_range(WTA, rng)
     % set value
     ctrl.(WTA).setText( num2str(VAL) );
 end
+
+
