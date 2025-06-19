@@ -189,9 +189,10 @@ end
 
 
 %% ===== Prepare output  ===== %%
-Results = struct();
+Results = be_template('resultsmat');
 Results.ImagingKernel   = [];
-Results.ImageGridAmp    =  obj.ImageGridAmp;
+Results.ImageGridAmp    = obj.ImageGridAmp;
+Results.Time            = OPTIONS.mandatory.DataTime;
 Results.nComponents     = round( length(obj.iModS) / obj.nb_sources );
 
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
