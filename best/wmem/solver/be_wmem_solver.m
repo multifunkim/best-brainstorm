@@ -192,9 +192,10 @@ end
 OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ')'];
 
 % Results
-Results = struct();
+Results = be_template('resultsmat');
 Results.ImagingKernel   = [];
 Results.ImageGridAmp    = obj.ImageGridAmp;
+Results.Time            = OPTIONS.mandatory.DataTime;
 Results.nComponents     = round( length(obj.iModS) / obj.nb_sources );
 
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
