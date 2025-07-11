@@ -27,7 +27,7 @@ function OPTIONS = be_cleanup_options(obj, OPTIONS)
         automatic.final_alpha       = {OPTIONS.automatic.final_alpha};
         automatic.clusters          = obj.CLS;
         automatic.MSP               = obj.SCR;     
-        automatic.minimum_norm      = OPTIONS.automatic.Modality(1).Jmne;
+        automatic.MneKernel         = OPTIONS.automatic.Modality(1).MneKernel;
            
     end
     
