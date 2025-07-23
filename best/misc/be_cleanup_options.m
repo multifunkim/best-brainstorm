@@ -24,6 +24,7 @@ function OPTIONS = be_cleanup_options(obj, OPTIONS)
     
         automatic.entropy_drops     = OPTIONS.automatic.entropy_drops;
         automatic.initial_alpha     = obj.ALPHA;
+        automatic.noise_var         = obj.noise_var;
         automatic.final_alpha       = {OPTIONS.automatic.final_alpha};
         automatic.clusters          = obj.CLS;
         automatic.MSP               = obj.SCR;     
