@@ -112,7 +112,7 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
                 Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
         
                 if ~isStandAlone
-                    bst_progress('inc', 1)
+                    bst_progress('inc', 1);
                 end
             end
         end
@@ -121,7 +121,7 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
             Data(i,:) =  be_dwsynthesis(full(WData(i,:)), Njs, filtre);
     
             if ~isStandAlone
-                bst_progress('inc', 1)
+                bst_progress('inc', 1);
             end
         end
     end
