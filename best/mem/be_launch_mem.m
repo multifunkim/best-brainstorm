@@ -75,6 +75,7 @@ isStandAlone    = OPTIONS.automatic.stand_alone;
 
 [OPTIONS_litle, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS);
 
+datetime.setDefaultFormats('default','hh:mm:ss');
 
 if OPTIONS.solver.parallel_matlab == 1    
     
@@ -131,7 +132,7 @@ end
 if ~isStandAlone
     bst_progress('stop');
 end
-
+datetime.setDefaultFormats('reset')
 % store the results where it should be
 if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
     ImageGridAmp = [];
@@ -178,7 +179,7 @@ function [R, E, A, S] = MEM_mainLoop(ii, obj, obj_const, OPTIONS)
     entropy_drop= mem_results_struct.entropy;
     act_proba   = mem_results_struct.active_probability;    
 
-    if OPTIONS.optional.verbose, fprintf('Sample %3d(%2d,%3.3f):',ii,obj.scale,obj.time); end
+    if OPTIONS.optional.verbose, fprintf('[%s] Sample %3d(%2d,%3.3f):', datetime(), ii, obj.scale, obj.time); end
     
     % Print output
     if any(isnan(J))
