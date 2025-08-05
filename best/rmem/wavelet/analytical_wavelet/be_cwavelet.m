@@ -114,7 +114,7 @@ OPTIONS.wavelet.Scone  = (f0/dt)./[1E-9,1:((N+1)/2-1),fliplr((1:(N/2-1))),1E-9];
 brd = [1/4 1/2 1 5/4];
 brd = brd(n);
 brd = brd/(N-1)/dt;
-brd = be_closest(OPTIONS.wavelet.freqs_analyzed, brd);
+brd = be_closest(brd,OPTIONS.wavelet.freqs_analyzed);
 WData(1:brd,:) = 0;
 
 
