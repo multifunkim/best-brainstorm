@@ -35,7 +35,9 @@ end
 %% ===== CREATE PANEL =====
 function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU> 
 
-
+    % Java initializations
+    import java.awt.*;
+    import javax.swing.*;
     
     global MEMglobal
     MEMglobal = [];
@@ -105,12 +107,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     MEMglobal.DataToProcess = DTS;
     MEMglobal.SubjToProcess = SUBJ;
     MEMglobal.StudToProcess = STD;
-
-
-    % Java initializations
-    import java.awt.*;
-    import javax.swing.*;
-
+    
     % Constants
     TEXT_WIDTH      = 60;
     DEFAULT_HEIGHT  = 20;
@@ -291,6 +288,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     %% Create Panels REF
     function [jPanel, ctrl] = CreatePanelType()
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+
         % Panel: Selection of the type of MEM (cMEM, wMEM, rMEM)
 
         jPanel = gui_river([1,1], [0, 6, 6, 6],'MEM type');
@@ -315,7 +316,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     function [jPanel, ctrl] = CreatePanelRef()
         % Panel: Showing MEM references 
-
+        
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
         % put references
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'References:');
         % Amblard
@@ -385,6 +390,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelData()
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Data definition');
         % ===== TIME SEGMENT =====
         jPanel.add('br', JLabel(''));
@@ -546,7 +555,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelOscillation()
-
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Oscillations options');
         % Scales
         jBoxWAVsc  = JComboBox({''});
@@ -567,6 +579,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelSynchrony()
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Synchrony options');
         % RDG frq rng
         jTxtRfrs  = JComboBox( {''} );  
@@ -592,7 +608,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelClustering()
-
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
      % ===== CLUSTERING METHOD =====
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Clustering');
              
@@ -710,6 +729,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelGroup()
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Group analysis');
 
         % Spatial smoothing
@@ -728,6 +751,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
     
     function [jPanel, ctrl] = CreatePanelDepthWeighting()
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Depth-weighting');
 
         jCheckDepthWeighting = gui_component('checkbox', jPanel, [], 'Use depth-weighting', [], [], @switchDepth, []);
@@ -758,7 +785,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
     
     function [jPanel, ctrl] = CreatePanelModelPrior()
-
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
         % Model priors
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Model priors');
 
@@ -853,6 +883,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
     
     function [jPanel, ctrl] = CreatePanelWavelet()
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Wavelet processing');
         jTxtWAVtp  = JTextField(OPTIONS.wavelet.type);
         jTxtWAVtp.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
@@ -910,7 +944,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelRidge()
-
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
         jPanel = gui_river([1,1], [0, 6, 6, 6], 'Ridge processing');
         % SC NRJ
         jTxtRsct  = JTextField( num2str(OPTIONS.ridges.scalo_threshold) );
@@ -952,6 +989,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelSolver()
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
        jPanel = gui_river([1,1], [0, 6, 6, 6], 'Solver options');
     
         % Optimization routine
@@ -1000,6 +1041,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function [jPanel, ctrl] = CreatePanelOutput()
+        % Java initializations
+        import java.awt.*;
+        import javax.swing.*;
+        
        jPanel = gui_river([1,1], [0, 6, 6, 6], 'Output options');
 
         % Display
