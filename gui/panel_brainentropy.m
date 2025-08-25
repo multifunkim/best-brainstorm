@@ -47,7 +47,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     panelName       =   'InverseOptionsMEM';
     bstPanelNew     =   [];
-    
+    selectedSensor  =   {};
+
+
     % Check caller and Load data
     if isfield(OPTIONS, 'Comment') && strcmp(OPTIONS.Comment,'Compute sources: BEst')
         % Call from the process
@@ -59,6 +61,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         
         ChannelTypes = inputData(1).ChannelTypes;  
         ChannelFile  = inputData(1).ChannelFile; 
+
+        if isfield(OPTIONS.options, 'sensortypes'  ) && isfield(OPTIONS.options.sensortypes, 'Value'  ) && ~isempty(strrep(OPTIONS.options.sensortypes.Value, ' ', ''))
+            selectedSensor = strsplit(strrep(OPTIONS.options.sensortypes.Value, ' ', ''),',');
+        end
+
         OPTIONS      = OPTIONS.options.mem.Value; 
         
         if isfield(OPTIONS,'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
@@ -1831,10 +1838,14 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             OPTIONS_wav  = struct();
             OPTIONS_wav.mandatory.pipeline  = 'wMEM';
             OPTIONS_wav.mandatory.DataTime  = sInput.Time;
-
-            AllSensorTypes = intersect(ChannelTypes, {'MEG MAG', 'MEG GRAD', 'MEG', 'EEG', 'ECOG', 'SEEG', 'NIRS'});
-            if any(ismember(AllSensorTypes, {'MEG MAG', 'MEG GRAD'}))
-                AllSensorTypes = setdiff(AllSensorTypes, 'MEG');
+            
+            if ~isempty(selectedSensor)
+                AllSensorTypes = selectedSensor;
+            else
+                AllSensorTypes = intersect(ChannelTypes, {'MEG MAG', 'MEG GRAD', 'MEG', 'EEG', 'ECOG', 'SEEG', 'NIRS'});
+                if any(ismember(AllSensorTypes, {'MEG MAG', 'MEG GRAD'}))
+                    AllSensorTypes = setdiff(AllSensorTypes, 'MEG');
+                end
             end
             
             OPTIONS_wav.wavelet.type            = char( ctrl.jWavType.getText() );
@@ -1871,9 +1882,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         
             n0 = 0;
             for iMod = 1:length(AllSensorTypes)
-                iData = good_channel(sChannel.Channel, sInput.ChannelFlag, AllSensorTypes{iMod});
+                iChannel = good_channel(sChannel.Channel, sInput.ChannelFlag, AllSensorTypes{iMod});
         
-                if isempty(iData)
+                if isempty(iChannel)
                     continue
                 end
 
@@ -1881,12 +1892,12 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 
                 if strcmp(OPTIONS_wav.mandatory.DataTypes, 'NIRS')
 
-                    groups = unique ({sChannel.Channel(iData).Group});
+                    groups = unique ({sChannel.Channel(iChannel).Group});
                     
                     for iGroup = 1:length(groups)
                         
                         iData_group = channel_find(sChannel.Channel, groups{iGroup});
-                        iData_group = intersect(iData, iData_group);
+                        iData_group = intersect(iChannel, iData_group);
 
                         OPTIONS_wav.automatic.Modality = struct('idx_data', iData_group, 'data', sInput.F(iData_group, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iData_group)));                    
                     
@@ -1898,8 +1909,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
 
                 else
-                    OPTIONS_wav.automatic.Modality = struct('idx_data', iData, 'data', sInput.F(iData, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iData)));
-                    n0 = n0 + length(iData);
+                    OPTIONS_wav.automatic.Modality = struct('idx_data', iChannel, 'data', sInput.F(iChannel, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iChannel)));
+                    n0 = n0 + length(iChannel);
                 
                     obj = struct('ImageGridAmp', [], 'hfig', hfig , 'hfigtab', hfigtab);
                     [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
