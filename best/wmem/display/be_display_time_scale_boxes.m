@@ -121,19 +121,33 @@ function sBox = create_rectangles(obj, OPTIONS, iMod)
     sBox = struct('Vertices', [],'Faces',[],  'FaceVertexCData', [],'FaceColor','Flat', 'EdgeColor', 'none');
 
     k = 1;
-    for b=1:length(OPTIONS.automatic.selected_values{iMod})
-        l = T/N*2^selection(2,b);
 
-        corner_vertex = [Tmin+(selection(3,b)-1)*l, selection(2,b)-1+e];
+    for scl = 1:length(OPTIONS.wavelet.selected_scales)
 
-        sBox.Vertices(end+1, :) = corner_vertex + [ 0, 0];
-        sBox.Vertices(end+1, :) = corner_vertex + [ l, 0];
-        sBox.Vertices(end+1, :) = corner_vertex + [ l, 1-2*e];
-        sBox.Vertices(end+1, :) = corner_vertex + [ 0, 1-2*e];
+        sj = OPTIONS.wavelet.selected_scales(scl);
+        bj = find(OPTIONS.automatic.Modality(iMod).selected_jk(2,:)==sj);
+        tt = OPTIONS.automatic.Modality(iMod).selected_jk(6,bj);
 
-        sBox.Faces(end+1, :) = [k, k+1, k+2, k+3, k];
-        sBox.FaceVertexCData(end+1, :) = MMM(b,end:-1:1);
-        k = k + 4;
+        if isempty(tt)
+            % if there is no selected box for that scale, we skip. 
+            continue;
+        end
 
+        for b=1:length(tt)
+            l = T/N*2^selection(2,bj(b));
+    
+            corner_vertex = [Tmin+(selection(3,bj(b))-1)*l, selection(2,bj(b))-1+e];
+    
+            sBox.Vertices(end+1, :) = corner_vertex + [ 0, 0];
+            sBox.Vertices(end+1, :) = corner_vertex + [ l, 0];
+            sBox.Vertices(end+1, :) = corner_vertex + [ l, 1-2*e];
+            sBox.Vertices(end+1, :) = corner_vertex + [ 0, 1-2*e];
+    
+            sBox.Faces(end+1, :) = [k, k+1, k+2, k+3, k];
+            sBox.FaceVertexCData(end+1, :) = MMM(bj(b),end:-1:1);
+            
+            k = k + 4;
+        end
     end
+
 end
