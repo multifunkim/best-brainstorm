@@ -153,7 +153,7 @@ function sBox = create_rectangles(obj, OPTIONS, iMod, ax)
             sBox(scl).Vertices(end+1, :) = first_corner + [ b*box_length, box_width];
         end
 
-        sBox(scl).FaceVertexCData =  [color_scale(1, :); color_scale; color_scale(end, :); color_scale(end:-1:1, :)];
+        sBox(scl).FaceVertexCData =  [color_scale(1, :); color_scale;  color_scale(end:-1:1, :); color_scale(1, :);];
         sBox(scl).Faces  = [1:size(sBox(scl).Vertices,1), 1];
         %sBox(scl).FaceVertexCData(end+1, :) = MMM(bj(I(1)),end:-1:1);
 
