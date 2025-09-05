@@ -132,22 +132,26 @@ function sBox = create_rectangles(obj, OPTIONS, iMod)
             % if there is no selected box for that scale, we skip. 
             continue;
         end
+        
+        box_length = T/N*2^selection(2,bj(1));
+        box_width  = 1-2*e;
 
-        for b=1:length(tt)
-            l = T/N*2^selection(2,bj(b));
-    
-            corner_vertex = [Tmin+(selection(3,bj(b))-1)*l, selection(2,bj(b))-1+e];
-    
-            sBox.Vertices(end+1, :) = corner_vertex + [ 0, 0];
-            sBox.Vertices(end+1, :) = corner_vertex + [ l, 0];
-            sBox.Vertices(end+1, :) = corner_vertex + [ l, 1-2*e];
-            sBox.Vertices(end+1, :) = corner_vertex + [ 0, 1-2*e];
+        [val, I]  = sort(selection(3,bj));
+        first_corner = [Tmin + (val(1)-1) * box_length, sj - box_width];
+
+        for b=1:length(I)
+            sBox.Vertices(end+1, :) = first_corner + [ (b-1)*box_length, 0];
+            sBox.Vertices(end+1, :) = first_corner + [ (b  )*box_length, 0];
+
+            sBox.Vertices(end+1, :) = first_corner + [ (b  )*box_length, box_width];
+            sBox.Vertices(end+1, :) = first_corner + [ (b-1)*box_length, box_width];
     
             sBox.Faces(end+1, :) = [k, k+1, k+2, k+3, k];
-            sBox.FaceVertexCData(end+1, :) = MMM(bj(b),end:-1:1);
-            
+            sBox.FaceVertexCData(end+1, :) = MMM(bj(I(b)),end:-1:1);
+
             k = k + 4;
         end
+
     end
 
 end
