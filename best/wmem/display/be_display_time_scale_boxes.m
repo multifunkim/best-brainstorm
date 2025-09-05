@@ -71,9 +71,11 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
                    'XLabel','time (s)', ...
                    'Ylabel', 'scale j');
     
-        sBox = create_rectangles(obj, OPTIONS, ii);
-        patch(ax, sBox);
-        
+        sBox = create_rectangles(obj, OPTIONS, ii, ax);
+        for iBox = 1:length(sBox)
+            patch(ax, sBox(iBox));
+        end
+
         for scl = 1:length(OPTIONS.wavelet.selected_scales)
 
             sj = OPTIONS.wavelet.selected_scales(scl);
@@ -108,7 +110,7 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
 end
 
 
-function sBox = create_rectangles(obj, OPTIONS, iMod)
+function sBox = create_rectangles(obj, OPTIONS, iMod, ax)
 
     Tmin = obj.t0 - (obj.info_extension.start-1)/OPTIONS.automatic.sampling_rate;
     Tmax = Tmin + (size(obj.data{iMod},2)-1)/OPTIONS.automatic.sampling_rate;
@@ -116,11 +118,11 @@ function sBox = create_rectangles(obj, OPTIONS, iMod)
     T    = Tmax - Tmin;
     e    = 0.05;
     MMM         = colormap(jet(size(OPTIONS.automatic.selected_values{iMod},2)));
+    MMM = MMM(end:-1:1, :);
     selection   = OPTIONS.automatic.Modality(iMod).selected_jk;
 
-    sBox = struct('Vertices', [],'Faces',[],  'FaceVertexCData', [],'FaceColor','Flat', 'EdgeColor', 'none');
+    sBox = repmat(struct('Vertices', [],'Faces',[],  'FaceVertexCData', [],'FaceColor','interp', 'EdgeColor', 'none'), length(OPTIONS.wavelet.selected_scales), 1) ;
 
-    k = 1;
 
     for scl = 1:length(OPTIONS.wavelet.selected_scales)
 
@@ -137,20 +139,33 @@ function sBox = create_rectangles(obj, OPTIONS, iMod)
         box_width  = 1-2*e;
 
         [val, I]  = sort(selection(3,bj));
+
+        color_scale = MMM(bj, :);
+        color_scale = color_scale(I, :);
+
         first_corner = [Tmin + (val(1)-1) * box_length, sj - box_width];
-
-        for b=1:length(I)
-            sBox.Vertices(end+1, :) = first_corner + [ (b-1)*box_length, 0];
-            sBox.Vertices(end+1, :) = first_corner + [ (b  )*box_length, 0];
-
-            sBox.Vertices(end+1, :) = first_corner + [ (b  )*box_length, box_width];
-            sBox.Vertices(end+1, :) = first_corner + [ (b-1)*box_length, box_width];
     
-            sBox.Faces(end+1, :) = [k, k+1, k+2, k+3, k];
-            sBox.FaceVertexCData(end+1, :) = MMM(bj(I(b)),end:-1:1);
-
-            k = k + 4;
+        for b=0:length(I)
+            sBox(scl).Vertices(end+1, :) = first_corner + [ b*box_length, 0];
         end
+
+        for b=length(I):-1:0
+            sBox(scl).Vertices(end+1, :) = first_corner + [ b*box_length, box_width];
+        end
+
+        sBox(scl).FaceVertexCData =  [color_scale(1, :); color_scale; color_scale(end, :); color_scale(end:-1:1, :)];
+        sBox(scl).Faces  = [1:size(sBox(scl).Vertices,1), 1];
+        %sBox(scl).FaceVertexCData(end+1, :) = MMM(bj(I(1)),end:-1:1);
+
+
+        % for b=1:length(I)
+        %     sBox.Vertices(end+1, :) = first_corner + [ (b  )*box_length, 0];
+        % 
+        %     sBox.Vertices(end+1, :) = first_corner + [ (b  )*box_length, box_width];
+        %     sBox.Vertices(end+1, :) = first_corner + [ (b-1)*box_length, box_width];
+        % 
+        % 
+        % end
 
     end
 
