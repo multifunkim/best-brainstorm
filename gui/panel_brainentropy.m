@@ -1224,11 +1224,22 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
     %% ===== CANCEL BUTTON =====
     function ButtonCancel_Callback()
+        
+        hfig = findall(0, 'Type', 'Figure', 'Tag', 'wMEM-TF');
+        if ~isempty(hfig)
+            close(hfig)
+        end
         gui_hide(panelName);
     end
 
     %% ===== OK BUTTON =====
-    function ButtonOk_Callback(varargin)       
+    function ButtonOk_Callback(varargin)  
+
+        hfig = findall(0, 'Type', 'Figure', 'Tag', 'wMEM-TF');
+        if ~isempty(hfig)
+            close(hfig)
+        end
+
         % Release mutex and keep the panel opened
         bst_mutex('release', panelName);
         be_print_best(OPTIONS);
@@ -1821,15 +1832,29 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function VisualizeOscillation()
+        hfig = [];
 
-        for iData = 1:length(MEMglobal.DataToProcess)        
-            hfig = uifigure("Name", "Time-Frequency Representation", "Position", [725 198 560 420]);
+        if length(MEMglobal.DataToProcess) == 1
+            hfig = findall(0, 'Type', 'Figure', 'Tag', 'wMEM-TF');
+            if isempty(hfig) || length(hfig) > 1
+                hfig = uifigure("Name", "Time-Frequency Representation",'Tag', 'wMEM-TF', "Position", [725 198 560 420]);
+            else 
+                clf(hfig)
+            end
+        end
+                
+        for iData = 1:length(MEMglobal.DataToProcess)
+
+            if isempty(hfig)
+                hfig = uifigure("Name", "Time-Frequency Representation",'Tag', 'wMEM-TF', "Position", [725 198 560 420]);
+            end
+
             hfigtab = uitabgroup(hfig, "Position",[0 0 hfig.Position(3) hfig.Position(4)]); 
             
             try 
                 focus(hfig)
             catch
-                figure(hfig);
+
             end
             
             sInput = in_bst_data(MEMglobal.DataToProcess{iData});
@@ -1916,8 +1941,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                     [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
                     be_display_time_scale_boxes(obj, OPTIONS_wav);
                 end
-                drawnow; % force event queue to process
-                pause(1)
             end
 
         end

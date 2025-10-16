@@ -39,7 +39,6 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
 % N : nomber of samples
 % TFboxes is a structure .k ans .j are (j,k) coordinates
 
-    warning('off','all');
     hp      = obj.hfig;
     hptab   = obj.hfigtab; 
     
@@ -98,8 +97,8 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
             ax = axes('parent',hpc, 'outerPosition',[0.01 0.01 0.98 0.98]);
 
             hold(ax,'on')
-            stem(ax, tt(tv==0), vv(tv==0), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor','black'); 
-            stem(ax, tt(tv==1), vv(tv==1), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor','red'); 
+            stem(ax, tt(tv==0), vv(tv==0), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor', 'black', 'Color','black'); 
+            stem(ax, tt(tv==1), vv(tv==1), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor', 'red', 'Color','red'); 
             hold(ax,'off')
         end
 
