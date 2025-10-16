@@ -98,7 +98,7 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
 
             hold(ax,'on')
             stem(ax, tt(tv==0), vv(tv==0), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor', 'black', 'Color','black'); 
-            stem(ax, tt(tv==1), vv(tv==1), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor', 'red', 'Color','red'); 
+            stem(ax, tt(tv==1), vv(tv==1), 'o', 'filled', 'markersize', 8, 'MarkerFaceColor', 'red', 'Color','red'); 
             hold(ax,'off')
         end
 
