@@ -59,22 +59,21 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
     
         Tmin = obj.t0 - (obj.info_extension.start-1)/OPTIONS.automatic.sampling_rate;
         Tmax = Tmin + (size(obj.data{ii},2)-1)/OPTIONS.automatic.sampling_rate;
-        J    = size(OPTIONS.automatic.scales,2);
-    
+
+        scales = unique(OPTIONS.automatic.Modality(ii).selected_jk(2,:));
+        J    = max(scales);
+
         ax = axes( 'parent', hpc, ...
                    'outerPosition', [0.01 0.01 0.98 0.98], ...
                    'YTick', 0.5:J-0.5, ...
                    'YTickLabel', num2cell(1:J), ...
                    'Xlim', [Tmin, Tmax], ...
                    'Ylim', [0, J], ...
-                   'Box', 'on', ...
-                   'XLabel','time (s)', ...
-                   'Ylabel', 'scale j');
-    
-        sBox = create_rectangles(obj, OPTIONS, ii, ax);
-        for iBox = 1:length(sBox)
-            patch(ax, sBox(iBox));
-        end
+                   'Box','on');
+
+        sBox = create_rectangles(obj, OPTIONS, ii);
+        patch(ax, sBox);
+        xlabel(ax, 'time (s)'); ylabel(ax,  'scale j');
 
         for scl = 1:length(OPTIONS.wavelet.selected_scales)
 
@@ -99,8 +98,8 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
             ax = axes('parent',hpc, 'outerPosition',[0.01 0.01 0.98 0.98]);
 
             hold(ax,'on')
-            stem(ax, tt, vv,'xk','filled','markersize',8); 
-            plot(ax, tt(tv==1), vv(tv==1),'xr'); 
+            stem(ax, tt(tv==0), vv(tv==0), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor','black'); 
+            stem(ax, tt(tv==1), vv(tv==1), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor','red'); 
             hold(ax,'off')
         end
 
@@ -110,23 +109,22 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
 end
 
 
-function sBox = create_rectangles(obj, OPTIONS, iMod, ax)
+function sBox = create_rectangles(obj, OPTIONS, iMod)
 
     Tmin = obj.t0 - (obj.info_extension.start-1)/OPTIONS.automatic.sampling_rate;
     Tmax = Tmin + (size(obj.data{iMod},2)-1)/OPTIONS.automatic.sampling_rate;
     N    = size(obj.data{iMod},2);
     T    = Tmax - Tmin;
-    e    = 0.05;
+    e    = 0; %0.05;
     MMM         = colormap(jet(size(OPTIONS.automatic.selected_values{iMod},2)));
-    MMM = MMM(end:-1:1, :);
+    MMM         = MMM(end:-1:1, :);
     selection   = OPTIONS.automatic.Modality(iMod).selected_jk;
 
-    sBox = repmat(struct('Vertices', [],'Faces',[],  'FaceVertexCData', [],'FaceColor','interp', 'EdgeColor', 'none'), length(OPTIONS.wavelet.selected_scales), 1) ;
+    sBox = struct('Vertices', [],'Faces',[],  'FaceVertexCData', [],'FaceColor','flat', 'EdgeColor', 'none');
+    iBox = 1;
 
+    for sj = 1:max(OPTIONS.automatic.Modality(iMod).selected_jk(2,:))
 
-    for scl = 1:length(OPTIONS.wavelet.selected_scales)
-
-        sj = OPTIONS.wavelet.selected_scales(scl);
         bj = find(OPTIONS.automatic.Modality(iMod).selected_jk(2,:)==sj);
         tt = OPTIONS.automatic.Modality(iMod).selected_jk(6,bj);
 
@@ -135,38 +133,25 @@ function sBox = create_rectangles(obj, OPTIONS, iMod, ax)
             continue;
         end
         
-        box_length = T/N*2^selection(2,bj(1));
+        box_length = T/N*2^sj;
         box_width  = 1-2*e;
 
         [val, I]  = sort(selection(3,bj));
 
         color_scale = MMM(bj, :);
         color_scale = color_scale(I, :);
-
-        first_corner = [Tmin + (val(1)-1) * box_length, sj - box_width];
     
-        for b=0:length(I)
-            sBox(scl).Vertices(end+1, :) = first_corner + [ b*box_length, 0];
+        for b=1:length(I)
+
+            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ 0, 0];
+            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ box_length, 0];
+            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ box_length, box_width];
+            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ 0, box_width];
+
+            sBox.Faces(end+1, :)  = [iBox, iBox + 1, iBox + 2 , iBox + 3, iBox];
+            iBox = iBox + 4;
+
+            sBox.FaceVertexCData(end+1, :) = color_scale(b, :);
         end
-
-        for b=length(I):-1:0
-            sBox(scl).Vertices(end+1, :) = first_corner + [ b*box_length, box_width];
-        end
-
-        sBox(scl).FaceVertexCData =  [color_scale(1, :); color_scale;  color_scale(end:-1:1, :); color_scale(1, :);];
-        sBox(scl).Faces  = [1:size(sBox(scl).Vertices,1), 1];
-        %sBox(scl).FaceVertexCData(end+1, :) = MMM(bj(I(1)),end:-1:1);
-
-
-        % for b=1:length(I)
-        %     sBox.Vertices(end+1, :) = first_corner + [ (b  )*box_length, 0];
-        % 
-        %     sBox.Vertices(end+1, :) = first_corner + [ (b  )*box_length, box_width];
-        %     sBox.Vertices(end+1, :) = first_corner + [ (b-1)*box_length, box_width];
-        % 
-        % 
-        % end
-
     end
-
 end
