@@ -54,6 +54,11 @@ switch(nargin)
         else
             error('MEM error : wrong pipeline input\n')
         end
+    case 2
+        if isempty(HeadModel)
+            Results = be_pipelineoptions(OPTIONS); 
+            return
+        end
 end
 
 
