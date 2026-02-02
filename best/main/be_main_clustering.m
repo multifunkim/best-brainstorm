@@ -37,17 +37,7 @@ function [OPTIONS, obj] = be_main_clustering(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
    
-global MEMglobal
-    
-if OPTIONS.optional.groupAnalysis > 0
-    [OPTIONS, SCR, CLS, active_probability] = be_groupAnalysis(OPTIONS); %, [hmem 0.05 .8]);
-    OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' | GrpAnalysis'];
-    [dum, studID]   = be_get_id( OPTIONS );
-    SCR             = MEMglobal.trMTX{studID} * SCR;
-    CLS             = MEMglobal.trMTX{studID} * CLS;
-    ALPHA           = MEMglobal.trMTX{studID} * active_probability;
-    
-elseif ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
+if ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
     % Sources prescoring - MSP (ref. Mattout et al. 2006) and clustering
     % following different strategies depending of the case cmem, wmem or
     % rmem
