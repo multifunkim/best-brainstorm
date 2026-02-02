@@ -1,6 +1,6 @@
-function [hp,hptab] = be_display_time_scale_boxes(obj,OPTIONS) 
-%DISPLAY_ENTROPY_DROPS displays a graphical window with MEM entropy drops at 
-% each  iteration
+function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS) 
+%be_display_time_scale_boxes displays the discrete wavelet
+%representation
 %
 %   INPUTS:
 %       -   obj
@@ -39,92 +39,118 @@ function [hp,hptab] = be_display_time_scale_boxes(obj,OPTIONS)
 % N : nomber of samples
 % TFboxes is a structure .k ans .j are (j,k) coordinates
 
+    hp      = obj.hfig;
+    hptab   = obj.hfigtab; 
+    
+    if ~strcmp(obj.data_type,'discrete_wavelet')
+        disp('NO WAVELET DISPLAY');
+        return
+    end
+    
+    for ii = 1:length(OPTIONS.mandatory.DataTypes)
+    
+        hhh  = uitab(hptab,'title', OPTIONS.mandatory.DataTypes{ii});
+        hpc  = uipanel('Parent', hhh, ...
+                       'Units', 'Normalized', ...
+                       'Position', [0.01 0.01 0.98 0.98], ...
+                       'FontWeight','demi');
+        set(hpc,'Title', 'Time-frequency boxes', 'FontSize', 8);
+    
+        Tmin = obj.t0 - (obj.info_extension.start-1)/OPTIONS.automatic.sampling_rate;
+        Tmax = Tmin + (size(obj.data{ii},2)-1)/OPTIONS.automatic.sampling_rate;
 
+        scales = unique(OPTIONS.automatic.Modality(ii).selected_jk(2,:));
+        J    = max(scales);
 
-warning('off','all');
-hp      = obj.hfig;
-hptab   = obj.hfigtab; 
+        ax = axes( 'parent', hpc, ...
+                   'outerPosition', [0.01 0.01 0.98 0.98], ...
+                   'YTick', 0.5:J-0.5, ...
+                   'YTickLabel', num2cell(1:J), ...
+                   'Xlim', [Tmin, Tmax], ...
+                   'Ylim', [0, J], ...
+                   'Box','on');
 
-if ~strcmp(obj.data_type,'discrete_wavelet')
-    disp('NO WAVELET DISPLAY');
-    return
+        sBox = create_rectangles(obj, OPTIONS, ii);
+        patch(ax, sBox);
+        xlabel(ax, 'time (s)'); ylabel(ax,  'scale j');
+
+        for scl = 1:length(OPTIONS.wavelet.selected_scales)
+
+            sj = OPTIONS.wavelet.selected_scales(scl);
+            bj = find(OPTIONS.automatic.Modality(ii).selected_jk(2,:)==sj);
+            tt = OPTIONS.automatic.Modality(ii).selected_jk(6,bj);
+            vv = OPTIONS.automatic.selected_values{ii}(2,bj);
+            tv = OPTIONS.automatic.selected_values{ii}(3,bj);
+
+            if isempty(tt)
+                % if there is no selected box for that scale, we skip. 
+                continue;
+            end
+
+            hhh = uitab(hptab,'title', [' scale ' num2str(OPTIONS.wavelet.selected_scales(scl)) ' ']);
+            hpc = uipanel(  'Parent', hhh, ...
+                            'Units', 'Normalized', ...
+                            'Position', [0.01 0.01 0.98 0.98], ...
+                            'FontWeight', 'demi');
+
+            set(hpc,'Title', ' Wavelet coefficients (% of power) ', 'FontSize', 8);
+            ax = axes('parent',hpc, 'outerPosition',[0.01 0.01 0.98 0.98]);
+
+            hold(ax,'on')
+            stem(ax, tt(tv==0), vv(tv==0), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor', 'black', 'Color','black'); 
+            stem(ax, tt(tv==1), vv(tv==1), 'o', 'filled', 'markersize', 8, 'MarkerFaceColor', 'red', 'Color','red'); 
+            hold(ax,'off')
+        end
+
+        drawnow
+    end
+
 end
 
-for ii = 1:length(OPTIONS.mandatory.DataTypes)
 
-    onglet{ii} = uitab(hptab,'title',OPTIONS.mandatory.DataTypes{ii});
+function sBox = create_rectangles(obj, OPTIONS, iMod)
 
     Tmin = obj.t0 - (obj.info_extension.start-1)/OPTIONS.automatic.sampling_rate;
-    Tmax = Tmin + (size(obj.data{ii},2)-1)/OPTIONS.automatic.sampling_rate;
-    J    = size(OPTIONS.automatic.scales,2);
-    N    = size(obj.data{ii},2);
-    T    = Tmax-Tmin;
+    Tmax = Tmin + (size(obj.data{iMod},2)-1)/OPTIONS.automatic.sampling_rate;
+    N    = size(obj.data{iMod},2);
+    T    = Tmax - Tmin;
     e    = 0.05;
+    MMM         = colormap(jet(size(OPTIONS.automatic.selected_values{iMod},2)));
+    MMM         = MMM(end:-1:1, :);
+    selection   = OPTIONS.automatic.Modality(iMod).selected_jk;
 
-    
-    hpc = uipanel('Parent', onglet{ii}, ...
-                  'Units', 'Normalized', ...
-                  'Position', [0.01 0.01 0.98 0.98], ...
-                  'FontWeight','demi');
+    sBox = struct('Vertices', [],'Faces',[],  'FaceVertexCData', [],'FaceColor','flat', 'EdgeColor', 'none');
+    iBox = 1;
 
-    set(hpc,'Title', 'Time-frequency boxes', 'FontSize', 8);
+    for sj = 1:max(OPTIONS.automatic.Modality(iMod).selected_jk(2,:))
 
-    ax = axes( 'parent', hpc, ...
-               'outerPosition', [0.01 0.01 0.98 0.98], ...
-               'YTick', 0.5:J-0.5, ...
-               'YTickLabel', num2cell(1:J));
+        bj = find(OPTIONS.automatic.Modality(iMod).selected_jk(2,:)==sj);
+        tt = OPTIONS.automatic.Modality(iMod).selected_jk(6,bj);
 
-    axis(ax, 'fill'); 
-    box(ax,'on'); 
-    xlim(ax,[Tmin Tmax]); 
-    ylim(ax,[0 J]); 
-    xlabel(ax,'time (s)'); 
-    ylabel(ax,'scale j'); 
-    
-    hold(ax, 'on');
-
-    MMM         = colormap(jet(size(OPTIONS.automatic.selected_values{ii},2)));
-    selection   = OPTIONS.automatic.Modality(ii).selected_jk;
-
-    for b=1:length(OPTIONS.automatic.selected_values{ii})
-        l = T/N*2^selection(2,b);
-        rectangle('parent',   ax, ...
-                  'Position', [Tmin+(selection(3,b)-1)*l,selection(2,b)-1+e,l,1-2*e],...
-                  'FaceColor', MMM(b,end:-1:1), ...
-                  'LineStyle','none');
-    end
-    hold off
-    
-    for scl = 1:length(OPTIONS.wavelet.selected_scales)
-
-        sj = OPTIONS.wavelet.selected_scales(scl);
-        bj = find(OPTIONS.automatic.Modality(ii).selected_jk(2,:)==sj);
-        tt = OPTIONS.automatic.Modality(ii).selected_jk(6,bj);
-        vv = OPTIONS.automatic.selected_values{ii}(2,bj);
-        tv = OPTIONS.automatic.selected_values{ii}(3,bj);
-        
         if isempty(tt)
             % if there is no selected box for that scale, we skip. 
             continue;
         end
+        
+        box_length = T/N*2^sj;
+        box_width  = 1-2*e;
 
-        hhh = uitab(hptab,'title', [' scale ' num2str(OPTIONS.wavelet.selected_scales(scl)) ' ']);
-        hpc = uipanel(  'Parent', hhh, ...
-                        'Units', 'Normalized', ...
-                        'Position', [0.01 0.01 0.98 0.98], ...
-                        'FontWeight','demi');
+        [val, I]  = sort(selection(3,bj));
 
-        set(hpc,'Title', ' Wavelet coefficients (% of power) ', 'FontSize', 8);
-        ax = axes('parent',hpc, 'outerPosition',[0.01 0.01 0.98 0.98]);
+        color_scale = MMM(bj, :);
+        color_scale = color_scale(I, :);
+    
+        for b=1:length(I)
 
-        hold(ax,'on')
-        stem(ax, tt, vv,'xk','filled','markersize',8); 
-        plot(ax, tt(tv==1), vv(tv==1),'xr'); 
-        hold(ax,'off')
+            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ 0, 0];
+            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ box_length, 0];
+            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ box_length, box_width];
+            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ 0, box_width];
+
+            sBox.Faces(end+1, :)  = [iBox, iBox + 1, iBox + 2 , iBox + 3, iBox];
+            iBox = iBox + 4;
+
+            sBox.FaceVertexCData(end+1, :) = color_scale(b, :);
+        end
     end
-
-    drawnow
-    pause(1)
-end
-
 end
