@@ -182,14 +182,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     jPanelLeft.add(jPanel, c);
     gridyL = gridyL + 1;
 
-    % ===== GROUP ANALYSIS =====
-    % Group analysis - conditional
-    [jPanel, ctrl_tmp] = CreatePanelGroup();
-    ctrl = struct_copy_fields(ctrl,ctrl_tmp);
-    c.gridy = gridyL;
-    jPanelLeft.add(jPanel, c);
-    gridyL = gridyL + 1;
-
     % Add glue to fill vertical space at the end
     c.gridy   = gridyL;
     c.weighty = 1;
@@ -735,28 +727,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                       'jTextSmooth',          jTextSmooth);
     end
 
-    function [jPanel, ctrl] = CreatePanelGroup()
-        % Java initializations
-        import java.awt.*;
-        import javax.swing.*;
-        
-        jPanel = gui_river([1,1], [0, 6, 6, 6], 'Group analysis');
-
-        % Spatial smoothing
-        jCheckGRP = JCheckBox('Multi-subjects spatial priors', OPTIONS.optional.groupAnalysis);
-        jCheckGRP.setToolTipText('<HTML><B>Warning</B>:<BR>Computations may take a lot of time</HTML>');        
-
-        jPanel.add('tab', jCheckGRP);
-        
-        % Add 'Method' panel to main panel (jPanelNew)
-        jPanel.add('br', JLabel(''));
-        JW = JLabel('    WARNING: very slow');
-        jPanel.add('tab', JW);
-
-        ctrl = struct('JPanelGRP',jPanel, ...
-                      'jCheckGRP', jCheckGRP);
-    end
-    
     function [jPanel, ctrl] = CreatePanelDepthWeighting()
         % Java initializations
         import java.awt.*;
@@ -1147,8 +1117,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         end
         ctrl.jRDGmindur.setText(num2str(OPTIONS.ridges.min_duration));
 
-
-
         % OPTIONS from CreatePanelClustering
         ctrl.jCLSd.setSelected(strcmp(OPTIONS.clustering.clusters_type,'blockwise'));
         ctrl.jCLSs.setSelected(strcmp(OPTIONS.clustering.clusters_type,'static'));
@@ -1167,11 +1135,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
 
        ctrl.jTextNeighbor.setText(num2str(OPTIONS.clustering.neighborhood_order));
        ctrl.jTextSmooth.setText(num2str(OPTIONS.solver.spatial_smoothing));
-
-
-        % OPTIONS from CreatePanelGroup
-        ctrl.jCheckGRP.setSelected(OPTIONS.optional.groupAnalysis)
-
 
         % OPTIONS from CreatePanelDepthWeighting
         if  (OPTIONS.model.depth_weigth_MNE > 0 || OPTIONS.model.depth_weigth_MEM > 0)
@@ -1377,7 +1340,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.JPanelnwav.setVisible(0);
             ctrl.JPanelnosc.setVisible(0);
             ctrl.JPanelCLSType.setVisible(0);
-            ctrl.JPanelGRP.setVisible(0);
             ctrl.JPanelDepth.setVisible(0);
             ctrl.jPanelModP.setVisible(0);
             ctrl.jPanelWAV.setVisible(0);
@@ -1393,11 +1355,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.JPanelData.setVisible(1);
             ctrl.jPanelSensC.setVisible(1);
 
-            if nsub > 1 
-                ctrl.JPanelGRP.setVisible(1);
-            else
-                ctrl.JPanelGRP.setVisible(0);
-            end
 
             if strcmp(choices(selected), 'cMEM')
                 ctrl.JPanelnwav.setVisible(0);
@@ -2048,10 +2005,6 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
         MEMpaneloptions.clustering.MSP_scores_threshold = 'fdr';
     end
    
-   % Group analysis
-   MEMpaneloptions.optional.groupAnalysis            = ctrl.jCheckGRP.isSelected(); 
-
-
     % Depth-weighting options
     if ctrl.jCheckDepthWeighting.isSelected() && any( strcmp(MEMpaneloptions.mandatory.pipeline, {'cMEM','wMEM'}) )
         MEMpaneloptions.model.depth_weigth_MNE  = str2double( ctrl.jTxtDepthMNE.getText() );

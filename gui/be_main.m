@@ -96,7 +96,6 @@ Def_OPTIONS.optional.EmptyRoom_channels         = {};
 %Def_OPTIONS.optional.normalization              = 'adaptive'; % either 'fixed' or 'adaptive'
 Def_OPTIONS.optional.TimeSegment                = [-9999999 9999999];
 Def_OPTIONS.optional.BaselineSegment            = [-9999999 9999999];
-Def_OPTIONS.optional.groupAnalysis              = 0;
 Def_OPTIONS.optional.Channel                    = [];
 Def_OPTIONS.optional.ChannelFlag                = [];
 Def_OPTIONS.optional.FileType                   = '';
