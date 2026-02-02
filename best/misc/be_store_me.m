@@ -56,7 +56,7 @@ end
 fprintf('\n\n****\tManual import : be_store_me ****\n****\tNew file in database:%s****\n****\tdone.\n\n',NewFile);
 db_reload_studies(iStudy)
 
-return
+end
 
 
 
@@ -118,7 +118,7 @@ if ~isempty(BSsub)
     end
 end
 
-return
+end
 
 
 
@@ -178,7 +178,7 @@ save(NewFile, '-struct', 'sMat');
 % Add file to database structure
 db_add_data(iS, NewFile, sMat);
 
-return
+end
 
 
 
@@ -238,4 +238,4 @@ save(NewFile, '-struct', 'FileMat');
 % Add file to database structure
 db_add_data(iS, NewFile, FileMat);
 
-return
+end

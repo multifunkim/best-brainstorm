@@ -157,7 +157,7 @@ if (nargout==2) && ~FLAG
     end
     
     % THE CODE STARTS HERE:    
-    [Results, OPTIONS]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions, Results );
+    [Results, OPTIONS]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions);
 
     
     % Initialize parallel computing
