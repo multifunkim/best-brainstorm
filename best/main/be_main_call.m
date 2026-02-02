@@ -40,25 +40,22 @@ function [Results, OPTIONS] = be_main_call(HeadModel, OPTIONS)
 %%
 
 % ===== common I/O arguments ===== %%
-Def_OPTIONS     =   BEst_defaults; 
+Def_OPTIONS     = BEst_defaults; 
+verbose         = ~(nargout==1);
 
-%% ==== LAUNCH PIPELINE ==== %%
-% If no arguments: return default options as a result
-if nargin == 0
-    Results     =   Def_OPTIONS;
-    return
+switch(nargin)
+    case 0
+        Results     =   Def_OPTIONS;
+        return
+    case 1
+        if ischar(HeadModel) && any(strcmpi({'cMEM', 'wMEM', 'rMEM'}, HeadModel))   
+            Results = be_pipelineoptions(Def_OPTIONS, HeadModel);   
+            return
+        else
+            error('MEM error : wrong pipeline input\n')
+        end
 end
 
-% If one argument: returns the default options of a particular pipeline
-if nargin>1 && isempty(HeadModel)
-    Results = be_pipelineoptions(OPTIONS, OPTIONS.mandatory.pipeline); 
-    return
-elseif any( strcmp({'cMEM', 'wMEM', 'rMEM'}, HeadModel) )   
-    Results = be_pipelineoptions(Def_OPTIONS, HeadModel);   
-    return
-elseif nargin==1
-    error('MEM error : wrong pipeline input\n')    
-end
 
 % ==== Copy default options to OPTIONS structure (do not replace defined values)
 [stand_alone, process] = be_check_caller;
@@ -104,24 +101,17 @@ else
     MEMoptions.automatic.process        =   process;
 end
 
-verbose = 1;
-if nargout==1
-    verbose = 0;
-end
 
 % ==== Check I/O
 [HeadModel, MEMoptions, FLAG] = be_checkio( HeadModel, MEMoptions, verbose );
 
 % Patch work [to be revisited]... Baseline no longer preloaded...
 if ~isempty(MEMoptions.optional.Baseline) && ischar(MEMoptions.optional.Baseline)
-    MEMoptions.optional.BaselineTime = getfield(load(...
-        MEMoptions.optional.Baseline, 'Time'), 'Time');
-    MEMoptions.optional.Baseline = getfield(load(...
-        MEMoptions.optional.Baseline, 'F'), 'F');
+    MEMoptions.optional.BaselineTime    = getfield(load(MEMoptions.optional.Baseline, 'Time'), 'Time');
+    MEMoptions.optional.Baseline        = getfield(load(MEMoptions.optional.Baseline, 'F'), 'F');
 end
 if ~isempty(MEMoptions.optional.BaselineChannels) && ischar(MEMoptions.optional.BaselineChannels)
-    MEMoptions.optional.BaselineChannels = load(...
-        MEMoptions.optional.BaselineChannels);
+    MEMoptions.optional.BaselineChannels = load(MEMoptions.optional.BaselineChannels);
 end
 
 % ==== Check if DATA is compatible with MEM pipeline
@@ -129,9 +119,6 @@ isRF = strcmp( MEMoptions.mandatory.pipeline, 'rMEM' );
 if ~MEMoptions.automatic.stand_alone || process
     [MEMoptions, isRF] = be_check_data_pipeline( MEMoptions );   
 end
-
-% ==== Call the specific solver:
-Results = struct('ImageGridAmp', [], 'ImagingKernel', []);
 
 % Check time and baseline defintions
 [MEMoptions, FLAG]  = be_check_timedef( MEMoptions, isRF );
@@ -144,31 +131,26 @@ if strcmp(MEMoptions.mandatory.pipeline, 'rMEM') & ...
 	fprintf('\n\nIn be_main :\trMEMoptions are incomplete.\n\t\tFill OPTIONS.ridges.frequency_range and OPTIONS.ridges.min_duration\n\n');
 end
 
-if (nargout==2) && ~FLAG
-    
-    % Initialize parallel computing
-    close_pool = true;
-    if MEMoptions.solver.parallel_matlab 
-        if isempty(gcp('nocreate'))
-            gcp;
-        else
-            close_pool = false;
-        end
-    end
-    
-    % THE CODE STARTS HERE:    
-    [Results, OPTIONS]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions);
-
-    
-    % Initialize parallel computing
-    if MEMoptions.solver.parallel_matlab && close_pool
-        delete(gcp('nocreate'))
-    end
-    
-elseif (nargout==1)
-    Results = MEMoptions;    
+if FLAG
+    error('MEM: unable to compute MEM.');
 end
 
+%% ==== LAUNCH PIPELINE ==== %%
+% Initialize parallel computing
+close_pool = false;
+if MEMoptions.solver.parallel_matlab && isempty(gcp('nocreate'))
+    gcp;
+    close_pool = true;
+end
+
+[Results, OPTIONS]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions);
+
+
+% Close parallel computing
+if close_pool
+    delete(gcp('nocreate'))
+end
+    
 end
 
 
