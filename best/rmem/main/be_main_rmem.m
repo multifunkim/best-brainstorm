@@ -1,4 +1,4 @@
-function [obj, OPTIONS] = be_main_MEM(obj, OPTIONS)
+function [obj, OPTIONS] = be_main_rmem(obj, OPTIONS)
 % BE_MAIN_MEM sets the appropriate options for the MEM 
 % accroding to the chosen MEM pipeline
 %
@@ -38,7 +38,7 @@ function [obj, OPTIONS] = be_main_MEM(obj, OPTIONS)
             new_obj.noise_var           =   real(new_obj.noise_var);
         	[obj.ImageGridAmp, OPTIONS] =   be_launch_mem(new_obj, OPTIONS); 
         	% - imaginary part 
-        	if ~isempty(new_obj.idata)
+            if ~isempty(new_obj.idata)
             	new_obj                 =   be_fusion_of_modalities(obj, OPTIONS);
                 if ~isreal( new_obj.noise_var )
                     new_obj.noise_var  	=   imag(new_obj.noise_var);
