@@ -11,6 +11,15 @@ end
 OPTIONS.optional.TimeSegment        =   be_closest( OPTIONS.optional.TimeSegment([1 end]), OPTIONS.mandatory.DataTime );
 OPTIONS.optional.TimeSegment        =   OPTIONS.mandatory.DataTime(OPTIONS.optional.TimeSegment(1):OPTIONS.optional.TimeSegment(end));
 
+% Patch work [to be revisited]... Baseline no longer preloaded...
+if ~isempty(OPTIONS.optional.Baseline) && ischar(OPTIONS.optional.Baseline)
+    OPTIONS.optional.BaselineTime    = getfield(load(OPTIONS.optional.Baseline, 'Time'), 'Time');
+    OPTIONS.optional.Baseline        = getfield(load(OPTIONS.optional.Baseline, 'F'), 'F');
+end
+if ~isempty(OPTIONS.optional.BaselineChannels) && ischar(OPTIONS.optional.BaselineChannels)
+    OPTIONS.optional.BaselineChannels = load(OPTIONS.optional.BaselineChannels);
+end
+
 % No baseline
 if isempty(OPTIONS.optional.Baseline) && ~any(isRF)
     % Baseline segment definition
@@ -138,4 +147,4 @@ if isfield(OPTIONS.automatic, 'Emptyroom_data')
     OPTIONS.automatic.Emptyroom_time    =   (0:size(OPTIONS.automatic.Emptyroom_data,2)-1)/OPTIONS.automatic.sampling_rate;
 end 
 
-return
+end

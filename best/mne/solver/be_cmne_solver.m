@@ -1,4 +1,4 @@
-function [Results, OPTIONS] = be_cmne_solver(HeadModel, OPTIONS, Results)
+function [Results, OPTIONS] = be_cmne_solver(HeadModel, OPTIONS)
 % cMNESOLVER: Minimum Norm Estimate solution.
 %
 % NOTES:
@@ -106,7 +106,7 @@ OBJ_FUS = be_fusion_of_modalities(obj, OPTIONS, 0);
 obj.ImageGridAmp = OPTIONS.automatic.Modality.MneKernel * OBJ_FUS.data;
 [OPTIONS, obj]   = be_apply_window( OPTIONS, obj );
 
-Results                 = struct();
+Results = be_template('resultsmat');
 Results.ImageGridAmp    = obj.ImageGridAmp;
 Results.ImagingKernel   = [];
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
