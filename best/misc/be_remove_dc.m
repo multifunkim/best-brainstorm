@@ -38,4 +38,4 @@ nSd     =   size( OPTIONS.mandatory.Data,2 );
 muM     =   mu * ones(1, nSd);
 OPTIONS.mandatory.Data = OPTIONS.mandatory.Data - muM;
 
-return
+end

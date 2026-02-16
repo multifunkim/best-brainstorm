@@ -1,8 +1,7 @@
 function [varargout] = be_main_call(varargin)
-% BE_MAIN calls the BEst package for solving inverse problems using MEM.
-% This function dirrectly call be_main_call
+% be_main_call
+% This function is depracated. Call be_main instead.
 %
-% See @be_main_call for a description of the input / output
 % -------------------------------------------------------------------------
 %
 % LATIS team, 2012
@@ -25,19 +24,6 @@ function [varargout] = be_main_call(varargin)
 % -------------------------------------------------------------------------
 %%
     
-    % ====      CALL THE PACKAGE      ==== %
-    if nargout == 1
-        Results             =   be_main_call(varargin{:});
-        varargout{1}        =   Results;
-
-    elseif nargout == 2
-        [Results, OPTIONS]  =   be_main_call(varargin{:});
-    
-        varargout{1}        =   Results;
-        varargout{2}        =   OPTIONS;
-        
-    else
-        error('MEM error : Invalid call to be_main\n')
-    end
+    [varargout{1:nargout}]  = be_main(varargin{1:end});
 
 end
