@@ -41,7 +41,6 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
 
     % ===== common I/O arguments ===== %%
     Def_OPTIONS     = BEst_defaults(); 
-    
     switch(nargin)
         case 0
             Results     =   Def_OPTIONS;
@@ -60,7 +59,6 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
             end
     end
     
-    
     % ==== Copy default options to OPTIONS structure (do not replace defined values)
     [stand_alone, process] = be_check_caller();
     if ~stand_alone && isfield( OPTIONS, 'MEMpaneloptions' )
@@ -71,24 +69,11 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
     MEMoptions.automatic.stand_alone    = stand_alone;
     MEMoptions.automatic.process        = process;
     
-    % Patch work [to be revisited]... Baseline no longer preloaded...
-    if ~isempty(MEMoptions.optional.Baseline) && ischar(MEMoptions.optional.Baseline)
-        MEMoptions.optional.BaselineTime    = getfield(load(MEMoptions.optional.Baseline, 'Time'), 'Time');
-        MEMoptions.optional.Baseline        = getfield(load(MEMoptions.optional.Baseline, 'F'), 'F');
-    end
-    if ~isempty(MEMoptions.optional.BaselineChannels) && ischar(MEMoptions.optional.BaselineChannels)
-        MEMoptions.optional.BaselineChannels = load(MEMoptions.optional.BaselineChannels);
-    end
-    
-    % ==== Check I/O
-    [HeadModel, MEMoptions, FLAG] = be_checkio( HeadModel, MEMoptions);
-    
-    
-    if FLAG
-        error('MEM: unable to compute MEM.');
-    end
-    
-    % Initialize parallel computing
+    % ==== Check Data and Options
+    [HeadModel, MEMoptions, FLAG] = be_checkio( HeadModel, MEMoptions);    
+    assert(~FLAG, 'MEM: unable to compute MEM.')
+
+    % ====  Initialize parallel computing
     close_pool = false;
     if MEMoptions.solver.parallel_matlab && isempty(gcp('nocreate'))
         gcp;
@@ -111,7 +96,7 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
             error('Unknown pipeline %s', lower(MEMoptions.mandatory.pipeline))
     end
     
-    % Close parallel computing
+    % ====  Close parallel computing
     if close_pool
         delete(gcp('nocreate'))
     end
