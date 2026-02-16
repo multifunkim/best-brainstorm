@@ -1,4 +1,4 @@
-function [varargout] = be_main(varargin)
+function [varargout] = be_main_call(varargin)
 % BE_MAIN calls the BEst package for solving inverse problems using MEM.
 % This function dirrectly call be_main_call
 %

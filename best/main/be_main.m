@@ -1,4 +1,4 @@
-function [Results, OPTIONS] = be_main_call(HeadModel, OPTIONS)
+function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
 % BE_MAIN launches the MEM inverse solution pipeline that fits the
 % OPTIONS.
 % 
