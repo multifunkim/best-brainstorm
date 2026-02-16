@@ -41,7 +41,6 @@ function [Results, OPTIONS] = be_main_call(HeadModel, OPTIONS)
 
 % ===== common I/O arguments ===== %%
 Def_OPTIONS     = BEst_defaults; 
-verbose         = ~(nargout==1);
 
 switch(nargin)
     case 0
@@ -69,13 +68,8 @@ if ~stand_alone && isfield( OPTIONS, 'MEMpaneloptions' )
 else
     MEMoptions = be_struct_copy_fields( OPTIONS, Def_OPTIONS, [] );
 end
-
 MEMoptions.automatic.stand_alone    = stand_alone;
 MEMoptions.automatic.process        = process;
-
-
-% ==== Check I/O
-[HeadModel, MEMoptions, FLAG] = be_checkio( HeadModel, MEMoptions, verbose );
 
 % Patch work [to be revisited]... Baseline no longer preloaded...
 if ~isempty(MEMoptions.optional.Baseline) && ischar(MEMoptions.optional.Baseline)
@@ -86,22 +80,9 @@ if ~isempty(MEMoptions.optional.BaselineChannels) && ischar(MEMoptions.optional.
     MEMoptions.optional.BaselineChannels = load(MEMoptions.optional.BaselineChannels);
 end
 
-% ==== Check if DATA is compatible with MEM pipeline
-isRF = strcmp( MEMoptions.mandatory.pipeline, 'rMEM' );
-if ~MEMoptions.automatic.stand_alone || process
-    [MEMoptions, isRF] = be_check_data_pipeline( MEMoptions );   
-end
+% ==== Check I/O
+[HeadModel, MEMoptions, FLAG] = be_checkio( HeadModel, MEMoptions);
 
-% Check time and baseline defintions
-[MEMoptions, FLAG]  = be_check_timedef( MEMoptions, isRF );
-
-% Check the options for rMEM
-if strcmp(MEMoptions.mandatory.pipeline, 'rMEM') & ...
-        any([isempty(MEMoptions.ridges.frequency_range) ...
-        isempty(MEMoptions.ridges.min_duration)])
-    FLAG = 1;
-	fprintf('\n\nIn be_main :\trMEMoptions are incomplete.\n\t\tFill OPTIONS.ridges.frequency_range and OPTIONS.ridges.min_duration\n\n');
-end
 
 if FLAG
     error('MEM: unable to compute MEM.');

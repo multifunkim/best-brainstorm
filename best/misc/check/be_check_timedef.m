@@ -138,4 +138,4 @@ if isfield(OPTIONS.automatic, 'Emptyroom_data')
     OPTIONS.automatic.Emptyroom_time    =   (0:size(OPTIONS.automatic.Emptyroom_data,2)-1)/OPTIONS.automatic.sampling_rate;
 end 
 
-return
+end
