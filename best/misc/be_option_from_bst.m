@@ -37,6 +37,5 @@ function MEMoptions = be_option_from_bst(OPTIONS)
         end
     end
 
-    MEMoptions  = be_check_data_pipeline( MEMoptions );   
 
 end

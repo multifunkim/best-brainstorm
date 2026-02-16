@@ -40,14 +40,13 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
 %%
 
     % ===== common I/O arguments ===== %%
-    Def_OPTIONS     = BEst_defaults(); 
     switch(nargin)
         case 0
-            Results     =   Def_OPTIONS;
+            Results     =   BEst_defaults();
             return
         case 1
-            if ischar(HeadModel) && any(strcmpi({'cMEM', 'wMEM', 'rMEM'}, HeadModel))   
-                Results = be_pipelineoptions(Def_OPTIONS, HeadModel);   
+            if ischar(HeadModel) && any(strcmpi({'cMEM', 'wMEM', 'rMEM','rwMEM', 'cMNE'}, HeadModel))   
+                Results = be_pipelineoptions(BEst_defaults(), HeadModel);   
                 return
             else
                 error('MEM error : wrong pipeline input\n')
@@ -59,41 +58,34 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
             end
     end
     
-    % ==== Copy default options to OPTIONS structure (do not replace defined values)
-    [stand_alone, process] = be_check_caller();
-    if ~stand_alone && isfield( OPTIONS, 'MEMpaneloptions' )
-        MEMoptions = be_option_from_bst(OPTIONS);
-    else
-        MEMoptions = be_struct_copy_fields( OPTIONS, Def_OPTIONS, [] );
-    end
-    MEMoptions.automatic.stand_alone    = stand_alone;
-    MEMoptions.automatic.process        = process;
+    % Initialize options
+    OPTIONS = be_initialize_options(OPTIONS);
     
     % ==== Check Data and Options
-    [HeadModel, MEMoptions, FLAG] = be_checkio( HeadModel, MEMoptions);    
+    [HeadModel, OPTIONS, FLAG] = be_checkio( HeadModel, OPTIONS);    
     assert(~FLAG, 'MEM: unable to compute MEM.')
 
     % ====  Initialize parallel computing
     close_pool = false;
-    if MEMoptions.solver.parallel_matlab && isempty(gcp('nocreate'))
+    if OPTIONS.solver.parallel_matlab && isempty(gcp('nocreate'))
         gcp;
         close_pool = true;
     end
     
     % ==== LAUNCH PIPELINE ==== %
-    switch lower(MEMoptions.mandatory.pipeline)
+    switch lower(OPTIONS.mandatory.pipeline)
         case 'cmem'
-            [Results, OPTIONS]   = be_cmem_solver(HeadModel, MEMoptions);
+            [Results, OPTIONS]   = be_cmem_solver(HeadModel, OPTIONS);
         case 'wmem' 
-            [Results, OPTIONS]   = be_wmem_solver(HeadModel, MEMoptions);
+            [Results, OPTIONS]   = be_wmem_solver(HeadModel, OPTIONS);
         case 'rmem' 
-            [Results, OPTIONS]   = be_rmem_solver(HeadModel, MEMoptions);
+            [Results, OPTIONS]   = be_rmem_solver(HeadModel, OPTIONS);
         case 'rwmem' 
-            [Results, OPTIONS]   = be_rwmem_solver(HeadModel, MEMoptions);
+            [Results, OPTIONS]   = be_rwmem_solver(HeadModel, OPTIONS);
         case 'cmne' 
-            [Results, OPTIONS]   = be_cmne_solver(HeadModel, MEMoptions);
+            [Results, OPTIONS]   = be_cmne_solver(HeadModel, OPTIONS);
         otherwise
-            error('Unknown pipeline %s', lower(MEMoptions.mandatory.pipeline))
+            error('Unknown pipeline %s', lower(OPTIONS.mandatory.pipeline))
     end
     
     % ====  Close parallel computing
