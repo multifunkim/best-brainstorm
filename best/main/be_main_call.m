@@ -63,48 +63,15 @@ end
 
 
 % ==== Copy default options to OPTIONS structure (do not replace defined values)
-[stand_alone, process] = be_check_caller;
+[stand_alone, process] = be_check_caller();
 if ~stand_alone && isfield( OPTIONS, 'MEMpaneloptions' )
-    MEMoptions = be_struct_copy_fields( Def_OPTIONS, OPTIONS.MEMpaneloptions, [],1 );
-    % mandatory
-    MEMoptions.mandatory.DataTime                       =   OPTIONS.DataTime;
-    MEMoptions.mandatory.DataTypes                      =   OPTIONS.DataTypes;
-    MEMoptions.mandatory.ChannelTypes                   =   {OPTIONS.Channel.Type};
-    MEMoptions.mandatory.Data                           =   OPTIONS.Data;
-    % optional
-    MEMoptions.optional.Channel                         =   OPTIONS.Channel;
-    MEMoptions.optional.ChannelFlag                     =   OPTIONS.ChannelFlag;
-    MEMoptions.optional.DataFile                        =   OPTIONS.DataFile;
-    MEMoptions.optional.ResultFile                      =   OPTIONS.ResultFile;
-    MEMoptions.optional.HeadModelFile                   =   OPTIONS.HeadModelFile;
-    MEMoptions.optional.Comment                         =   OPTIONS.Comment;
-    % automatic
-    MEMoptions.automatic.stand_alone                    =   0;
-    MEMoptions.automatic.GoodChannel                    =   OPTIONS.GoodChannel;
-    MEMoptions.automatic.iProtocol                      =   bst_get('ProtocolInfo');
-    MEMoptions.automatic.Comment                        =   OPTIONS.Comment;
-    MEMoptions.automatic.iStudy                         =   be_get_id( MEMoptions );
-    [dummy, MEMoptions.automatic.iItem]                 =   be_get_id( MEMoptions );
-    MEMoptions.automatic.DataInfo                       =   load( be_fullfile(MEMoptions.automatic.iProtocol.STUDIES, OPTIONS.DataFile) );
-    % solver
-    if isfield(OPTIONS, 'NoiseCov')
-        MEMoptions.solver.NoiseCov                    	=   OPTIONS.NoiseCov;
-    elseif isfield(OPTIONS, 'NoiseCovMat')
-        MEMoptions.solver.NoiseCov                      =   OPTIONS.NoiseCovMat.NoiseCov;
-    else
-        error('MEM: cannot find noise covariance matrix in the OPTIONS');
-    end
-    if OPTIONS.MEMpaneloptions.solver.NoiseCov_recompute
-        MEMoptions.solver.NoiseCov = []; 
-    end
-
-    MEMoptions = be_struct_copy_fields( MEMoptions, Def_OPTIONS, [] );
-
+    MEMoptions = be_option_from_bst(OPTIONS);
 else
     MEMoptions = be_struct_copy_fields( OPTIONS, Def_OPTIONS, [] );
-    MEMoptions.automatic.stand_alone    =   1;
-    MEMoptions.automatic.process        =   process;
 end
+
+MEMoptions.automatic.stand_alone    = stand_alone;
+MEMoptions.automatic.process        = process;
 
 
 % ==== Check I/O
@@ -204,7 +171,7 @@ Def_OPTIONS.optional.Comment                    = 'MEM';
 % sigma will be the true smoothing matrix on the patches)
 
 % Automatic (contains the outputs)
-Def_OPTIONS.automatic.InverseMethod             = ['MEM (' version ')'];
+Def_OPTIONS.automatic.InverseMethod             = ['MEM (' be_versions() ')'];
 Def_OPTIONS.automatic.stand_alone               = 0;
 Def_OPTIONS.automatic.process                   = 0;
 Def_OPTIONS.automatic.Units                     = struct;
