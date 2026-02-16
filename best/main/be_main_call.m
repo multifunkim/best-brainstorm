@@ -160,6 +160,7 @@ end
 
 
 % ----------------------------------------------------------------------- %
+
 function Def_OPTIONS=   BEst_defaults
 
 % ===== common I/O arguments ===== %%
@@ -176,14 +177,15 @@ Def_OPTIONS.optional.verbose                    = 1;
 Def_OPTIONS.optional.display                    = 0;  
 Def_OPTIONS.optional.iData                      = [];
 Def_OPTIONS.optional.Baseline                   = [];
+Def_OPTIONS.optional.BaselineType               = '';
 Def_OPTIONS.optional.BaselineTime               = [];
 Def_OPTIONS.optional.BaselineChannels           = [];
 Def_OPTIONS.optional.BaselineHistory            = [];
 Def_OPTIONS.optional.EmptyRoom_data             = [];
 Def_OPTIONS.optional.EmptyRoom_channels         = {};
 %Def_OPTIONS.optional.normalization              = 'adaptive'; % either 'fixed' or 'adaptive'
-Def_OPTIONS.optional.TimeSegment                = [-9999 9999];
-Def_OPTIONS.optional.BaselineSegment            = [-9999 9999];
+Def_OPTIONS.optional.TimeSegment                = [-9999999 9999999];
+Def_OPTIONS.optional.BaselineSegment            = [-9999999 9999999];
 Def_OPTIONS.optional.Channel                    = [];
 Def_OPTIONS.optional.ChannelFlag                = [];
 Def_OPTIONS.optional.FileType                   = '';
@@ -226,21 +228,22 @@ Def_OPTIONS.automatic.last_update               = 'unknown';
 % clustering (parcellization parameters)
 Def_OPTIONS.clustering.MSP_R2_threshold         = .95;
 Def_OPTIONS.clustering.neighborhood_order       = 4;                       
-Def_OPTIONS.clustering.MSP_window               = [];
-Def_OPTIONS.clustering.clusters_type            = '';
-Def_OPTIONS.clustering.MSP_scores_threshold     = [];
+Def_OPTIONS.clustering.MSP_window               = 10;
+Def_OPTIONS.clustering.clusters_type            = 'static';
+Def_OPTIONS.clustering.MSP_scores_threshold     = 0;
 
 % MEM model (reference law)
-Def_OPTIONS.model.active_mean_method            = [];
-Def_OPTIONS.model.alpha_method                  = []; 
-Def_OPTIONS.model.alpha_threshold               = [];
+Def_OPTIONS.model.active_mean_method            = 2;
+Def_OPTIONS.model.alpha_method                  = 3; 
+Def_OPTIONS.model.alpha_threshold               = 0;
 Def_OPTIONS.model.initial_lambda                = 1;
-Def_OPTIONS.model.depth_weigth_MNE              = 0;
-Def_OPTIONS.model.depth_weigth_MEM              = 0;
+
+Def_OPTIONS.model.depth_weigth_MNE              = 0.5;
+Def_OPTIONS.model.depth_weigth_MEM              = 0.5;
 
 % MEM solver
 Def_OPTIONS.solver.NoiseCov                     = [];
-Def_OPTIONS.solver.NoiseCov_method              = [];
+Def_OPTIONS.solver.NoiseCov_method              = 2;
 Def_OPTIONS.solver.mne_use_noiseCov             = 0;
 Def_OPTIONS.solver.NoiseCov_recompute           = 1;
 Def_OPTIONS.solver.spatial_smoothing            = 0.6;
@@ -248,7 +251,7 @@ Def_OPTIONS.solver.active_var_mult              = 0.05;
 Def_OPTIONS.solver.inactive_var_mult            = 0;
 Def_OPTIONS.solver.Optim_method                 = 'fminunc';
 Def_OPTIONS.solver.covariance_scale             = 1;
-Def_OPTIONS.solver.parallel_matlab              = false;
+Def_OPTIONS.solver.parallel_matlab              = be_canUseParallelPool();
 
 % output options
 Def_OPTIONS.output.save_factor                  =  1;
