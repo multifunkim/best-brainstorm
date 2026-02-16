@@ -88,7 +88,6 @@ function [Results, OPTIONS] = be_main_call(HeadModel, OPTIONS)
         error('MEM: unable to compute MEM.');
     end
     
-    %% ==== LAUNCH PIPELINE ==== %%
     % Initialize parallel computing
     close_pool = false;
     if MEMoptions.solver.parallel_matlab && isempty(gcp('nocreate'))
@@ -96,8 +95,21 @@ function [Results, OPTIONS] = be_main_call(HeadModel, OPTIONS)
         close_pool = true;
     end
     
-    [Results, OPTIONS]   = feval(['be_' lower(MEMoptions.mandatory.pipeline) '_solver'], HeadModel, MEMoptions);
-    
+    % ==== LAUNCH PIPELINE ==== %
+    switch lower(MEMoptions.mandatory.pipeline)
+        case 'cmem'
+            [Results, OPTIONS]   = be_cmem_solver(HeadModel, MEMoptions);
+        case 'wmem' 
+            [Results, OPTIONS]   = be_wmem_solver(HeadModel, MEMoptions);
+        case 'rmem' 
+            [Results, OPTIONS]   = be_rmem_solver(HeadModel, MEMoptions);
+        case 'rwmem' 
+            [Results, OPTIONS]   = be_rwmem_solver(HeadModel, MEMoptions);
+        case 'cmne' 
+            [Results, OPTIONS]   = be_cmne_solver(HeadModel, MEMoptions);
+        otherwise
+            error('Unknown pipeline %s', lower(MEMoptions.mandatory.pipeline))
+    end
     
     % Close parallel computing
     if close_pool
