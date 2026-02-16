@@ -41,11 +41,11 @@ function [HeadModel, OPTIONS, FLAG] = be_checkio( HeadModel, OPTIONS)
     % ==== Check if DATA is compatible with rMEM pipeline
     isRF = strcmpi(OPTIONS.mandatory.pipeline, 'rMEM');
     if isRF
-        OPTIONS  = be_check_data_pipeline( OPTIONS );   
+        OPTIONS  = be_check_data_pipeline(OPTIONS);   
     end
 
     % Check time and baseline defintions
-    [OPTIONS, FLAG_time]  = be_check_timedef( OPTIONS, isRF );
+    [OPTIONS, FLAG_time]  = be_check_timedef(OPTIONS, isRF);
     FLAG = FLAG || FLAG_time;
 
     % Check additional options for rMEM
