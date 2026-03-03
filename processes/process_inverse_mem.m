@@ -158,40 +158,9 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             return;
         end
     end
-    % Loop through all the channel files to find the available modalities and head model types
-    AllMod = {};
-    MEGMethod = [];
-    for i = 1:length(sChanStudies)
-        AllMod = union(AllMod, sChanStudies(i).Channel.DisplayableSensorTypes);
-        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).MEGMethod)
-            AllMod = setdiff(AllMod, {'MEG GRAD','MEG MAG','MEG'});
-        end
-        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).EEGMethod)
-            AllMod = setdiff(AllMod, {'EEG'});
-        end
-        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).ECOGMethod)
-            AllMod = setdiff(AllMod, {'ECOG'});
-        end
-        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).SEEGMethod)
-            AllMod = setdiff(AllMod, {'SEEG'});
-        end
-        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).NIRSMethod)
-            AllMod = setdiff(AllMod, {'NIRS'});
-        end
-        if ~isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).MEGMethod) && isempty(MEGMethod)
-            MEGMethod = sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).MEGMethod;
-        end
-    end
-
-    % Check for the presence of NIRS
-    isOnlyNirs = all(ismember(AllMod, {'NIRS'}));
-    % Keep only MEG and EEG
-    if any(ismember(AllMod, {'MEG GRAD','MEG MAG'}))
-        AllMod = intersect(AllMod, {'MEG GRAD', 'MEG MAG', 'EEG', 'ECOG', 'SEEG'});
-    else
-        AllMod = intersect(AllMod, {'MEG', 'EEG', 'ECOG', 'SEEG'});
-    end
+    
     % Check that at least one modality is available
+    [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies);
     if isempty(AllMod)
         % If only NIRS sensors
         if isOnlyNirs
@@ -221,16 +190,15 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         errMessage = 'Please select at least one modality.';
         return;
     end
+
     % Tags corresponding to the different methods
     methodTag = panel_inverse_2018('GetMethodComment', OPTIONS.InverseMethod, OPTIONS.InverseMeasure);
    
     %% ===== COMMENT =====
     % Base comment: "METHOD: MODALITIES"
     if isempty(OPTIONS.Comment)
-        OPTIONS.Comment = [methodTag, ': ' GetModalityComment(OPTIONS.DataTypes)];
+        OPTIONS.Comment = [methodTag, ': ' GetModalityComment(OPTIONS.DataTypes) ' (Full)'];
     end
-    OPTIONS.Comment = [OPTIONS.Comment, '(Full)'];
-    
     
     %% ===== LOOP ON INPUT FILES =====
     % Initializations
@@ -461,4 +429,36 @@ function Comment = GetModalityComment(Modalities)
         end
         Comment = [Comment, Modalities{im}];
     end    
+end
+
+function [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies)
+    % Loop through all the channel files to find the available modalities and head model types
+    AllMod = {};
+    for i = 1:length(sChanStudies)
+        AllMod = union(AllMod, sChanStudies(i).Channel.DisplayableSensorTypes);
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).MEGMethod)
+            AllMod = setdiff(AllMod, {'MEG GRAD','MEG MAG','MEG'});
+        end
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).EEGMethod)
+            AllMod = setdiff(AllMod, {'EEG'});
+        end
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).ECOGMethod)
+            AllMod = setdiff(AllMod, {'ECOG'});
+        end
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).SEEGMethod)
+            AllMod = setdiff(AllMod, {'SEEG'});
+        end
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).NIRSMethod)
+            AllMod = setdiff(AllMod, {'NIRS'});
+        end
+    end
+    
+    % Check for the presence of NIRS
+    isOnlyNirs = all(ismember(AllMod, {'NIRS'}));
+    % Keep only MEG and EEG
+    if any(ismember(AllMod, {'MEG GRAD','MEG MAG'}))
+        AllMod = intersect(AllMod, {'MEG GRAD', 'MEG MAG', 'EEG', 'ECOG', 'SEEG'});
+    else
+        AllMod = intersect(AllMod, {'MEG', 'EEG', 'ECOG', 'SEEG'});
+    end
 end
