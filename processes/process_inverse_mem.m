@@ -19,14 +19,14 @@ function varargout = process_inverse_mem( varargin )
 % For more information type "brainstorm license" at command prompt.
 % =============================================================================@
 %
-% Authors: Francois Tadel, 2012-2014
+% Authors: Edouard Delaire, 2026
 
 eval(macro_method);
 end
 
 
 %% ===== GET DESCRIPTION =====
-function sProcess = GetDescription() %#ok<DEFNU>
+function sProcess = GetDescription()
     % ===== PROCESS =====
     % Description the process
     sProcess.Comment     = 'Compute sources: BEst';
@@ -56,13 +56,13 @@ end
 
 
 %% ===== FORMAT COMMENT =====
-function Comment = FormatComment(sProcess) %#ok<DEFNU>
+function Comment = FormatComment(sProcess)
     Comment = sProcess.Comment;
 end
 
 
 %% ===== RUN =====
-function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
+function OutputFiles = Run(sProcess, sInputs)
     OutputFiles = {};
     
     % ===== GET OPTIONS =====
@@ -74,27 +74,13 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
         fprintf('\n\n***\tError in BEst process\t***\n\tyou MUST edit options before lauching the MEM.\n\n')
         return
     end
-    OPTIONS.MEMpaneloptions =   sProcess.options.mem.Value.MEMpaneloptions;
+    OPTIONS.MEMpaneloptions = sProcess.options.mem.Value.MEMpaneloptions;
+    
+    % Prepare input
+    iStudies = [sInputs.iStudy];
+    iDatas   = [sInputs.iItem];
+    OPTIONS.ComputeKernel = 0;
 
-    % Output
-    switch (sProcess.options.output.Value)
-        % Kernel only: shared
-        case 1      
-            [sChannels, iStudies] = bst_get('ChannelForStudy', unique([sInputs.iStudy]));
-            iStudies = unique(iStudies);
-            iDatas   = [];
-            OPTIONS.ComputeKernel = 1;
-        % Kernel only: one per file
-        case 2      
-            iStudies = [sInputs.iStudy];
-            iDatas   = [sInputs.iItem];
-            OPTIONS.ComputeKernel = 1;
-        % Full results: one per file
-        case 3
-            iStudies = [sInputs.iStudy];
-            iDatas   = [sInputs.iItem];
-            OPTIONS.ComputeKernel = 0;
-    end
     % No messages
     OPTIONS.DisplayMessages = 0;
 
@@ -125,8 +111,6 @@ function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
         OutputFiles = AllFiles;
     end
 end
-
-
 
 %% ===== COMPUTE INVERSE SOLUTION =====
 % USAGE:      OPTIONS = Compute()
@@ -834,7 +818,7 @@ end
 
 
 %% ===== RUN =====
-function OutputFiles = RunA(sProcess, sInputs) %#ok<DEFNU>
+function OutputFiles = RunA(sProcess, sInputs)
     OutputFiles = {};
     
     % ===== GET OPTIONS =====
