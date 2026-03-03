@@ -74,8 +74,9 @@ function OutputFiles = Run(sProcess, sInputs)
         fprintf('\n\n***\tError in BEst process\t***\n\tyou MUST edit options before lauching the MEM.\n\n')
         return
     end
+    OPTIONS.InverseMethod   = 'mem';
     OPTIONS.MEMpaneloptions = sProcess.options.mem.Value.MEMpaneloptions;
-    
+    OPTIONS.DataTypes       = strsplit(strrep(sProcess.options.sensortypes.Value,' ',''), ',');
     % Prepare input
     iStudies = [sInputs.iStudy];
     iDatas   = [sInputs.iItem];
@@ -298,138 +299,19 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % ===== LOAD DATA FILES =====
         bst_progress('text', 'Getting bad channels...');
         % Single inverse file
-        if ~isShared
-            % Get only one file
-            DataFile = sStudy.Data(iDatas(iEntry)).FileName;
-            % Load data file info (only 'mem' requires the recordings to be loaded here)
-            if strcmpi(OPTIONS.InverseMethod, 'mem')
-                DataMat = in_bst_data(DataFile, 'ChannelFlag', 'Time', 'nAvg', 'Leff', 'F');
-            else
-                DataMat = in_bst_data(DataFile, 'ChannelFlag', 'Time', 'nAvg', 'Leff');
-            end
-            ChannelFlag = DataMat.ChannelFlag;
-            nAvg        = DataMat.nAvg;
-            Leff        = DataMat.Leff;
-            Time        = DataMat.Time;
-            % Is it a Raw file?
-            isRaw = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
-        % Shared inverse kernel
-        else
-            % Get all the dependent data files
-            [iRelatedStudies, iRelatedData] = bst_get('DataForStudy', iStudy);
-            % List all the data files
-            nAvgAll     = zeros(1,length(iRelatedStudies));
-            LeffAll     = zeros(1,length(iRelatedStudies));
-            BadChannels = [];
-            nChannels   = [];
-            for i = 1:length(iRelatedStudies)
-                % Get data file
-                sStudyRel = bst_get('Study', iRelatedStudies(i));
-                % If bad trial: don't take it into consideration
-                if (sStudyRel.Data(iRelatedData(i)).BadTrial)
-                    nAvgAll(i) = Inf;
-                    LeffAll(i) = Inf;
-                    continue;
-                end
-                % Read bad channels and nAvg
-                DataMat = in_bst_data(sStudyRel.Data(iRelatedData(i)).FileName, 'ChannelFlag', 'nAvg', 'Leff');
-                if isfield(DataMat, 'nAvg') && ~isempty(DataMat.nAvg)
-                    nAvgAll(i) = DataMat.nAvg;
-                else
-                    nAvgAll(i) = 1;
-                end
-                if isfield(DataMat, 'Leff') && ~isempty(DataMat.Leff)
-                    LeffAll(i) = DataMat.Leff;
-                else
-                    LeffAll(i) = 1;
-                end
-                % Count number of times the channe is bad
-                if isempty(BadChannels)
-                    BadChannels = double(DataMat.ChannelFlag < 0);
-                else
-                    BadChannels = BadChannels + (DataMat.ChannelFlag < 0);
-                end
-                % Channel number
-                if isempty(nChannels)
-                    nChannels = length(DataMat.ChannelFlag);
-                elseif (nChannels ~= length(DataMat.ChannelFlag))
-                    errMessage = 'All data files must have the same number of channels.';
-                    continue;
-                end
-            end
-            % Get list of sensors selected for inversion
-            iChanInv = good_channel(ChannelMat.Channel, [], OPTIONS.DataTypes);
-            % Mark all the channels that are not selected here as good
-            BadChannels(setdiff(1:length(BadChannels), iChanInv)) = 0;
-                    
-            % === CHECK nAVG ===
-            % if ~isempty(iRelatedStudies) && any(nAvgAll ~= nAvgAll(1)) && isFirstWarnAvg
-            %     % Display a warning in a dialog window
-            %     if OPTIONS.DisplayMessages
-            %         isConfirm = java_dialog('confirm', ...
-            %             ['Warning: You should estimate separataley the sources for the averages and the single trials.', 10 ...
-            %             'The level of noise in the files might be different, this may cause inaccurate results.' 10 10 ... 
-            %             ' - For several averages: compute sources separately for each file.' 10 ...
-            %             ' - For single trials: compute a shared solution, and move the averages in another condition.' 10 10 ...
-            %             'Ignore this warning and compute sources ?'], 'Compute sources');
-            %         if ~isConfirm
-            %             return
-            %         end
-            %     % Return a warning message
-            %     else
-            %         errMessage = [errMessage 'Mixing averages and single trials. Result might be inaccurate.' 10];
-            %     end
-            %     isFirstWarnAvg = 0;
-            % end
-            nAvg = min([nAvgAll, 1]);
-            Leff = min([LeffAll, 1]);
-            
-            % === BAD CHANNELS ===
-            if any(BadChannels)
-                % Display a warning in a dialog window
-                if OPTIONS.DisplayMessages
-                    % Build list of bad channels
-                    strBad = '';
-                    iBad = find(BadChannels);
-                    for i = 1:length(iBad)
-                        strBad = [strBad sprintf('%d(%d)   ', iBad(i), BadChannels(iBad(i)))];
-                        if (mod(i,6) == 0)
-                            strBad = [strBad 10];
-                        end
-                    end
-                    % Ask user confirmation
-                    [res, isCancel] = java_dialog('input', ...
-                        ['Some channels are bad in at least one file (total ' num2str(length(iRelatedStudies)) ' files): ' 10 ...
-                         '(in parentheses, the number of files for which the channel is bad)' 10 10 ...
-                         strBad 10 10 ...
-                         'The following channels will be considered as BAD for' 10 ...
-                         'all the recordings and excluded from the source estimation:' 10 10], ...
-                        'Exclude bad channels', [], sprintf('%d ', iBad));
-                    if isCancel
-                        continue;
-                    elseif (~isempty(res) && isempty(str2num(res)))
-                        errMessage = 'Invalid bad channel list of indices.';
-                        continue;
-                    end
-                    % Get bad channels
-                    BadChannels = 0 * BadChannels;
-                    if ~isempty(res)
-                        iBad = str2num(res);
-                        BadChannels(iBad) = 1;
-                    end
-                % Return a warning message
-                else
-                    errMessage = [errMessage 'Bad channels for all the trials: ' sprintf('%d ', find(BadChannels)) 10];
-                end
-            end
-            % Build a resulting ChannelFlag
-            ChannelFlag = ones(length(ChannelMat.Channel), 1);
-            ChannelFlag(BadChannels > 0) = -1;
-            % No data loaded
-            DataFile = [];
-            Time = [];
-        end
-        
+
+        % Get only one file
+        DataFile = sStudy.Data(iDatas(iEntry)).FileName;
+        % Load data file info (only 'mem' requires the recordings to be loaded here)
+        DataMat = in_bst_data(DataFile, 'ChannelFlag', 'Time', 'nAvg', 'Leff', 'F');
+
+        ChannelFlag = DataMat.ChannelFlag;
+        nAvg        = DataMat.nAvg;
+        Leff        = DataMat.Leff;
+        Time        = DataMat.Time;
+        % Is it a Raw file?
+        isRaw = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
+
         % ===== CHANNEL FLAG =====
         % Get the list of good channels
         GoodChannel = good_channel(ChannelMat.Channel, ChannelFlag, OPTIONS.DataTypes);
@@ -454,10 +336,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             errMessage = [errMessage 'Bad channels in noise covariance are different from bad channels in recordings.' 10 'Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
             break;
         end
-%         % Divide noise covariance by number of trials (DEPRECATED IN THIS VERSION)
-%         if ~isempty(nAvg) && (nAvg > 1)
-%             NoiseCovMat.NoiseCov = NoiseCovMat.NoiseCov ./ nAvg;
-%         end
         
         % ===== LOAD DATA COVARIANCE =====
         % Load DataCov file 
@@ -473,26 +351,10 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
                 errMessage = [errMessage 'Bad channels in data covariance are different from bad channels in recordings.' 10 'Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
                 break;
             end
-%             % Divide data covariance by number of trials
-%             if isempty(nAvg) && (nAvg > 1)
-%                 DataCovMat.NoiseCov = DataCovMat.NoiseCov ./ nAvg;
-%             end
         else
             DataCovMat = [];
         end
-        % Beamformers: Require a data covariance matrix
-        if strcmpi(OPTIONS.InverseMethod, 'lcmv') && isempty(DataCovMat)
-            errMessage = [errMessage 'You need to calculate a data covariance before using the "beamformer" option.' 10];
-            break;
-        end
-        % Shrinkage: Require the FourthMoment matrix
-        if ~strcmpi(OPTIONS.InverseMethod, 'mem') && strcmpi(OPTIONS.NoiseMethod, 'shrink') && ...
-                ((~isempty(DataCovMat)  && (~isfield(DataCovMat, 'FourthMoment')  || isempty(DataCovMat.FourthMoment))) || ...
-                 (~isempty(NoiseCovMat) && (~isfield(NoiseCovMat, 'FourthMoment') || isempty(NoiseCovMat.FourthMoment))))
-            errMessage = [errMessage 'Please recalculate the noise and data covariance matrices for using the "automatic shrinkage" option.' 10];
-            break;
-        end
-        
+
         % ===== LOAD HEAD MODEL =====
         bst_progress('text', 'Loading head model...');
         bst_progress('inc', 1);
