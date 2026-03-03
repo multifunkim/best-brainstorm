@@ -108,7 +108,14 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
     errMessage = [];
 
     % Default options settings
-    Def_OPTIONS = process_inverse_2018('Compute');
+    Def_OPTIONS = struct(...
+        'InverseMethod',       'mem', ... % A string that specifies the imaging method
+        'InverseMeasure',      '', ...
+        'SourceOrient',        'fixed', ...
+        'DataTypes',           [], ...     % Cell array of strings: list of modality to use for the reconstruction (MEG, MEG GRAD, MEG MAG, EEG)
+        'Comment',             '', ...     % Inverse solution description (optional)
+        'DisplayMessages',     1, ...
+        'ComputeKernel',       0);  
 
     % Return default options
     if (nargin < 2)
