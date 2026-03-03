@@ -380,10 +380,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             OPTIONS.DataCovMat.FourthMoment = OPTIONS.DataCovMat.FourthMoment(GoodChannel, GoodChannel);
             OPTIONS.DataCovMat.nSamples     = OPTIONS.DataCovMat.nSamples(GoodChannel, GoodChannel);
         end
-        % Get channels types
+        
         OPTIONS.ChannelTypes = {ChannelMat.Channel(GoodChannel).Type};
-
-        % Add options needed by the MEM functions
         OPTIONS.DataFile      = DataFile;
         OPTIONS.DataTime      = Time;
         OPTIONS.Channel       = ChannelMat.Channel(GoodChannel);
@@ -396,15 +394,11 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
 
         % ===== Call the mem solver =====
         [Results, OPTIONS] = be_main(HeadModel, OPTIONS);
-        % Error handling
         if isempty(Results)
             errMessage = [errMessage 'The inverse function returned an empty structure.' 10];
             break;
         end
 
-        if ~isfield(Results, 'nComponents') || isempty(Results.nComponents)
-            Results.nComponents = round(max(size(Results.ImageGridAmp,1),size(Results.ImagingKernel,1)) / nSources);
-        end
         % Get outputs
         DataFile = OPTIONS.DataFile; 
         Time     = OPTIONS.DataTime;
