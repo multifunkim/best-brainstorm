@@ -295,24 +295,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             break;
         end
         
-        % ===== LOAD DATA COVARIANCE =====
-        % Load DataCov file 
-        if (length(sStudyChannel.NoiseCov) >= 2) && ~isempty(sStudyChannel.NoiseCov(2).FileName)
-            DataCovMat = load(file_fullpath(sStudyChannel.NoiseCov(2).FileName));
-            % Check for NaN values in the noise covariance
-            if ~isempty(DataCovMat.NoiseCov) && (nnz(isnan(DataCovMat.NoiseCov(GoodChannel, GoodChannel))) > 0)
-                errMessage = [errMessage 'The data covariance contains NaN values. Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
-                break;
-            end
-            badChDataCov_goodChRecs = intersect(find(and(~any(DataCovMat.NoiseCov,1), ~any(DataCovMat.NoiseCov,2)')), GoodChannel);
-            if ~isempty(badChDataCov_goodChRecs)
-                errMessage = [errMessage 'Bad channels in data covariance are different from bad channels in recordings.' 10 'Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
-                break;
-            end
-        else
-            DataCovMat = [];
-        end
-
         % ===== LOAD HEAD MODEL =====
         bst_progress('text', 'Loading head model...');
         bst_progress('inc', 1);
@@ -338,9 +320,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
                 HeadModel.Gain(iGainSensors,:) = Proj(iGainSensors,iGainSensors) * HeadModel.Gain(iGainSensors,:);
                 % Apply SSPs on both sides of the noise covariance matrix
                 NoiseCovMat.NoiseCov = Proj * NoiseCovMat.NoiseCov * Proj';
-                if ~isempty(DataCovMat)
-                    DataCovMat.NoiseCov = Proj * DataCovMat.NoiseCov * Proj';
-                end
             end
         end
         % Select only good channels
@@ -352,14 +331,9 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             HeadModel.Gain = sMontage.Matrix * HeadModel.Gain;
             % Apply average reference operator on both sides of the noise covariance matrix
             NoiseCovMat.NoiseCov(GoodChannel, GoodChannel) = sMontage.Matrix * NoiseCovMat.NoiseCov(GoodChannel, GoodChannel) * sMontage.Matrix';
-            if ~isempty(DataCovMat)
-                DataCovMat.NoiseCov(GoodChannel, GoodChannel) = sMontage.Matrix * DataCovMat.NoiseCov(GoodChannel, GoodChannel) * sMontage.Matrix';
-            end
         end
         % Copy initial head model
         HeadModelInit = HeadModel;
-        % Get number of sources
-        nSources =  size(HeadModelInit.Gain,2) / 3;
 
         %% ===== COMPUTE INVERSE SOLUTION =====
         bst_progress('text', 'Estimating sources...');
@@ -373,14 +347,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         if isfield(OPTIONS.NoiseCovMat, 'nSamples') && ~isempty(OPTIONS.NoiseCovMat.nSamples)
             OPTIONS.NoiseCovMat.nSamples = OPTIONS.NoiseCovMat.nSamples(GoodChannel, GoodChannel);
         end
-        % DataCov: keep only the good channels
-        if ~isempty(DataCovMat)
-            OPTIONS.DataCovMat = DataCovMat;
-            OPTIONS.DataCovMat.NoiseCov     = OPTIONS.DataCovMat.NoiseCov(GoodChannel, GoodChannel);
-            OPTIONS.DataCovMat.FourthMoment = OPTIONS.DataCovMat.FourthMoment(GoodChannel, GoodChannel);
-            OPTIONS.DataCovMat.nSamples     = OPTIONS.DataCovMat.nSamples(GoodChannel, GoodChannel);
-        end
-        
+
         OPTIONS.ChannelTypes = {ChannelMat.Channel(GoodChannel).Type};
         OPTIONS.DataFile      = DataFile;
         OPTIONS.DataTime      = Time;
