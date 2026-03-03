@@ -65,7 +65,6 @@ end
 function OutputFiles = Run(sProcess, sInputs)
     OutputFiles = {};
     
-    % ===== GET OPTIONS =====
     % Default inverse options
     OPTIONS = Compute();
     
@@ -74,53 +73,34 @@ function OutputFiles = Run(sProcess, sInputs)
         fprintf('\n\n***\tError in BEst process\t***\n\tyou MUST edit options before lauching the MEM.\n\n')
         return
     end
+
     OPTIONS.InverseMethod   = 'mem';
     OPTIONS.MEMpaneloptions = sProcess.options.mem.Value.MEMpaneloptions;
     OPTIONS.DataTypes       = strsplit(strrep(sProcess.options.sensortypes.Value,' ',''), ',');
+    OPTIONS.ComputeKernel   = 0;
+    OPTIONS.DisplayMessages = 0;
+
     % Prepare input
     iStudies = [sInputs.iStudy];
     iDatas   = [sInputs.iItem];
-    OPTIONS.ComputeKernel = 0;
-
-    % No messages
-    OPTIONS.DisplayMessages = 0;
 
     % ===== START COMPUTATION =====
     % Call head modeler
-    [AllFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS);
+    [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS);
+
     % Report errors
-    if isempty(AllFiles) && ~isempty(errMessage)
-        bst_report('Error', sProcess, sInputs, errMessage);
-        return;
-    elseif ~isempty(errMessage)
-        bst_report('Warning', sProcess, sInputs, errMessage);
-    end
-    % For shared kernels: Return only the source files corresponding to the recordings that were in input
-    if isempty(iDatas)
-        % Loop on the output files (all links): find the ones that match the input
-        for iFile = 1:length(AllFiles)
-            % Resolve link: get data file
-            [ResFile, DataFile] = file_resolve_link(AllFiles{iFile});
-            % Find one that matches the inputs
-            iInput = find(file_compare({sInputs.FileName}, file_short(DataFile)));
-            % If founf: add to the output files
-            if ~isempty(iInput)
-                OutputFiles{end+1} = AllFiles{iFile};
-            end
+    if ~isempty(errMessage)
+        if isempty(AllFiles)
+            bst_report('Error', sProcess, sInputs, errMessage);
+        else
+            bst_report('Warning', sProcess, sInputs, errMessage);
         end
-    else
-        OutputFiles = AllFiles;
     end
 end
 
 %% ===== COMPUTE INVERSE SOLUTION =====
 % USAGE:      OPTIONS = Compute()
 %         OutputFiles = Compute(iStudies, iDatas, OPTIONS)
-%
-% Authors: Sylvain Baillet, October 2002
-%          Esen Kucukaltun-Yildirim, 2004
-%          Syed Ashrafulla, John Mosher, Rey Ramirez, 2009-2012
-%          Francois Tadel, John Mosher, 2009-2018
 %
 function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
     % Initialize returned variables
@@ -149,17 +129,11 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         errMessage = 'Cannot compute shared kernels with this method.';
         return
     end
-
-    % Get all the study structures
-    sStudies = bst_get('Study', unique(iStudies));
+    
     % Get channel studies
-    if isShared
-        sChanStudies = sStudies;
-    else
-        [tmp, iChanStudies] = bst_get('ChannelForStudy', unique(iStudies));
-        sChanStudies = bst_get('Study', iChanStudies);
-    end
-
+    [~, iChanStudies] = bst_get('ChannelForStudy', unique(iStudies));
+    sChanStudies = bst_get('Study', iChanStudies);
+    
     % Check that there are channel files available
     if any(cellfun(@isempty, {sChanStudies.Channel}))
         errMessage = 'No channel file available.';
@@ -179,10 +153,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
     end
     % Loop through all the channel files to find the available modalities and head model types
     AllMod = {};
-    HeadModelType = 'surface';
     MEGMethod = [];
-    nSamplesNoise = [];
-    nSamplesData  = [];
     for i = 1:length(sChanStudies)
         AllMod = union(AllMod, sChanStudies(i).Channel.DisplayableSensorTypes);
         if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).MEGMethod)
@@ -200,30 +171,11 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).NIRSMethod)
             AllMod = setdiff(AllMod, {'NIRS'});
         end
-        if ~strcmpi(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).HeadModelType, 'surface')
-            HeadModelType = sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).HeadModelType;
-        end
         if ~isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).MEGMethod) && isempty(MEGMethod)
             MEGMethod = sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).MEGMethod;
         end
-        % First file only: Load the number of samples from the covariance files
-        if (i == 1)
-            % Noise covariance
-            if (length(sChanStudies(i).NoiseCov) >= 1) && ~isempty(sChanStudies(i).NoiseCov(1).FileName)
-                covMat = load(file_fullpath(sChanStudies(i).NoiseCov(1).FileName), 'nSamples');
-                if isfield(covMat, 'nSamples') && ~isempty(covMat.nSamples)
-                    nSamplesNoise = covMat.nSamples;
-                end
-            end
-            % Data covariance
-            if (length(sChanStudies(i).NoiseCov) >= 2) && ~isempty(sChanStudies(i).NoiseCov(2).FileName)
-                covMat = load(file_fullpath(sChanStudies(i).NoiseCov(2).FileName), 'nSamples');
-                if isfield(covMat, 'nSamples') && ~isempty(covMat.nSamples)
-                    nSamplesData = covMat.nSamples;
-                end
-            end
-        end
     end
+
     % Check for the presence of NIRS
     isOnlyNirs = all(ismember(AllMod, {'NIRS'}));
     % Keep only MEG and EEG
@@ -243,7 +195,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         return;
     end
 
-    
     %% ===== SELECT INVERSE METHOD =====
     % Select method
     if OPTIONS.DisplayMessages
@@ -253,8 +204,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         if isempty(MethodOptions)
             return
         end
+
         MethodOptions.SourceOrient{1} = 'fixed';
-        % Add options to list
         OPTIONS = struct_copy_fields(OPTIONS, MethodOptions, 1);
     end
 
@@ -288,8 +239,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % Get study structure
         iStudy = iStudies(iEntry);
         sStudy = bst_get('Study', iStudy);
-        % Check if default study
-        isDefaultStudy = strcmpi(sStudy.Name, bst_get('DirDefaultStudy'));
         % Get channel file for study
         [sChannel, iStudyChannel] = bst_get('ChannelForStudy', iStudy);
         ChannelFile = sChannel.FileName;
@@ -298,7 +247,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
 
         % ===== LOAD DATA FILES =====
         bst_progress('text', 'Getting bad channels...');
-        % Single inverse file
 
         % Get only one file
         DataFile = sStudy.Data(iDatas(iEntry)).FileName;
@@ -311,7 +259,10 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         Time        = DataMat.Time;
         % Is it a Raw file?
         isRaw = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
-
+        if isRaw
+            errMessage = [errMessage 'Cannot compute full results for raw files: import the files first or compute an inversion kernel only.' 10];
+            break;
+        end
         % ===== CHANNEL FLAG =====
         % Get the list of good channels
         GoodChannel = good_channel(ChannelMat.Channel, ChannelFlag, OPTIONS.DataTypes);
@@ -362,6 +313,12 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         HeadModelFile = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
         % Load head model
         HeadModel = in_bst_headmodel(HeadModelFile, 0, 'Gain', 'GridLoc', 'GridOrient', 'GridAtlas', 'SurfaceFile', 'MEGMethod', 'EEGMethod', 'ECOGMethod', 'SEEGMethod', 'HeadModelType');
+        % ===== MIXED HEADMODEL =====
+        if strcmpi(HeadModel.HeadModelType, 'mixed') && ~isempty(HeadModel.GridAtlas) && ~isempty(HeadModel.GridAtlas(1).Scouts)
+            errMessage = [errMessage 'The mixed headmodel is currently only supported for the following inverse solutions: Minimum norm, dipole fitting, beamformer.' 10];
+            break;
+        end
+        
         % Apply current SSP projectors
         if ~isempty(ChannelMat.Projector)
             % Rebuild projector in the expanded form (I-UUt)
@@ -397,62 +354,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % Get number of sources
         nSources =  size(HeadModelInit.Gain,2) / 3;
 
-        % ===== MIXED HEADMODEL =====
-        if strcmpi(HeadModelInit.HeadModelType, 'mixed') && ~isempty(HeadModel.GridAtlas) && ~isempty(HeadModel.GridAtlas(1).Scouts)
-            % Only supported for wMNE
-            if ~ismember(OPTIONS.InverseMethod, {'minnorm', 'gls', 'lcmv'})
-                errMessage = [errMessage 'The mixed headmodel is currently only supported for the following inverse solutions: Minimum norm, dipole fitting, beamformer.' 10];
-                break;
-            end
-            % Initialize variable
-            HeadModel.Gain      = [];
-            HeadModel.GridAtlas = [];
-            HeadModel           = repmat(HeadModel, 1, length(HeadModelInit.GridAtlas(1).Scouts));
-            iVert2Grid = [];
-            iAllGrid   = [];
-            iAllSource = [];
-            iOffset    = 0;
-            % Split the head model in multiple entries
-            for iScout = 1:length(HeadModelInit.GridAtlas(1).Scouts)
-                % Get indices in the Gain matrix
-                sScout = HeadModelInit.GridAtlas(1).Scouts(iScout);
-                iGainRows = sort([3*sScout.GridRows-2, 3*sScout.GridRows-1, 3*sScout.GridRows]);
-                % Create the headmodel structure for the current region
-                HeadModel(iScout).Gain       = HeadModelInit.Gain(:, iGainRows);
-                HeadModel(iScout).GridLoc    = HeadModelInit.GridLoc(sScout.GridRows, :);
-                HeadModel(iScout).GridOrient = HeadModelInit.GridOrient(sScout.GridRows, :);
-                switch (sScout.Region(3))
-                    case 'C',  OPTIONS.SourceOrient{iScout} = 'fixed';  nComp = 1;
-                    case 'U',  OPTIONS.SourceOrient{iScout} = 'free';   nComp = 3;
-                    case 'L',  OPTIONS.SourceOrient{iScout} = 'loose';  nComp = 3;
-                end
-                % In the case of a surface region, add the match of the vertices in the cortex surface and the GridLoc matrix
-                if strcmpi(sScout.Region(2), 'S')
-                    iVert2Grid = [iVert2Grid; sScout.Vertices(:), sScout.GridRows(:)];
-                end
-                % Add to the scout definition the indices in the ImageGrid
-                iAllGrid   = [iAllGrid,   reshape(repmat(sScout.GridRows,nComp,1), 1, [])];
-                iAllSource = [iAllSource, iOffset + (1:nComp*length(sScout.GridRows))];
-                iOffset = iOffset + nComp*length(sScout.GridRows);
-            end
-            % Create sparse conversion matrices between indices
-            if ~isempty(iVert2Grid)
-                % Ensure size is full grid for clarity and to allow matrix multiplication, e.g. with Grid2Source.
-                % If the last region(s) are volume, they correspond to grid points but not vertices,
-                % so this sparse array could be missing grid rows were its size not specified.
-                nVert = size(iVert2Grid,1);
-                HeadModelInit.GridAtlas(1).Vert2Grid = sparse(iVert2Grid(:,2), iVert2Grid(:,1), true(nVert,1), max(iAllGrid), max(iVert2Grid(:,1)));
-            else
-                HeadModelInit.GridAtlas(1).Vert2Grid = [];
-            end
-            if ~isempty(iAllSource)
-                HeadModelInit.GridAtlas(1).Grid2Source = sparse(iAllSource, iAllGrid, true(size(iAllSource)));
-            else
-                HeadModelInit.GridAtlas(1).Grid2Source = [];
-            end
-        end
-
-
         %% ===== COMPUTE INVERSE SOLUTION =====
         bst_progress('text', 'Estimating sources...');
         bst_progress('inc', 1);
@@ -474,82 +375,36 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         end
         % Get channels types
         OPTIONS.ChannelTypes = {ChannelMat.Channel(GoodChannel).Type};
-        % Switch depending on the selected inverse method
-        switch( OPTIONS.InverseMethod )       
-            case {'minnorm', 'gls', 'lcmv'}
-                % Call John's wmne function
-                % NOTE: The output HeadModel param is used here in return to save LOTS of memory in the bst_inverse_linear_2018 function,
-                %       event if it seems to be absolutely useless. Having a parameter in both input and output have the
-                %       effect in Matlab of passing them "by reference".
-                try
-                    [Results, OPTIONS] = bst_inverse_linear_2018(HeadModel, OPTIONS);
-                catch e
-                    if bst_get('MatlabVersion') == 904
-                        errMsg = ['Note: Matlab 2018a changed the behavior of the SVD() function. ' ...
-                            10 'If issues arise, we recommend using another version.'];
-                        e = MException(e.identifier, [e.message 10 10 errMsg]);
-                        throw(e);
-                    else
-                        rethrow(e);
-                    end
-                end
-            case 'mem'
-                % Add options needed by the MEM functions
-                OPTIONS.DataFile      = DataFile;
-                OPTIONS.DataTime      = Time;
-                OPTIONS.Channel       = ChannelMat.Channel(GoodChannel);
-                OPTIONS.Data          = DataMat.F(GoodChannel,:);
-                OPTIONS.ChannelFlag   = ChannelFlag(GoodChannel);
-                OPTIONS.ResultFile    = [];
-                OPTIONS.HeadModelFile = HeadModelFile;
-                OPTIONS.GoodChannel   = GoodChannel;
-                OPTIONS.FunctionName  = 'mem';
-                % Call the mem solver
-                [Results, OPTIONS] = be_main(HeadModel, OPTIONS);
-                if ~isfield(Results, 'nComponents') || isempty(Results.nComponents)
-                    Results.nComponents = round(max(size(Results.ImageGridAmp,1),size(Results.ImagingKernel,1)) / nSources);
-                end
 
-                % Get outputs
-                DataFile = OPTIONS.DataFile; 
-                Time     = OPTIONS.DataTime;
-            otherwise
-                error('Unknown method');
-        end
+        % Add options needed by the MEM functions
+        OPTIONS.DataFile      = DataFile;
+        OPTIONS.DataTime      = Time;
+        OPTIONS.Channel       = ChannelMat.Channel(GoodChannel);
+        OPTIONS.Data          = DataMat.F(GoodChannel,:);
+        OPTIONS.ChannelFlag   = ChannelFlag(GoodChannel);
+        OPTIONS.ResultFile    = [];
+        OPTIONS.HeadModelFile = HeadModelFile;
+        OPTIONS.GoodChannel   = GoodChannel;
+        OPTIONS.FunctionName  = 'mem';
+
+        % ===== Call the mem solver =====
+        [Results, OPTIONS] = be_main(HeadModel, OPTIONS);
         % Error handling
         if isempty(Results)
             errMessage = [errMessage 'The inverse function returned an empty structure.' 10];
             break;
         end
+
+        if ~isfield(Results, 'nComponents') || isempty(Results.nComponents)
+            Results.nComponents = round(max(size(Results.ImageGridAmp,1),size(Results.ImagingKernel,1)) / nSources);
+        end
+        % Get outputs
+        DataFile = OPTIONS.DataFile; 
+        Time     = OPTIONS.DataTime;
+
         % Copy outputs to a standard results structure
         ResultsMat = db_template('resultsmat');
         ResultsMat = struct_copy_fields(ResultsMat, Results, 1);
-        
-        % ===== COMPUTE FULL RESULTS =====
-        % Full results
-        if (OPTIONS.ComputeKernel == 0) && ~isempty(ResultsMat.ImagingKernel) && ~isempty(DataFile)
-            % Load data
-            DataMat = in_bst_data(DataFile, 'F');
-            % Incompatible options: Full results + raw files (impossible to view after)
-            if isstruct(DataMat.F)
-                errMessage = [errMessage 'Cannot compute full results for raw files: import the files first or compute an inversion kernel only.' 10];
-                break;
-            end
-            % Multiply inversion kernel with the recordings
-            ResultsMat.ImageGridAmp = ResultsMat.ImagingKernel * DataMat.F(GoodChannel, :);
-            ResultsMat.ImagingKernel = [];
-        end
-        % If kernel only on raw data: do not save the Time vector
-        if ~isempty(ResultsMat.ImagingKernel) && ~isShared && isRaw
-            Time = [];
-        % Check if no time dimension
-        elseif ~isempty(ResultsMat.ImageGridAmp) && (size(ResultsMat.ImageGridAmp, 2) == 1)
-            % If the output is not a timecourse: replicate the results to get two time instants
-            ResultsMat.ImageGridAmp = repmat(ResultsMat.ImageGridAmp, [1,2]); 
-            % Keep only the first and last time instants
-            Time = [Time(1), Time(end)];
-        end
-        
         
         %% ===== SAVE RESULTS FILE =====
         bst_progress('text', 'Saving results...');
@@ -561,16 +416,10 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         for i = 1:length(OPTIONS.DataTypes)
             strMethod = [strMethod, '_', file_standardize(OPTIONS.DataTypes{i})];
         end
-        % Add kernel tag
-        if OPTIONS.ComputeKernel
-            strMethod = [strMethod, '_KERNEL'];
-        end
+
         % Output folder
-        if isempty(DataFile)
-            OutputDir = bst_fileparts(file_fullpath(ChannelFile));
-        else
-            OutputDir = bst_fileparts(file_fullpath(DataFile));
-        end
+        OutputDir = bst_fileparts(file_fullpath(DataFile));
+
         % Output filename
         ResultFile = bst_process('GetNewFilename', OutputDir, ['results_', strMethod]);
 
@@ -584,21 +433,11 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         ResultsMat.ChannelFlag   = ChannelFlag;
         ResultsMat.GoodChannel   = GoodChannel;
         ResultsMat.SurfaceFile   = file_short(HeadModelInit.SurfaceFile);        
-        switch lower(ResultsMat.HeadModelType)
-            case 'volume'
-                ResultsMat.GridLoc    = HeadModelInit.GridLoc;
-                % ResultsMat.GridOrient = [];
-            case 'surface'
-                ResultsMat.GridLoc    = [];
-                % ResultsMat.GridOrient = [];    % THE ORIENTATION CAN BE RETURNED BY THE INVERSE METHOD ('optim')
-            case 'mixed'
-                ResultsMat.GridLoc    = HeadModelInit.GridLoc;
-                ResultsMat.GridOrient = HeadModelInit.GridOrient;
-        end
-        ResultsMat.GridAtlas = HeadModelInit.GridAtlas;
-        ResultsMat.nAvg      = nAvg;
-        ResultsMat.Leff      = Leff;
-        ResultsMat.Options   = OPTIONS;
+        ResultsMat.GridLoc       = [];
+        ResultsMat.GridAtlas     = HeadModelInit.GridAtlas;
+        ResultsMat.nAvg          = nAvg;
+        ResultsMat.Leff          = Leff;
+        ResultsMat.Options       = OPTIONS;
         % History
         ResultsMat = bst_history('add', ResultsMat, 'compute', ['Source estimation: ' OPTIONS.InverseMethod]);
         % Make file comment unique
@@ -625,36 +464,19 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % ===== UPDATE DISPLAY =====
         % Update tree
         panel_protocols('UpdateNode', 'Study', iStudy);
-        % Update links
-        if isShared
-            if isDefaultStudy
-                % If added to a 'default_study' node: need to update results links 
-                OutputLinks = db_links('Subject', sStudy.BrainStormSubject);
-                % Update whole tree display
-                panel_protocols('UpdateTree');
-            else
-                % Update links to the new results file 
-                OutputLinks = db_links('Study', iStudy);
-                % Update display of the study node
-                panel_protocols('UpdateNode', 'Study', iStudy);
-            end
-            % Find in the links the ones that are based on the node that was just calculated
-            isNewLink = ~cellfun(@(c)isempty(strfind(c, newResult.FileName)), OutputLinks);
-            OutputFiles = cat(2, OutputFiles, OutputLinks(isNewLink));
-        else
-            % Store output filename
-            OutputFiles{end+1} = newResult.FileName;
-        end
+
+        % Store output filename
+        OutputFiles{end+1} = newResult.FileName;
+
         % Expand data node
         panel_protocols('SelectNode', [], newResult.FileName);
     end
+
     % Save database
     db_save();
     % Hide progress bar
     bst_progress('stop');
 end
-
-
 
 %% ===== GET MODALITY COMMENT =====
 function Comment = GetModalityComment(Modalities)
@@ -671,111 +493,4 @@ function Comment = GetModalityComment(Modalities)
         end
         Comment = [Comment, Modalities{im}];
     end    
-end
-
-
-
-
-
-
-
-%% ===== RUN =====
-function OutputFiles = RunA(sProcess, sInputs)
-    OutputFiles = {};
-    
-    % ===== GET OPTIONS =====
-    % Default inverse options
-    OPTIONS = process_inverse_2018('Compute');
-
-    OPTIONS.MEMpaneloptions =   sProcess.options.mem.Value.MEMpaneloptions;
-
-    % Get options
-    OPTIONS.InverseMethod   =   'mem';
-    OPTIONS.SourceOrient    =   {'fixed'};
-
-    % Output
-    iStudies = [sInputs.iStudy];
-    iDatas   = [sInputs.iItem];
-    OPTIONS.ComputeKernel = 0;
-
-    % Get modalities in channel files
-    AllSensorTypes = unique(cat(2, sInputs.ChannelTypes));
-    AllSensorTypes = intersect(AllSensorTypes, {'MEG MAG', 'MEG GRAD', 'MEG', 'EEG', 'ECOG', 'SEEG'});
-    if any(ismember(AllSensorTypes, {'MEG MAG', 'MEG GRAD'}))
-        AllSensorTypes = setdiff(AllSensorTypes, 'MEG');
-    end
-    % Get valid modalities in head models
-    allChanFiles = unique({sInputs.ChannelFile});
-    for i = 1:length(allChanFiles)
-        % Get study
-        sStudy = bst_get('ChannelFile', allChanFiles{i});
-        % Check if all the files exist
-        if isempty(sStudy.Channel) || isempty(sStudy.HeadModel) || isempty(sStudy.iHeadModel) || isempty(sStudy.NoiseCov)
-            bst_report('Error', sProcess, [], 'No channel file, noise covariance, or headmodel or for at least one of the files.');
-            return;
-        end
-        % Remove all the modalities that do not exist in the headmodels
-        if isempty(sStudy.HeadModel(sStudy.iHeadModel).MEGMethod)
-            AllSensorTypes = setdiff(AllSensorTypes, {'MEG', 'MEG MAG', 'MEG GRAD'});
-        end
-        if isempty(sStudy.HeadModel(sStudy.iHeadModel).EEGMethod)
-            AllSensorTypes = setdiff(AllSensorTypes, {'EEG'});
-         end
-        if isempty(sStudy.HeadModel(sStudy.iHeadModel).ECOGMethod)
-            AllSensorTypes = setdiff(AllSensorTypes, {'ECOG'});
-        end
-        if isempty(sStudy.HeadModel(sStudy.iHeadModel).SEEGMethod)
-            AllSensorTypes = setdiff(AllSensorTypes, {'SEEG'});
-        end
-    end
-    % Selected sensor types
-    OPTIONS.DataTypes = strtrim(str_split(sProcess.options.sensortypes.Value, ',;'));
-    if ismember('MEG', OPTIONS.DataTypes) && any(ismember({'MEG GRAD','MEG MAG'}, AllSensorTypes))
-        OPTIONS.DataTypes = union(setdiff(OPTIONS.DataTypes, 'MEG'), {'MEG MAG', 'MEG GRAD'});
-    end
-    OPTIONS.DataTypes = intersect(OPTIONS.DataTypes, AllSensorTypes);
-    if isempty(OPTIONS.DataTypes)
-        strTypes = '';
-        for i = 1:length(AllSensorTypes)
-            if (i > 1)
-                strTypes = [strTypes, ', '];
-            end
-            strTypes = [strTypes, AllSensorTypes{i}];
-        end
-        bst_report('Error', sProcess, [], ['No valid sensor type selected.' 10 'Valid options are: ' strTypes]);
-        return;
-    end
-    % Comment
-    if isfield(sProcess.options, 'comment') && isfield(sProcess.options.comment, 'Value') && ~isempty(sProcess.options.comment.Value)
-        OPTIONS.Comment = sProcess.options.comment.Value;
-    end
-
-    OPTIONS.DisplayMessages = 0;
-
-    % ===== START COMPUTATION =====
-    % Call head modeler
-    [AllFiles, errMessage] = process_inverse_2018('Compute', iStudies, iDatas, OPTIONS);
-    % Report errors
-    if isempty(AllFiles) && ~isempty(errMessage)
-        bst_report('Error', sProcess, sInputs, errMessage);
-        return;
-    elseif ~isempty(errMessage)
-        bst_report('Warning', sProcess, sInputs, errMessage);
-    end
-    % For shared kernels: Return only the source files corresponding to the recordings that were in input
-    if isempty(iDatas)
-        % Loop on the output files (all links): find the ones that match the input
-        for iFile = 1:length(AllFiles)
-            % Resolve link: get data file
-            [ResFile, DataFile] = file_resolve_link(AllFiles{iFile});
-            % Find one that matches the inputs
-            iInput = find(file_compare({sInputs.FileName}, file_short(DataFile)));
-            % If founf: add to the output files
-            if ~isempty(iInput)
-                OutputFiles{end+1} = AllFiles{iFile};
-            end
-        end
-    else
-        OutputFiles = AllFiles;
-    end
 end
