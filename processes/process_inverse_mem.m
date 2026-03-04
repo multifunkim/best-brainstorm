@@ -212,7 +212,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % Is it a Raw file?
         isRaw = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
         if isRaw
-            errMessage = [errMessage 'Cannot compute full results for raw files: import the files first or compute an inversion kernel only.' 10];
+            errMessage = [ 'Cannot compute full results for raw files: import the files first or compute an inversion kernel only.' 10];
             break;
         end
 
@@ -232,7 +232,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % Get the list of good channels
         GoodChannel = good_channel(ChannelMat.Channel, DataMat.ChannelFlag, OPTIONS.DataTypes);
         if isempty(GoodChannel)
-            errMessage = [errMessage 'No good channels available.' 10];
+            errMessage = [ 'No good channels available.' 10];
             break;
         end
         
@@ -243,13 +243,13 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         NoiseCovMat = load(file_fullpath(sStudyChannel.NoiseCov(1).FileName));
         % Check for NaN values in the noise covariance
         if ~isempty(NoiseCovMat.NoiseCov) && (nnz(isnan(NoiseCovMat.NoiseCov(GoodChannel, GoodChannel))) > 0)
-            errMessage = [errMessage 'The noise covariance contains NaN values. Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
+            errMessage = [ 'The noise covariance contains NaN values. Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
             break;
         end
         % Check that bad channels in noise covariance are the same as bad channels in recordings
         badChNoiseCov_goodChRecs = intersect(find(and(~any(NoiseCovMat.NoiseCov,1), ~any(NoiseCovMat.NoiseCov,2)')), GoodChannel);
         if ~isempty(badChNoiseCov_goodChRecs)
-            errMessage = [errMessage 'Bad channels in noise covariance are different from bad channels in recordings.' 10 'Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
+            errMessage = [ 'Bad channels in noise covariance are different from bad channels in recordings.' 10 'Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
             break;
         end
         
@@ -262,7 +262,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         HeadModel = in_bst_headmodel(HeadModelFile, 0, 'Gain', 'GridLoc', 'GridOrient', 'GridAtlas', 'SurfaceFile', 'MEGMethod', 'EEGMethod', 'ECOGMethod', 'SEEGMethod', 'HeadModelType');
         % ===== MIXED HEADMODEL =====
         if strcmpi(HeadModel.HeadModelType, 'mixed') && ~isempty(HeadModel.GridAtlas) && ~isempty(HeadModel.GridAtlas(1).Scouts)
-            errMessage = [errMessage 'The mixed headmodel is currently only supported for the following inverse solutions: Minimum norm, dipole fitting, beamformer.' 10];
+            errMessage = [ 'The mixed headmodel is currently only supported for the following inverse solutions: Minimum norm, dipole fitting, beamformer.' 10];
             break;
         end
         
@@ -294,7 +294,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % ===== Call the mem solver =====
         [Results, OPTIONS] = be_main(HeadModel, OPTIONS);
         if isempty(Results)
-            errMessage = [errMessage 'The inverse function returned an empty structure.' 10];
+            errMessage = [ 'The inverse function returned an empty structure.' 10];
             break;
         end
 
