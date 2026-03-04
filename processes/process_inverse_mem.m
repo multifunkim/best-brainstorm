@@ -85,7 +85,6 @@ function OutputFiles = Run(sProcess, sInputs)
     iDatas   = [sInputs.iItem];
 
     % ===== START COMPUTATION =====
-    % Call head modeler
     [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS);
 
     % Report errors
@@ -311,7 +310,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             OPTIONS.NoiseCovMat.nSamples = OPTIONS.NoiseCovMat.nSamples(GoodChannel, GoodChannel);
         end
 
-        OPTIONS.ChannelTypes = {ChannelMat.Channel(GoodChannel).Type};
+        OPTIONS.ChannelTypes  = {ChannelMat.Channel(GoodChannel).Type};
         OPTIONS.DataFile      = DataFile;
         OPTIONS.DataTime      = Time;
         OPTIONS.Channel       = ChannelMat.Channel(GoodChannel);
@@ -333,10 +332,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         DataFile = OPTIONS.DataFile; 
         Time     = OPTIONS.DataTime;
 
-        % Copy outputs to a standard results structure
-        ResultsMat = db_template('resultsmat');
-        ResultsMat = struct_copy_fields(ResultsMat, Results, 1);
-        
         %% ===== SAVE RESULTS FILE =====
         bst_progress('text', 'Saving results...');
         bst_progress('inc', 1);
@@ -348,6 +343,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         ResultFile = bst_process('GetNewFilename', OutputDir, ['results_', strMethod]);
 
         % ===== CREATE FILE STRUCTURE =====
+        ResultsMat = db_template('resultsmat');
+        ResultsMat = struct_copy_fields(ResultsMat, Results, 1);
         ResultsMat.Comment       = [OPTIONS.Comment ' 2018'];
         ResultsMat.Function      = OPTIONS.FunctionName;
         ResultsMat.Time          = Time;
