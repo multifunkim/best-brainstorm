@@ -72,6 +72,7 @@ function OutputFiles = Run(sProcess, sInputs)
     % Inverse options
     OPTIONS = Compute();
     OPTIONS.InverseMethod   = 'mem';
+    OPTIONS.Comment         = sProcess.options.comment.Value;
     OPTIONS.MEMpaneloptions = sProcess.options.mem.Value.MEMpaneloptions;
     OPTIONS.DataTypes       = strsplit(strrep(sProcess.options.sensortypes.Value,' ',''), ',');
     OPTIONS.DisplayMessages = 0;
@@ -143,7 +144,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
     end
 
     % Set file comment 
-    [initOPTIONS.Comment, strMethod] = GetModalityComment(initOPTIONS.DataTypes);
+    [initOPTIONS, strMethod] = GetModalityComment(initOPTIONS);
 
     % ===== LOOP ON INPUT FILES =====
     bst_progress('start', 'Compute sources', 'Initialize...', 0, 3*length(iStudies) + 1);
@@ -344,7 +345,7 @@ function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
             return;
         end
 
-        [~, iStudyChannel]   = bst_get('ChannelForStudy', iStudy);
+        [~, iStudyChannel]   = bst_get('ChannelForStudy', iStudies(iEntry));
         sStudyChannel        = bst_get('Study', iStudyChannel);
         HeadModelFile        = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
         HeadModel = in_bst_headmodel(HeadModelFile, 0, 'GridLoc', 'GridOrient', 'GridAtlas', 'SurfaceFile', 'MEGMethod', 'EEGMethod', 'ECOGMethod', 'SEEGMethod', 'HeadModelType');
@@ -357,26 +358,21 @@ function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
 end
 
 %% ===== GET MODALITY COMMENT =====
-function [Comment, strMethod] = GetModalityComment(Modalities)
+function [OPTIONS, strMethod] = GetModalityComment(OPTIONS)
+    
+    Modalities = OPTIONS.DataTypes;
 
     % Replace "MEG GRAD+MEG MAG" with "MEG ALL"
     if all(ismember({'MEG GRAD', 'MEG MAG'}, Modalities))
         Modalities = setdiff(Modalities, {'MEG GRAD', 'MEG MAG'});
         Modalities{end+1} = 'MEG ALL';
     end 
+    
+    if isempty(OPTIONS.Comment)
+        OPTIONS.Comment     = ['MEM : ' strjoin(Modalities, '+'), ' (Full)'];
+    end
 
-    % Loop to build comment
-    Comment     = 'MEM :';
-    strMethod   = 'MEM';
-
-    for im = 1:length(Modalities)
-        if (im >= 2)
-            Comment = [Comment, '+'];
-        end
-        Comment = [Comment, Modalities{im}];
-        strMethod = [strMethod, '_', file_standardize(Modalities{im})];
-    end    
-    Comment = [Comment, ' (Full)'];
+    strMethod   = file_standardize(['MEM_', strjoin(Modalities, '_')]);
 end
 
 function [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies)
