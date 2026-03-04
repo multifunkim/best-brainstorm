@@ -151,29 +151,19 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
     bst_progress('start', 'Compute sources', 'Initialize...', 0, 3*length(iStudies) + 1);
     for iEntry = 1:length(iStudies)
         OPTIONS = initOPTIONS;
-        
-        % ===== LOAD CHANNEL FILE =====
-        bst_progress('text', 'Reading channel information...');
-        
+
         % Get study structure
         iStudy = iStudies(iEntry);
         sStudy = bst_get('Study', iStudy);
-
-        % Is it a Raw file?
-        isRaw = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
-        if isRaw
-            errMessage = [ 'Cannot compute full results for raw files: import the files first or compute an inversion kernel only.' 10];
-            break;
-        end
-
-        % Get channel file for study
-        [sChannel, iStudyChannel]   = bst_get('ChannelForStudy', iStudy);
-        ChannelMat                  = in_bst_channel(sChannel.FileName, 'Channel', 'Projector');
 
         % ===== LOAD DATA FILES =====
         bst_progress('text', 'Loading data...');
         DataFile    = sStudy.Data(iDatas(iEntry)).FileName;
         DataMat     = in_bst_data(DataFile, 'ChannelFlag', 'Time', 'nAvg', 'Leff', 'F');
+
+        % Get channel file for study
+        [sChannel, iStudyChannel]   = bst_get('ChannelForStudy', iStudy);
+        ChannelMat                  = in_bst_channel(sChannel.FileName, 'Channel', 'Projector');
 
         % ===== CHANNEL FLAG =====
         % Get the list of good channels
@@ -189,15 +179,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         % ===== LOAD HEAD MODEL =====
         bst_progress('text', 'Loading head model...');
         bst_progress('inc', 1);
-        % Get headmodel file
-        HeadModelFile = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
-        % Load head model
-        HeadModel = in_bst_headmodel(HeadModelFile, 0, 'Gain', 'GridLoc', 'GridOrient', 'GridAtlas', 'SurfaceFile', 'MEGMethod', 'EEGMethod', 'ECOGMethod', 'SEEGMethod', 'HeadModelType');
-        % ===== MIXED HEADMODEL =====
-        if strcmpi(HeadModel.HeadModelType, 'mixed') && ~isempty(HeadModel.GridAtlas) && ~isempty(HeadModel.GridAtlas(1).Scouts)
-            errMessage = [ 'The mixed headmodel is currently only supported for the following inverse solutions: Minimum norm, dipole fitting, beamformer.' 10];
-            break;
-        end
+        HeadModelFile   = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
+        HeadModel       = in_bst_headmodel(HeadModelFile, 0, 'Gain', 'GridLoc', 'GridOrient', 'GridAtlas', 'SurfaceFile', 'MEGMethod', 'EEGMethod', 'ECOGMethod', 'SEEGMethod', 'HeadModelType');
 
         % ===== Load NoiseCov file =====
         [NoiseCovMat, errMessage] = LoadNoiseCov(sStudyChannel.NoiseCov(1).FileName, GoodChannel);
@@ -355,6 +338,26 @@ function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
         return;
     end
 
+    % Check for raw files and mixed head model -- todo avoid loading so
+    % much
+    for iEntry = 1:length(iStudies)
+        sStudy = bst_get('Study',  iStudies(iEntry));
+        isRaw  = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
+        if isRaw
+            errMessage = [ 'Cannot compute full results for raw files: import the files first.' 10];
+            return;
+        end
+
+        [~, iStudyChannel]   = bst_get('ChannelForStudy', iStudy);
+        sStudyChannel        = bst_get('Study', iStudyChannel);
+        HeadModelFile        = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
+        HeadModel = in_bst_headmodel(HeadModelFile, 0, 'GridLoc', 'GridOrient', 'GridAtlas', 'SurfaceFile', 'MEGMethod', 'EEGMethod', 'ECOGMethod', 'SEEGMethod', 'HeadModelType');
+        if strcmpi(HeadModel.HeadModelType, 'mixed') && ~isempty(HeadModel.GridAtlas) && ~isempty(HeadModel.GridAtlas(1).Scouts)
+            errMessage = [ 'The mixed headmodel is currently only supported for the following inverse solutions: Minimum norm, dipole fitting, beamformer.' 10];
+            break;
+        end
+
+    end
 end
 
 %% ===== GET MODALITY COMMENT =====
