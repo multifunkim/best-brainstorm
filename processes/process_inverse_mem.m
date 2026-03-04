@@ -158,7 +158,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             return;
         end
     end
-    
+
     % Check that at least one modality is available
     [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies);
     if isempty(AllMod)
@@ -211,33 +211,34 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         
         % ===== LOAD CHANNEL FILE =====
         bst_progress('text', 'Reading channel information...');
+        
         % Get study structure
         iStudy = iStudies(iEntry);
         sStudy = bst_get('Study', iStudy);
-        % Get channel file for study
-        [sChannel, iStudyChannel] = bst_get('ChannelForStudy', iStudy);
-        ChannelFile = sChannel.FileName;
-        % Load channel file
-        ChannelMat = in_bst_channel(ChannelFile, 'Channel', 'Projector');
-
-        % ===== LOAD DATA FILES =====
-        bst_progress('text', 'Getting bad channels...');
-
-        % Get only one file
-        DataFile = sStudy.Data(iDatas(iEntry)).FileName;
-        % Load data file info (only 'mem' requires the recordings to be loaded here)
-        DataMat = in_bst_data(DataFile, 'ChannelFlag', 'Time', 'nAvg', 'Leff', 'F');
-
-        ChannelFlag = DataMat.ChannelFlag;
-        nAvg        = DataMat.nAvg;
-        Leff        = DataMat.Leff;
-        Time        = DataMat.Time;
+        
         % Is it a Raw file?
         isRaw = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
         if isRaw
             errMessage = [errMessage 'Cannot compute full results for raw files: import the files first or compute an inversion kernel only.' 10];
             break;
         end
+
+        % Get channel file for study
+        [sChannel, iStudyChannel]   = bst_get('ChannelForStudy', iStudy);
+        ChannelMat                  = in_bst_channel(sChannel.FileName, 'Channel', 'Projector');
+
+        % ===== LOAD DATA FILES =====
+        bst_progress('text', 'Getting bad channels...');
+
+        % Load data file
+        DataFile    = sStudy.Data(iDatas(iEntry)).FileName;
+        DataMat     = in_bst_data(DataFile, 'ChannelFlag', 'Time', 'nAvg', 'Leff', 'F');
+
+        ChannelFlag = DataMat.ChannelFlag;
+        nAvg        = DataMat.nAvg;
+        Leff        = DataMat.Leff;
+        Time        = DataMat.Time;
+
         % ===== CHANNEL FLAG =====
         % Get the list of good channels
         GoodChannel = good_channel(ChannelMat.Channel, ChannelFlag, OPTIONS.DataTypes);
