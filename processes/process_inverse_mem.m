@@ -65,19 +65,17 @@ end
 function OutputFiles = Run(sProcess, sInputs)
     OutputFiles = {};
     
-    % Default inverse options
-    OPTIONS = Compute();
-    
     % Get options edited by the user
-    if ~isfield(sProcess.options.mem.Value, 'MEMpaneloptions')
+    if ~isfield(sProcess.options.mem.Value, 'MEMpaneloptions') || isempty(sProcess.options.mem.Value.MEMpaneloptions)
         fprintf('\n\n***\tError in BEst process\t***\n\tyou MUST edit options before lauching the MEM.\n\n')
         return
     end
 
+    % Inverse options
+    OPTIONS = Compute();
     OPTIONS.InverseMethod   = 'mem';
     OPTIONS.MEMpaneloptions = sProcess.options.mem.Value.MEMpaneloptions;
     OPTIONS.DataTypes       = strsplit(strrep(sProcess.options.sensortypes.Value,' ',''), ',');
-    OPTIONS.ComputeKernel   = 0;
     OPTIONS.DisplayMessages = 0;
 
     % Prepare input
@@ -87,7 +85,7 @@ function OutputFiles = Run(sProcess, sInputs)
     % ===== START COMPUTATION =====
     [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS);
 
-    % Report errors
+    % Report errors 
     if ~isempty(errMessage)
         if isempty(AllFiles)
             bst_report('Error', sProcess, sInputs, errMessage);
@@ -124,10 +122,10 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
     % Use default options
     if (nargin < 3) || isempty(OPTIONS)
         OPTIONS = Def_OPTIONS;
-    else
-        % Check field names of passed OPTIONS and fill missing ones with default values
-        OPTIONS = struct_copy_fields(OPTIONS, Def_OPTIONS, 0);
     end
+
+    % Check field names of passed OPTIONS and fill missing ones with default values
+    OPTIONS = struct_copy_fields(OPTIONS, Def_OPTIONS, 0);
     
     %% ===== GET INPUT INFORMATION =====
     isShared = isempty(iDatas);
