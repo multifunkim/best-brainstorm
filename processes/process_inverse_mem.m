@@ -273,13 +273,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat);
 
         % Apply average reference: separately SEEG, ECOG, EEG
-        if any(ismember(unique({ChannelMat.Channel.Type}), {'EEG','ECOG','SEEG'}))
-            % Create average reference montage
-            sMontage = panel_montage('GetMontageAvgRef', [], ChannelMat.Channel, DataMat.ChannelFlag, 0);
-            HeadModel.Gain = sMontage.Matrix * HeadModel.Gain;
-            % Apply average reference operator on both sides of the noise covariance matrix
-            NoiseCovMat.NoiseCov = sMontage.Matrix * NoiseCovMat.NoiseCov * sMontage.Matrix';
-        end
+        [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat);
 
         %% ===== COMPUTE INVERSE SOLUTION =====
         bst_progress('text', 'Estimating sources...');
@@ -429,18 +423,20 @@ end
 function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
 % Apply SSP from ChannelMat to HeadModel and NoiseCovMat
 
-    if ~isempty(ChannelMat.Projector)
-        % Rebuild projector in the expanded form (I-UUt)
-        Proj = process_ssp2('BuildProjector', ChannelMat.Projector, [1 2]);
-        % Apply projectors
-        if ~isempty(Proj)
-            % Get all sensors for which the gain matrix was successfully computed
-            iGainSensors = find(sum(isnan(HeadModel.Gain), 2) == 0);
-            % Apply projectors to gain matrix
-            HeadModel.Gain(iGainSensors,:) = Proj(iGainSensors,iGainSensors) * HeadModel.Gain(iGainSensors,:);
-            % Apply SSPs on both sides of the noise covariance matrix
-            NoiseCovMat.NoiseCov = Proj * NoiseCovMat.NoiseCov * Proj';
-        end
+    if isempty(ChannelMat.Projector)
+        return
+    end
+
+    % Rebuild projector in the expanded form (I-UUt)
+    Proj = process_ssp2('BuildProjector', ChannelMat.Projector, [1 2]);
+    % Apply projectors
+    if ~isempty(Proj)
+        % Get all sensors for which the gain matrix was successfully computed
+        iGainSensors = find(sum(isnan(HeadModel.Gain), 2) == 0);
+        % Apply projectors to gain matrix
+        HeadModel.Gain(iGainSensors,:) = Proj(iGainSensors,iGainSensors) * HeadModel.Gain(iGainSensors,:);
+        % Apply SSPs on both sides of the noise covariance matrix
+        NoiseCovMat.NoiseCov = Proj * NoiseCovMat.NoiseCov * Proj';
     end
 end
 
@@ -460,4 +456,21 @@ function [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodC
 
     DataMat.F  = DataMat.F(GoodChannel,:);
     DataMat.ChannelFlag = DataMat.ChannelFlag(GoodChannel);
+end
+
+function [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat)
+% Apply average reference: separately SEEG, ECOG, EEG
+    if ~any(ismember(unique({ChannelMat.Channel.Type}), {'EEG','ECOG','SEEG'}))
+        % Nothing to do
+        return;
+    end
+
+    % Create average reference montage
+    ChannelFlag     = ones(length(ChannelMat.Channel),1);
+    sMontage        = panel_montage('GetMontageAvgRef', [], ChannelMat.Channel, ChannelFlag , 0);
+    %  Apply average reference operator on the gain matrix
+    HeadModel.Gain  = sMontage.Matrix * HeadModel.Gain;
+    % Apply average reference operator on both sides of the noise covariance matrix
+    NoiseCovMat.NoiseCov = sMontage.Matrix * NoiseCovMat.NoiseCov * sMontage.Matrix';
+
 end
