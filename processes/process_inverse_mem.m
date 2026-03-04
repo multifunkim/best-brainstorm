@@ -226,15 +226,11 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % Load data file
         DataFile    = sStudy.Data(iDatas(iEntry)).FileName;
         DataMat     = in_bst_data(DataFile, 'ChannelFlag', 'Time', 'nAvg', 'Leff', 'F');
-
-        ChannelFlag = DataMat.ChannelFlag;
-        nAvg        = DataMat.nAvg;
-        Leff        = DataMat.Leff;
         Time        = DataMat.Time;
 
         % ===== CHANNEL FLAG =====
         % Get the list of good channels
-        GoodChannel = good_channel(ChannelMat.Channel, ChannelFlag, OPTIONS.DataTypes);
+        GoodChannel = good_channel(ChannelMat.Channel, DataMat.ChannelFlag, OPTIONS.DataTypes);
         if isempty(GoodChannel)
             errMessage = [errMessage 'No good channels available.' 10];
             break;
@@ -272,15 +268,17 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         
         % Apply current SSP projectors
         [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat);
+
         % Select only good channels
-        HeadModel.Gain = HeadModel.Gain(GoodChannel, :);
+        [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat);
+
         % Apply average reference: separately SEEG, ECOG, EEG
         if any(ismember(unique({ChannelMat.Channel.Type}), {'EEG','ECOG','SEEG'}))
             % Create average reference montage
-            sMontage = panel_montage('GetMontageAvgRef', [], ChannelMat.Channel(GoodChannel), ChannelFlag(GoodChannel), 0);
+            sMontage = panel_montage('GetMontageAvgRef', [], ChannelMat.Channel, DataMat.ChannelFlag, 0);
             HeadModel.Gain = sMontage.Matrix * HeadModel.Gain;
             % Apply average reference operator on both sides of the noise covariance matrix
-            NoiseCovMat.NoiseCov(GoodChannel, GoodChannel) = sMontage.Matrix * NoiseCovMat.NoiseCov(GoodChannel, GoodChannel) * sMontage.Matrix';
+            NoiseCovMat.NoiseCov = sMontage.Matrix * NoiseCovMat.NoiseCov * sMontage.Matrix';
         end
         % Copy initial head model
         HeadModelInit = HeadModel;
@@ -290,20 +288,12 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         bst_progress('inc', 1);
         % NoiseCov: keep only the good channels
         OPTIONS.NoiseCovMat = NoiseCovMat;
-        OPTIONS.NoiseCovMat.NoiseCov = OPTIONS.NoiseCovMat.NoiseCov(GoodChannel, GoodChannel);
-        if isfield(OPTIONS.NoiseCovMat, 'FourthMoment') && ~isempty(OPTIONS.NoiseCovMat.FourthMoment)
-            OPTIONS.NoiseCovMat.FourthMoment = OPTIONS.NoiseCovMat.FourthMoment(GoodChannel, GoodChannel);
-        end
-        if isfield(OPTIONS.NoiseCovMat, 'nSamples') && ~isempty(OPTIONS.NoiseCovMat.nSamples)
-            OPTIONS.NoiseCovMat.nSamples = OPTIONS.NoiseCovMat.nSamples(GoodChannel, GoodChannel);
-        end
-
-        OPTIONS.ChannelTypes  = {ChannelMat.Channel(GoodChannel).Type};
+        OPTIONS.ChannelTypes  = {ChannelMat.Channel.Type};
         OPTIONS.DataFile      = DataFile;
         OPTIONS.DataTime      = Time;
-        OPTIONS.Channel       = ChannelMat.Channel(GoodChannel);
-        OPTIONS.Data          = DataMat.F(GoodChannel,:);
-        OPTIONS.ChannelFlag   = ChannelFlag(GoodChannel);
+        OPTIONS.Channel       = ChannelMat.Channel;
+        OPTIONS.Data          = DataMat.F;
+        OPTIONS.ChannelFlag   = DataMat.ChannelFlag;
         OPTIONS.ResultFile    = [];
         OPTIONS.HeadModelFile = HeadModelFile;
         OPTIONS.GoodChannel   = GoodChannel;
@@ -335,13 +325,13 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         ResultsMat.DataFile      = OPTIONS.DataFile;
         ResultsMat.HeadModelFile = HeadModelFile;
         ResultsMat.HeadModelType = HeadModelInit.HeadModelType;
-        ResultsMat.ChannelFlag   = ChannelFlag;
+        ResultsMat.ChannelFlag   = DataMat.ChannelFlag;
         ResultsMat.GoodChannel   = GoodChannel;
         ResultsMat.SurfaceFile   = file_short(HeadModelInit.SurfaceFile);        
         ResultsMat.GridLoc       = [];
         ResultsMat.GridAtlas     = HeadModelInit.GridAtlas;
-        ResultsMat.nAvg          = nAvg;
-        ResultsMat.Leff          = Leff;
+        ResultsMat.nAvg          = DataMat.nAvg;
+        ResultsMat.Leff          = DataMat.Leff;
         ResultsMat.Options       = OPTIONS;
         % History
         ResultsMat = bst_history('add', ResultsMat, 'compute', ['Source estimation: ' OPTIONS.InverseMethod]);
@@ -454,4 +444,22 @@ function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
             NoiseCovMat.NoiseCov = Proj * NoiseCovMat.NoiseCov * Proj';
         end
     end
+end
+
+function [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat)
+    
+    ChannelMat.Channel = ChannelMat.Channel(GoodChannel);
+    HeadModel.Gain = HeadModel.Gain(GoodChannel, :);
+
+
+    NoiseCovMat.NoiseCov = NoiseCovMat.NoiseCov(GoodChannel, GoodChannel);
+    if isfield(NoiseCovMat, 'FourthMoment') && ~isempty(NoiseCovMat.FourthMoment)
+        NoiseCovMat.FourthMoment = NoiseCovMat.FourthMoment(GoodChannel, GoodChannel);
+    end
+    if isfield(NoiseCovMat, 'nSamples') && ~isempty(NoiseCovMat.nSamples)
+        NoiseCovMat.nSamples = NoiseCovMat.nSamples(GoodChannel, GoodChannel);
+    end
+
+    DataMat.F  = DataMat.F(GoodChannel,:);
+    DataMat.ChannelFlag = DataMat.ChannelFlag(GoodChannel);
 end
