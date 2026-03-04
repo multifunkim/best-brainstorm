@@ -239,19 +239,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % ===== LOAD NOISE COVARIANCE =====
         % Get channel study
         sStudyChannel = bst_get('Study', iStudyChannel);
-        % Load NoiseCov file 
-        NoiseCovMat = load(file_fullpath(sStudyChannel.NoiseCov(1).FileName));
-        % Check for NaN values in the noise covariance
-        if ~isempty(NoiseCovMat.NoiseCov) && (nnz(isnan(NoiseCovMat.NoiseCov(GoodChannel, GoodChannel))) > 0)
-            errMessage = [ 'The noise covariance contains NaN values. Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
-            break;
-        end
-        % Check that bad channels in noise covariance are the same as bad channels in recordings
-        badChNoiseCov_goodChRecs = intersect(find(and(~any(NoiseCovMat.NoiseCov,1), ~any(NoiseCovMat.NoiseCov,2)')), GoodChannel);
-        if ~isempty(badChNoiseCov_goodChRecs)
-            errMessage = [ 'Bad channels in noise covariance are different from bad channels in recordings.' 10 'Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
-            break;
-        end
         
         % ===== LOAD HEAD MODEL =====
         bst_progress('text', 'Loading head model...');
@@ -265,14 +252,20 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             errMessage = [ 'The mixed headmodel is currently only supported for the following inverse solutions: Minimum norm, dipole fitting, beamformer.' 10];
             break;
         end
-        
-        % Apply current SSP projectors
+
+        % ===== Load NoiseCov file =====
+        [NoiseCovMat, errMessage] = LoadNoiseCov(sStudyChannel.NoiseCov(1).FileName, GoodChannel);
+        if ~isempty(errMessage)
+            break;
+        end
+
+        % ===== Apply current SSP projectors =====
         [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat);
 
-        % Select only good channels
+        % ===== Select only good channels =====
         [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat);
 
-        % Apply average reference: separately SEEG, ECOG, EEG
+        % ===== Apply average reference: separately SEEG, ECOG, EEG =====
         [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat);
 
         %% ===== COMPUTE INVERSE SOLUTION =====
@@ -417,6 +410,24 @@ function [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies)
         AllMod = intersect(AllMod, {'MEG GRAD', 'MEG MAG', 'EEG', 'ECOG', 'SEEG'});
     else
         AllMod = intersect(AllMod, {'MEG', 'EEG', 'ECOG', 'SEEG'});
+    end
+end
+
+function [NoiseCovMat, errMessage] = LoadNoiseCov(FileName, GoodChannel)
+    errMessage = '';
+
+    NoiseCovMat = load(file_fullpath(FileName));
+    % Check for NaN values in the noise covariance
+    if ~isempty(NoiseCovMat.NoiseCov) && (nnz(isnan(NoiseCovMat.NoiseCov(GoodChannel, GoodChannel))) > 0)
+        errMessage = [ 'The noise covariance contains NaN values. Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
+        return
+    end
+
+    % Check that bad channels in noise covariance are the same as bad channels in recordings
+    badChNoiseCov_goodChRecs = intersect(find(and(~any(NoiseCovMat.NoiseCov,1), ~any(NoiseCovMat.NoiseCov,2)')), GoodChannel);
+    if ~isempty(badChNoiseCov_goodChRecs)
+        errMessage = [ 'Bad channels in noise covariance are different from bad channels in recordings.' 10 'Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
+        return;
     end
 end
 
