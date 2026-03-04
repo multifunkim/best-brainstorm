@@ -280,8 +280,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             % Apply average reference operator on both sides of the noise covariance matrix
             NoiseCovMat.NoiseCov = sMontage.Matrix * NoiseCovMat.NoiseCov * sMontage.Matrix';
         end
-        % Copy initial head model
-        HeadModelInit = HeadModel;
 
         %% ===== COMPUTE INVERSE SOLUTION =====
         bst_progress('text', 'Estimating sources...');
@@ -324,12 +322,12 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         ResultsMat.Time          = OPTIONS.DataTime;
         ResultsMat.DataFile      = OPTIONS.DataFile;
         ResultsMat.HeadModelFile = HeadModelFile;
-        ResultsMat.HeadModelType = HeadModelInit.HeadModelType;
+        ResultsMat.HeadModelType = HeadModel.HeadModelType;
         ResultsMat.ChannelFlag   = DataMat.ChannelFlag;
         ResultsMat.GoodChannel   = GoodChannel;
-        ResultsMat.SurfaceFile   = file_short(HeadModelInit.SurfaceFile);        
+        ResultsMat.SurfaceFile   = file_short(HeadModel.SurfaceFile);        
         ResultsMat.GridLoc       = [];
-        ResultsMat.GridAtlas     = HeadModelInit.GridAtlas;
+        ResultsMat.GridAtlas     = HeadModel.GridAtlas;
         ResultsMat.nAvg          = DataMat.nAvg;
         ResultsMat.Leff          = DataMat.Leff;
         ResultsMat.Options       = OPTIONS;
