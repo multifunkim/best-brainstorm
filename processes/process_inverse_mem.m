@@ -328,16 +328,12 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
             break;
         end
 
-        % Get outputs
-        DataFile = OPTIONS.DataFile; 
-        Time     = OPTIONS.DataTime;
-
-        %% ===== SAVE RESULTS FILE =====
+        % ===== SAVE RESULTS FILE =====
         bst_progress('text', 'Saving results...');
         bst_progress('inc', 1);
 
         % Output folder
-        OutputDir = bst_fileparts(file_fullpath(DataFile));
+        OutputDir = bst_fileparts(file_fullpath(OPTIONS.DataFile));
 
         % Output filename
         ResultFile = bst_process('GetNewFilename', OutputDir, ['results_', strMethod]);
@@ -347,8 +343,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         ResultsMat = struct_copy_fields(ResultsMat, Results, 1);
         ResultsMat.Comment       = [OPTIONS.Comment ' 2018'];
         ResultsMat.Function      = OPTIONS.FunctionName;
-        ResultsMat.Time          = Time;
-        ResultsMat.DataFile      = DataFile;
+        ResultsMat.Time          = OPTIONS.DataTime;
+        ResultsMat.DataFile      = OPTIONS.DataFile;
         ResultsMat.HeadModelFile = HeadModelFile;
         ResultsMat.HeadModelType = HeadModelInit.HeadModelType;
         ResultsMat.ChannelFlag   = ChannelFlag;
@@ -373,7 +369,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         newResult = db_template('results');
         newResult.Comment       = ResultsMat.Comment;
         newResult.FileName      = file_short(ResultFile);
-        newResult.DataFile      = DataFile;
+        newResult.DataFile      = ResultsMat.DataFile;
         newResult.isLink        = 0;
         newResult.HeadModelType = ResultsMat.HeadModelType;
         % Add new entry to the database
