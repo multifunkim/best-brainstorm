@@ -1,5 +1,6 @@
 function varargout = process_inverse_mem( varargin )
-% PROCESS_INVERSE: Compute an inverse model.
+% PROCESS_INVERSE_MEM: Compute inverse model using Maximum Entropy on the
+% Mean (MEM)
 
 % @=============================================================================
 % This software is part of the Brainstorm software:
@@ -23,7 +24,6 @@ function varargout = process_inverse_mem( varargin )
 
 eval(macro_method);
 end
-
 
 %% ===== GET DESCRIPTION =====
 function sProcess = GetDescription()
@@ -54,12 +54,10 @@ function sProcess = GetDescription()
     sProcess.options.sensortypes.Value   = 'MEG, MEG MAG, MEG GRAD, EEG';
 end
 
-
 %% ===== FORMAT COMMENT =====
 function Comment = FormatComment(sProcess)
     Comment = sProcess.Comment;
 end
-
 
 %% ===== RUN =====
 function OutputFiles = Run(sProcess, sInputs)
