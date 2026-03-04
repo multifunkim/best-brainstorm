@@ -271,19 +271,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         end
         
         % Apply current SSP projectors
-        if ~isempty(ChannelMat.Projector)
-            % Rebuild projector in the expanded form (I-UUt)
-            Proj = process_ssp2('BuildProjector', ChannelMat.Projector, [1 2]);
-            % Apply projectors
-            if ~isempty(Proj)
-                % Get all sensors for which the gain matrix was successfully computed
-                iGainSensors = find(sum(isnan(HeadModel.Gain), 2) == 0);
-                % Apply projectors to gain matrix
-                HeadModel.Gain(iGainSensors,:) = Proj(iGainSensors,iGainSensors) * HeadModel.Gain(iGainSensors,:);
-                % Apply SSPs on both sides of the noise covariance matrix
-                NoiseCovMat.NoiseCov = Proj * NoiseCovMat.NoiseCov * Proj';
-            end
-        end
+        [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat);
         % Select only good channels
         HeadModel.Gain = HeadModel.Gain(GoodChannel, :);
         % Apply average reference: separately SEEG, ECOG, EEG
@@ -447,5 +435,23 @@ function [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies)
         AllMod = intersect(AllMod, {'MEG GRAD', 'MEG MAG', 'EEG', 'ECOG', 'SEEG'});
     else
         AllMod = intersect(AllMod, {'MEG', 'EEG', 'ECOG', 'SEEG'});
+    end
+end
+
+function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
+% Apply SSP from ChannelMat to HeadModel and NoiseCovMat
+
+    if ~isempty(ChannelMat.Projector)
+        % Rebuild projector in the expanded form (I-UUt)
+        Proj = process_ssp2('BuildProjector', ChannelMat.Projector, [1 2]);
+        % Apply projectors
+        if ~isempty(Proj)
+            % Get all sensors for which the gain matrix was successfully computed
+            iGainSensors = find(sum(isnan(HeadModel.Gain), 2) == 0);
+            % Apply projectors to gain matrix
+            HeadModel.Gain(iGainSensors,:) = Proj(iGainSensors,iGainSensors) * HeadModel.Gain(iGainSensors,:);
+            % Apply SSPs on both sides of the noise covariance matrix
+            NoiseCovMat.NoiseCov = Proj * NoiseCovMat.NoiseCov * Proj';
+        end
     end
 end
