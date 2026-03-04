@@ -197,10 +197,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         % ===== Apply average reference: separately SEEG, ECOG, EEG =====
         [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat);
 
-        %% ===== COMPUTE INVERSE SOLUTION =====
-        bst_progress('text', 'Estimating sources...');
-        bst_progress('inc', 1);
-        % NoiseCov: keep only the good channels
+        % ===== Finalize Options struct =====
         OPTIONS.NoiseCovMat = NoiseCovMat;
         OPTIONS.ChannelTypes  = {ChannelMat.Channel.Type};
         OPTIONS.DataFile      = DataFile;
@@ -212,8 +209,11 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         OPTIONS.HeadModelFile = HeadModelFile;
         OPTIONS.GoodChannel   = GoodChannel;
         OPTIONS.FunctionName  = 'mem';
+        
+        % ===== COMPUTE INVERSE SOLUTION =====
+        bst_progress('text', 'Estimating sources...');
+        bst_progress('inc', 1);
 
-        % ===== Call the mem solver =====
         [Results, OPTIONS] = be_main(HeadModel, OPTIONS);
         if isempty(Results)
             errMessage = [ 'The inverse function returned an empty structure.' 10];
@@ -224,10 +224,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         bst_progress('text', 'Saving results...');
         bst_progress('inc', 1);
 
-        % Output folder
-        OutputDir = bst_fileparts(file_fullpath(OPTIONS.DataFile));
-
-        % Output filename
+        % Output file
+        OutputDir  = bst_fileparts(file_fullpath(OPTIONS.DataFile));
         ResultFile = bst_process('GetNewFilename', OutputDir, ['results_', strMethod]);
 
         % ===== CREATE FILE STRUCTURE =====
