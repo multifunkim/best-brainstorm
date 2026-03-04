@@ -171,12 +171,9 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         ChannelMat                  = in_bst_channel(sChannel.FileName, 'Channel', 'Projector');
 
         % ===== LOAD DATA FILES =====
-        bst_progress('text', 'Getting bad channels...');
-
-        % Load data file
+        bst_progress('text', 'Loading data...');
         DataFile    = sStudy.Data(iDatas(iEntry)).FileName;
         DataMat     = in_bst_data(DataFile, 'ChannelFlag', 'Time', 'nAvg', 'Leff', 'F');
-        Time        = DataMat.Time;
 
         % ===== CHANNEL FLAG =====
         % Get the list of good channels
@@ -186,7 +183,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
             break;
         end
         
-        % ===== LOAD NOISE COVARIANCE =====
         % Get channel study
         sStudyChannel = bst_get('Study', iStudyChannel);
         
@@ -225,7 +221,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         OPTIONS.NoiseCovMat = NoiseCovMat;
         OPTIONS.ChannelTypes  = {ChannelMat.Channel.Type};
         OPTIONS.DataFile      = DataFile;
-        OPTIONS.DataTime      = Time;
+        OPTIONS.DataTime      = DataMat.Time;
         OPTIONS.Channel       = ChannelMat.Channel;
         OPTIONS.Data          = DataMat.F;
         OPTIONS.ChannelFlag   = DataMat.ChannelFlag;
