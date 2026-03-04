@@ -289,12 +289,18 @@ function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
     
     errMessage = '';
 
+    % If no MEG and no EEG selected
+    if isempty(OPTIONS.DataTypes)
+        errMessage = 'Please select at least one modality.';
+        return;
+    end
+
     isShared = isempty(iDatas);
     if isShared
         errMessage = 'Cannot compute shared kernels with this method.';
         return
     end
-    
+
     % Get channel studies
     [~, iChanStudies] = bst_get('ChannelForStudy', unique(iStudies));
     sChanStudies = bst_get('Study', iChanStudies);
@@ -304,11 +310,21 @@ function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
         errMessage = 'No channel file available.';
         return;
     end
+
     % Check head model
     if any(cellfun(@isempty, {sChanStudies.HeadModel}))
         errMessage = 'No head model available.';
         return;
     end
+
+    % Check that head model is surface
+    for iStudy = 1:length(sChanStudies)
+        if ~strcmp(sChanStudies(iStudy).HeadModel(sChanStudies(iStudy).iHeadModel).HeadModelType, 'surface')
+            errMessage = [ 'MEM only support surface headmodel.' 10];
+            return;
+        end
+    end
+
     % Check noise covariance
     for i = 1:length(sChanStudies)
         if isempty(sChanStudies(i).NoiseCov) || ~isfield(sChanStudies(i).NoiseCov(1), 'FileName') || isempty(sChanStudies(i).NoiseCov(1).FileName)
@@ -329,14 +345,7 @@ function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
         return;
     end
 
-    % If no MEG and no EEG selected
-    if isempty(OPTIONS.DataTypes)
-        errMessage = 'Please select at least one modality.';
-        return;
-    end
-
-    % Check for raw files and mixed head model -- todo avoid loading so
-    % much
+    % Check for raw files and mixed head model
     for iEntry = 1:length(iStudies)
         sStudy = bst_get('Study',  iStudies(iEntry));
         isRaw  = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
@@ -344,16 +353,6 @@ function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
             errMessage = [ 'Cannot compute full results for raw files: import the files first.' 10];
             return;
         end
-
-        [~, iStudyChannel]   = bst_get('ChannelForStudy', iStudies(iEntry));
-        sStudyChannel        = bst_get('Study', iStudyChannel);
-        HeadModelFile        = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
-        HeadModel = in_bst_headmodel(HeadModelFile, 0, 'GridLoc', 'GridOrient', 'GridAtlas', 'SurfaceFile', 'MEGMethod', 'EEGMethod', 'ECOGMethod', 'SEEGMethod', 'HeadModelType');
-        if strcmpi(HeadModel.HeadModelType, 'mixed') && ~isempty(HeadModel.GridAtlas) && ~isempty(HeadModel.GridAtlas(1).Scouts)
-            errMessage = [ 'The mixed headmodel is currently only supported for the following inverse solutions: Minimum norm, dipole fitting, beamformer.' 10];
-            break;
-        end
-
     end
 end
 
