@@ -99,7 +99,7 @@ end
 % USAGE:      OPTIONS = Compute()
 %         OutputFiles = Compute(iStudies, iDatas, OPTIONS)
 %
-function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
+function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
     % Initialize returned variables
     OutputFiles = {};
     errMessage  = [];
@@ -120,58 +120,20 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         return;
     end
     % Use default options
-    if (nargin < 3) || isempty(OPTIONS)
-        OPTIONS = Def_OPTIONS;
+    if (nargin < 3) || isempty(initOPTIONS)
+        initOPTIONS = Def_OPTIONS;
     end
-
-    % Check field names of passed OPTIONS and fill missing ones with default values
-    OPTIONS = struct_copy_fields(OPTIONS, Def_OPTIONS, 0);
+    % Fill missing ones with default values
+    initOPTIONS = struct_copy_fields(initOPTIONS, Def_OPTIONS, 0);
     
-    %% ===== GET INPUT INFORMATION =====
-    isShared = isempty(iDatas);
-    if isShared
-        errMessage = 'Cannot compute shared kernels with this method.';
-        return
-    end
-    
-    % Get channel studies
-    [~, iChanStudies] = bst_get('ChannelForStudy', unique(iStudies));
-    sChanStudies = bst_get('Study', iChanStudies);
-    
-    % Check that there are channel files available
-    if any(cellfun(@isempty, {sChanStudies.Channel}))
-        errMessage = 'No channel file available.';
+    % ===== CHECK INPUT INFORMATION =====
+    errMessage = CheckInputs(iStudies, iDatas, initOPTIONS);
+    if ~isempty(errMessage)
         return;
     end
-    % Check head model
-    if any(cellfun(@isempty, {sChanStudies.HeadModel}))
-        errMessage = 'No head model available.';
-        return;
-    end
-    % Check noise covariance
-    for i = 1:length(sChanStudies)
-        if isempty(sChanStudies(i).NoiseCov) || ~isfield(sChanStudies(i).NoiseCov(1), 'FileName') || isempty(sChanStudies(i).NoiseCov(1).FileName)
-            errMessage = 'No noise covariance matrix available.';
-            return;
-        end
-    end
-
-    % Check that at least one modality is available
-    [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies);
-    if isempty(AllMod)
-        % If only NIRS sensors
-        if isOnlyNirs
-            errMessage = ['To estimate sources for NIRS, use process:' 10 'NIRS > Sources > Compute sources' 10 'NIRSTORM plugin is required'];
-        else
-            errMessage = 'No valid sensor types to estimate sources: please calculate an appropriate headmodel.';
-        end
-        return;
-    end
-
-    %% ===== SELECT INVERSE METHOD =====
-    % Select method
-    if OPTIONS.DisplayMessages
-        % Interface to edit options
+    
+    % Interface to edit options
+    if initOPTIONS.DisplayMessages
         MethodOptions = gui_show_dialog('MEM options', @panel_brainentropy, [], [],  be_main());
         % Canceled by user
         if isempty(MethodOptions)
@@ -179,24 +141,14 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         end
 
         MethodOptions.SourceOrient{1} = 'fixed';
-        OPTIONS = struct_copy_fields(OPTIONS, MethodOptions, 1);
+        initOPTIONS = struct_copy_fields(initOPTIONS, MethodOptions, 1);
     end
 
-    % If no MEG and no EEG selected
-    if isempty(OPTIONS.DataTypes)
-        errMessage = 'Please select at least one modality.';
-        return;
-    end
+    % Set file comment 
+    [initOPTIONS.Comment, strMethod] = GetModalityComment(initOPTIONS.DataTypes);
 
-    % COMMENT 
-    [OPTIONS.Comment, strMethod] = GetModalityComment(OPTIONS.DataTypes);
-
-    %% ===== LOOP ON INPUT FILES =====
-    % Initializations
-    initOPTIONS = OPTIONS;
-    % Display progress bar
+    % ===== LOOP ON INPUT FILES =====
     bst_progress('start', 'Compute sources', 'Initialize...', 0, 3*length(iStudies) + 1);
-    % Process each input
     for iEntry = 1:length(iStudies)
         OPTIONS = initOPTIONS;
         
@@ -354,6 +306,59 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
     db_save();
     % Hide progress bar
     bst_progress('stop');
+end
+
+%% ===== CHECK INPUTS =====
+function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
+    
+    errMessage = '';
+
+    isShared = isempty(iDatas);
+    if isShared
+        errMessage = 'Cannot compute shared kernels with this method.';
+        return
+    end
+    
+    % Get channel studies
+    [~, iChanStudies] = bst_get('ChannelForStudy', unique(iStudies));
+    sChanStudies = bst_get('Study', iChanStudies);
+    
+    % Check that there are channel files available
+    if any(cellfun(@isempty, {sChanStudies.Channel}))
+        errMessage = 'No channel file available.';
+        return;
+    end
+    % Check head model
+    if any(cellfun(@isempty, {sChanStudies.HeadModel}))
+        errMessage = 'No head model available.';
+        return;
+    end
+    % Check noise covariance
+    for i = 1:length(sChanStudies)
+        if isempty(sChanStudies(i).NoiseCov) || ~isfield(sChanStudies(i).NoiseCov(1), 'FileName') || isempty(sChanStudies(i).NoiseCov(1).FileName)
+            errMessage = 'No noise covariance matrix available.';
+            return;
+        end
+    end
+    
+    % Check that at least one modality is available
+    [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies);
+    if isempty(AllMod)
+        % If only NIRS sensors
+        if isOnlyNirs
+            errMessage = ['To estimate sources for NIRS, use process:' 10 'NIRS > Sources > Compute sources' 10 'NIRSTORM plugin is required'];
+        else
+            errMessage = 'No valid sensor types to estimate sources: please calculate an appropriate headmodel.';
+        end
+        return;
+    end
+
+    % If no MEG and no EEG selected
+    if isempty(OPTIONS.DataTypes)
+        errMessage = 'Please select at least one modality.';
+        return;
+    end
+
 end
 
 %% ===== GET MODALITY COMMENT =====
