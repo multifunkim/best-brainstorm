@@ -105,7 +105,7 @@ end
 function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
     % Initialize returned variables
     OutputFiles = {};
-    errMessage = [];
+    errMessage  = [];
 
     % Default options settings
     Def_OPTIONS = struct(...
@@ -191,15 +191,9 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         return;
     end
 
-    % Tags corresponding to the different methods
-    methodTag = panel_inverse_2018('GetMethodComment', OPTIONS.InverseMethod, OPTIONS.InverseMeasure);
-   
-    %% ===== COMMENT =====
-    % Base comment: "METHOD: MODALITIES"
-    if isempty(OPTIONS.Comment)
-        OPTIONS.Comment = [methodTag, ': ' GetModalityComment(OPTIONS.DataTypes) ' (Full)'];
-    end
-    
+    % COMMENT 
+    [OPTIONS.Comment, strMethod] = GetModalityComment(OPTIONS.DataTypes);
+
     %% ===== LOOP ON INPUT FILES =====
     % Initializations
     initOPTIONS = OPTIONS;
@@ -215,7 +209,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         % Get study structure
         iStudy = iStudies(iEntry);
         sStudy = bst_get('Study', iStudy);
-        
+
         % Is it a Raw file?
         isRaw = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
         if isRaw
@@ -346,13 +340,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
         %% ===== SAVE RESULTS FILE =====
         bst_progress('text', 'Saving results...');
         bst_progress('inc', 1);
-        % ===== OUTPUT FILENAME =====
-        % Add method name
-        strMethod = methodTag;
-        % Add modality
-        for i = 1:length(OPTIONS.DataTypes)
-            strMethod = [strMethod, '_', file_standardize(OPTIONS.DataTypes{i})];
-        end
 
         % Output folder
         OutputDir = bst_fileparts(file_fullpath(DataFile));
@@ -416,20 +403,26 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS)
 end
 
 %% ===== GET MODALITY COMMENT =====
-function Comment = GetModalityComment(Modalities)
+function [Comment, strMethod] = GetModalityComment(Modalities)
+
     % Replace "MEG GRAD+MEG MAG" with "MEG ALL"
     if all(ismember({'MEG GRAD', 'MEG MAG'}, Modalities))
         Modalities = setdiff(Modalities, {'MEG GRAD', 'MEG MAG'});
         Modalities{end+1} = 'MEG ALL';
-    end
+    end 
+
     % Loop to build comment
-    Comment = '';
+    Comment     = 'MEM :';
+    strMethod   = 'MEM';
+
     for im = 1:length(Modalities)
         if (im >= 2)
             Comment = [Comment, '+'];
         end
         Comment = [Comment, Modalities{im}];
+        strMethod = [strMethod, '_', file_standardize(Modalities{im})];
     end    
+    Comment = [Comment, ' (Full)'];
 end
 
 function [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies)
