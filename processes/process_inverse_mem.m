@@ -103,8 +103,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
     OutputFiles = {};
     errMessage  = [];
 
-    cleanupObj = onCleanup(@() cleanupRoutine());
-
     % Default options settings
     Def_OPTIONS = struct(...
         'InverseMethod',       'mem', ... % A string that specifies the imaging method
@@ -126,7 +124,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
     end
     % Fill missing ones with default values
     initOPTIONS = struct_copy_fields(initOPTIONS, Def_OPTIONS, 0);
-    
+    cleanupObj  = onCleanup(@() cleanupRoutine());
+
     % ===== CHECK INPUT INFORMATION =====
     errMessage = CheckInputs(iStudies, iDatas, initOPTIONS);
     if ~isempty(errMessage)
@@ -486,6 +485,4 @@ function cleanupRoutine()
     % Hide progress bar 
     bst_progress('removeimage');
     bst_progress('stop');
-
-    disp('')
 end
