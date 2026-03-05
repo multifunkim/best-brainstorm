@@ -103,6 +103,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
     OutputFiles = {};
     errMessage  = [];
 
+    cleanupObj = onCleanup(@() cleanupRoutine());
+
     % Default options settings
     Def_OPTIONS = struct(...
         'InverseMethod',       'mem', ... % A string that specifies the imaging method
@@ -216,6 +218,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         bst_progress('inc', 1);
 
         [Results, OPTIONS] = be_main(HeadModel, OPTIONS);
+
         if isempty(Results)
             errMessage = [ 'The inverse function returned an empty structure.' 10];
             break;
@@ -282,9 +285,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
 
     % Save database
     db_save();
-    % Hide progress bar
-    bst_progress('removeimage');
-    bst_progress('stop');
 end
 
 %% ===== CHECK INPUTS =====
@@ -480,4 +480,12 @@ function [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCov
     % Apply average reference operator on both sides of the noise covariance matrix
     NoiseCovMat.NoiseCov = sMontage.Matrix * NoiseCovMat.NoiseCov * sMontage.Matrix';
 
+end
+
+function cleanupRoutine()
+    % Hide progress bar 
+    bst_progress('removeimage');
+    bst_progress('stop');
+
+    disp('')
 end
