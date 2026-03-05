@@ -148,6 +148,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
 
     % ===== LOOP ON INPUT FILES =====
     bst_progress('start', 'Compute sources', 'Initialize...', 0, 3*length(iStudies) + 1);
+    bst_progress('setimage', 'plugins/brainentropy_logo.png');
+
     for iEntry = 1:length(iStudies)
         OPTIONS = initOPTIONS;
 
@@ -281,6 +283,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
     % Save database
     db_save();
     % Hide progress bar
+    bst_progress('removeimage');
     bst_progress('stop');
 end
 

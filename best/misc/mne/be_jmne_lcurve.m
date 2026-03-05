@@ -129,9 +129,6 @@ function [Kermel, J, alpha] = be_jmne_lcurve(obj, OPTIONS, sfig)
         alpha  = alpha(Index);
     end
 
-    if ~OPTIONS.automatic.stand_alone
-        bst_progress('stop');
-    end
     fprintf('done. \n');
     
     if OPTIONS.optional.display
