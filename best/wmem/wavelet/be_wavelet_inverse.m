@@ -133,4 +133,8 @@ if OPTIONS.optional.verbose
     fprintf(' done in %5.2f seconds.\n',time_it_ends);
 end
 
+if ~OPTIONS.automatic.stand_alone
+    bst_progress('stop');
+end
+
 end

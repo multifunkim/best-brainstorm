@@ -127,6 +127,10 @@ else
     end
 end
 
+if ~isStandAlone
+    bst_progress('stop');
+end
+
 % store the results where it should be
 if strcmp(OPTIONS.mandatory.pipeline, 'wMEM') && OPTIONS.wavelet.single_box
     ImageGridAmp = [];
