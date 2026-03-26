@@ -1,5 +1,6 @@
 function varargout = process_inverse_mem( varargin )
-% PROCESS_INVERSE: Compute an inverse model.
+% PROCESS_INVERSE_MEM: Compute inverse model using Maximum Entropy on the
+% Mean (MEM)
 
 % @=============================================================================
 % This software is part of the Brainstorm software:
@@ -19,14 +20,13 @@ function varargout = process_inverse_mem( varargin )
 % For more information type "brainstorm license" at command prompt.
 % =============================================================================@
 %
-% Authors: Francois Tadel, 2012-2014
+% Authors: Edouard Delaire, 2026
 
 eval(macro_method);
 end
 
-
 %% ===== GET DESCRIPTION =====
-function sProcess = GetDescription() %#ok<DEFNU>
+function sProcess = GetDescription()
     % ===== PROCESS =====
     % Description the process
     sProcess.Comment     = 'Compute sources: BEst';
@@ -54,117 +54,435 @@ function sProcess = GetDescription() %#ok<DEFNU>
     sProcess.options.sensortypes.Value   = 'MEG, MEG MAG, MEG GRAD, EEG';
 end
 
-
 %% ===== FORMAT COMMENT =====
-function Comment = FormatComment(sProcess) %#ok<DEFNU>
+function Comment = FormatComment(sProcess)
     Comment = sProcess.Comment;
 end
 
-
 %% ===== RUN =====
-function OutputFiles = Run(sProcess, sInputs) %#ok<DEFNU>
+function OutputFiles = Run(sProcess, sInputs)
     OutputFiles = {};
     
-    % ===== GET OPTIONS =====
-    % Default inverse options
-    OPTIONS = process_inverse_2018('Compute');
-    % MEM options
-    if ~isfield(sProcess.options.mem.Value, 'MEMpaneloptions')
+    % Get options edited by the user
+    if ~isfield(sProcess.options.mem.Value, 'MEMpaneloptions') || isempty(sProcess.options.mem.Value.MEMpaneloptions)
         fprintf('\n\n***\tError in BEst process\t***\n\tyou MUST edit options before lauching the MEM.\n\n')
         return
     end
-    OPTIONS.MEMpaneloptions =   sProcess.options.mem.Value.MEMpaneloptions;
 
-    % Get options
-    OPTIONS.InverseMethod   =   'mem';
-    OPTIONS.SourceOrient    =   {'fixed'};
-
-    % Output
-    iStudies = [sInputs.iStudy];
-    iDatas   = [sInputs.iItem];
-    OPTIONS.ComputeKernel = 0;
-
-    % Get modalities in channel files
-    AllSensorTypes = unique(cat(2, sInputs.ChannelTypes));
-    AllSensorTypes = intersect(AllSensorTypes, {'MEG MAG', 'MEG GRAD', 'MEG', 'EEG', 'ECOG', 'SEEG'});
-    if any(ismember(AllSensorTypes, {'MEG MAG', 'MEG GRAD'}))
-        AllSensorTypes = setdiff(AllSensorTypes, 'MEG');
-    end
-    % Get valid modalities in head models
-    allChanFiles = unique({sInputs.ChannelFile});
-    for i = 1:length(allChanFiles)
-        % Get study
-        sStudy = bst_get('ChannelFile', allChanFiles{i});
-        % Check if all the files exist
-        if isempty(sStudy.Channel) || isempty(sStudy.HeadModel) || isempty(sStudy.iHeadModel) || isempty(sStudy.NoiseCov)
-            bst_report('Error', sProcess, [], 'No channel file, noise covariance, or headmodel or for at least one of the files.');
-            return;
-        end
-        % Remove all the modalities that do not exist in the headmodels
-        if isempty(sStudy.HeadModel(sStudy.iHeadModel).MEGMethod)
-            AllSensorTypes = setdiff(AllSensorTypes, {'MEG', 'MEG MAG', 'MEG GRAD'});
-        end
-        if isempty(sStudy.HeadModel(sStudy.iHeadModel).EEGMethod)
-            AllSensorTypes = setdiff(AllSensorTypes, {'EEG'});
-         end
-        if isempty(sStudy.HeadModel(sStudy.iHeadModel).ECOGMethod)
-            AllSensorTypes = setdiff(AllSensorTypes, {'ECOG'});
-        end
-        if isempty(sStudy.HeadModel(sStudy.iHeadModel).SEEGMethod)
-            AllSensorTypes = setdiff(AllSensorTypes, {'SEEG'});
-        end
-    end
-    % Selected sensor types
-    OPTIONS.DataTypes = strtrim(str_split(sProcess.options.sensortypes.Value, ',;'));
-    if ismember('MEG', OPTIONS.DataTypes) && any(ismember({'MEG GRAD','MEG MAG'}, AllSensorTypes))
-        OPTIONS.DataTypes = union(setdiff(OPTIONS.DataTypes, 'MEG'), {'MEG MAG', 'MEG GRAD'});
-    end
-    OPTIONS.DataTypes = intersect(OPTIONS.DataTypes, AllSensorTypes);
-    if isempty(OPTIONS.DataTypes)
-        strTypes = '';
-        for i = 1:length(AllSensorTypes)
-            if (i > 1)
-                strTypes = [strTypes, ', '];
-            end
-            strTypes = [strTypes, AllSensorTypes{i}];
-        end
-        bst_report('Error', sProcess, [], ['No valid sensor type selected.' 10 'Valid options are: ' strTypes]);
-        return;
-    end
-    % Comment
-    if isfield(sProcess.options, 'comment') && isfield(sProcess.options.comment, 'Value') && ~isempty(sProcess.options.comment.Value)
-        OPTIONS.Comment = sProcess.options.comment.Value;
-    end
-
+    % Inverse options
+    OPTIONS = Compute();
+    OPTIONS.InverseMethod   = 'mem';
+    OPTIONS.Comment         = sProcess.options.comment.Value;
+    OPTIONS.MEMpaneloptions = sProcess.options.mem.Value.MEMpaneloptions;
+    OPTIONS.DataTypes       = strsplit(strrep(sProcess.options.sensortypes.Value,' ',''), ',');
     OPTIONS.DisplayMessages = 0;
 
+    % Prepare input
+    iStudies = [sInputs.iStudy];
+    iDatas   = [sInputs.iItem];
+
     % ===== START COMPUTATION =====
-    % Call head modeler
-    [AllFiles, errMessage] = process_inverse_2018('Compute', iStudies, iDatas, OPTIONS);
-    % Report errors
-    if isempty(AllFiles) && ~isempty(errMessage)
-        bst_report('Error', sProcess, sInputs, errMessage);
-        return;
-    elseif ~isempty(errMessage)
-        bst_report('Warning', sProcess, sInputs, errMessage);
-    end
-    % For shared kernels: Return only the source files corresponding to the recordings that were in input
-    if isempty(iDatas)
-        % Loop on the output files (all links): find the ones that match the input
-        for iFile = 1:length(AllFiles)
-            % Resolve link: get data file
-            [ResFile, DataFile] = file_resolve_link(AllFiles{iFile});
-            % Find one that matches the inputs
-            iInput = find(file_compare({sInputs.FileName}, file_short(DataFile)));
-            % If founf: add to the output files
-            if ~isempty(iInput)
-                OutputFiles{end+1} = AllFiles{iFile};
-            end
+    [OutputFiles, errMessage] = Compute(iStudies, iDatas, OPTIONS);
+
+    % Report errors 
+    if ~isempty(errMessage)
+        if isempty(AllFiles)
+            bst_report('Error', sProcess, sInputs, errMessage);
+        else
+            bst_report('Warning', sProcess, sInputs, errMessage);
         end
-    else
-        OutputFiles = AllFiles;
     end
 end
 
-            
+%% ===== COMPUTE INVERSE SOLUTION =====
+% USAGE:      OPTIONS = Compute()
+%         OutputFiles = Compute(iStudies, iDatas, OPTIONS)
+%
+function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
+    % Initialize returned variables
+    OutputFiles = {};
+    errMessage  = [];
 
+    % Default options settings
+    Def_OPTIONS = struct(...
+        'InverseMethod',       'mem', ... % A string that specifies the imaging method
+        'InverseMeasure',      '', ...
+        'SourceOrient',        'fixed', ...
+        'DataTypes',           [], ...     % Cell array of strings: list of modality to use for the reconstruction (MEG, MEG GRAD, MEG MAG, EEG)
+        'Comment',             '', ...     % Inverse solution description (optional)
+        'DisplayMessages',     1, ...
+        'ComputeKernel',       0);  
+
+    % Return default options
+    if (nargin < 2)
+        OutputFiles = Def_OPTIONS;
+        return;
+    end
+    % Use default options
+    if (nargin < 3) || isempty(initOPTIONS)
+        initOPTIONS = Def_OPTIONS;
+    end
+    % Fill missing ones with default values
+    initOPTIONS = struct_copy_fields(initOPTIONS, Def_OPTIONS, 0);
+    cleanupObj  = onCleanup(@() cleanupRoutine());
+
+    % ===== CHECK INPUT INFORMATION =====
+    errMessage = CheckInputs(iStudies, iDatas, initOPTIONS);
+    if ~isempty(errMessage)
+        return;
+    end
+    
+    % Interface to edit options
+    if initOPTIONS.DisplayMessages
+        MethodOptions = gui_show_dialog('MEM options', @panel_brainentropy, [], [],  be_main());
+        % Canceled by user
+        if isempty(MethodOptions)
+            return
+        end
+
+        MethodOptions.SourceOrient{1} = 'fixed';
+        initOPTIONS = struct_copy_fields(initOPTIONS, MethodOptions, 1);
+    end
+
+    % Set file comment 
+    [initOPTIONS, strMethod] = GetModalityComment(initOPTIONS);
+
+    % ===== LOOP ON INPUT FILES =====
+    bst_progress('start', 'Compute sources', 'Initialize...', 0, 3*length(iStudies) + 1);
+    bst_progress('setimage', 'plugins/brainentropy_logo.png');
+
+    for iEntry = 1:length(iStudies)
+        OPTIONS = initOPTIONS;
+
+        % Get study structure
+        iStudy = iStudies(iEntry);
+        sStudy = bst_get('Study', iStudy);
+
+        % ===== LOAD DATA FILES =====
+        bst_progress('text', 'Loading data...');
+        DataFile    = sStudy.Data(iDatas(iEntry)).FileName;
+        DataMat     = in_bst_data(DataFile, 'ChannelFlag', 'Time', 'nAvg', 'Leff', 'F');
+
+        % Get channel file for study
+        [sChannel, iStudyChannel]   = bst_get('ChannelForStudy', iStudy);
+        ChannelMat                  = in_bst_channel(sChannel.FileName, 'Channel', 'Projector');
+
+        % ===== CHANNEL FLAG =====
+        % Get the list of good channels
+        GoodChannel = good_channel(ChannelMat.Channel, DataMat.ChannelFlag, OPTIONS.DataTypes);
+        if isempty(GoodChannel)
+            errMessage = [ 'No good channels available.' 10];
+            break;
+        end
+        
+        % Get channel study
+        sStudyChannel = bst_get('Study', iStudyChannel);
+        
+        % ===== LOAD HEAD MODEL =====
+        bst_progress('text', 'Loading head model...');
+        bst_progress('inc', 1);
+        HeadModelFile   = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
+        HeadModel       = in_bst_headmodel(HeadModelFile, 0, 'Gain', 'GridLoc', 'GridOrient', 'GridAtlas', 'SurfaceFile', 'MEGMethod', 'EEGMethod', 'ECOGMethod', 'SEEGMethod', 'HeadModelType');
+
+        % ===== Load NoiseCov file =====
+        [NoiseCovMat, errMessage] = LoadNoiseCov(sStudyChannel.NoiseCov(1).FileName, GoodChannel);
+        if ~isempty(errMessage)
+            break;
+        end
+
+        % ===== Apply current SSP projectors =====
+        [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat);
+
+        % ===== Select only good channels =====
+        [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat);
+
+        % ===== Apply average reference: separately SEEG, ECOG, EEG =====
+        [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat);
+
+        % ===== Finalize Options struct =====
+        OPTIONS.NoiseCovMat = NoiseCovMat;
+        OPTIONS.ChannelTypes  = {ChannelMat.Channel.Type};
+        OPTIONS.DataFile      = DataFile;
+        OPTIONS.DataTime      = DataMat.Time;
+        OPTIONS.Channel       = ChannelMat.Channel;
+        OPTIONS.Data          = DataMat.F;
+        OPTIONS.ChannelFlag   = DataMat.ChannelFlag;
+        OPTIONS.ResultFile    = [];
+        OPTIONS.HeadModelFile = HeadModelFile;
+        OPTIONS.GoodChannel   = GoodChannel;
+        OPTIONS.FunctionName  = 'mem';
+        
+        % ===== COMPUTE INVERSE SOLUTION =====
+        bst_progress('text', 'Estimating sources...');
+        bst_progress('inc', 1);
+
+        [Results, OPTIONS] = be_main(HeadModel, OPTIONS);
+
+        if isempty(Results)
+            errMessage = [ 'The inverse function returned an empty structure.' 10];
+            break;
+        end
+
+        % ===== SAVE RESULTS FILE =====
+        bst_progress('text', 'Saving results...');
+        bst_progress('inc', 1);
+
+        % Output file
+        OutputDir  = bst_fileparts(file_fullpath(OPTIONS.DataFile));
+        ResultFile = bst_process('GetNewFilename', OutputDir, ['results_', strMethod]);
+
+        % ===== CREATE FILE STRUCTURE =====
+        ResultsMat = db_template('resultsmat');
+        ResultsMat = struct_copy_fields(ResultsMat, Results, 1);
+        ResultsMat.Comment       = [OPTIONS.Comment ' 2018'];
+        ResultsMat.Function      = OPTIONS.FunctionName;
+        ResultsMat.Time          = OPTIONS.DataTime;
+        ResultsMat.DataFile      = OPTIONS.DataFile;
+        ResultsMat.HeadModelFile = HeadModelFile;
+        ResultsMat.HeadModelType = HeadModel.HeadModelType;
+        ResultsMat.ChannelFlag   = DataMat.ChannelFlag;
+        ResultsMat.GoodChannel   = GoodChannel;
+        ResultsMat.SurfaceFile   = file_short(HeadModel.SurfaceFile);        
+        ResultsMat.GridLoc       = [];
+        ResultsMat.GridAtlas     = HeadModel.GridAtlas;
+        ResultsMat.nAvg          = DataMat.nAvg;
+        ResultsMat.Leff          = DataMat.Leff;
+        ResultsMat.Options       = OPTIONS;
+        % History
+        ResultsMat = bst_history('add', ResultsMat, 'compute', ['Source estimation: ' OPTIONS.InverseMethod]);
+        % Make file comment unique
+        if ~isempty(sStudy.Result)
+            ResultsMat.Comment = file_unique(ResultsMat.Comment, {sStudy.Result.Comment});
+        end
+        % Save new file structure
+        bst_save(ResultFile, ResultsMat, 'v6');
+
+        % ===== REGISTER NEW FILE =====
+        % Create new results structure
+        newResult = db_template('results');
+        newResult.Comment       = ResultsMat.Comment;
+        newResult.FileName      = file_short(ResultFile);
+        newResult.DataFile      = ResultsMat.DataFile;
+        newResult.isLink        = 0;
+        newResult.HeadModelType = ResultsMat.HeadModelType;
+        % Add new entry to the database
+        iResult = length(sStudy.Result) + 1;
+        sStudy.Result(iResult) = newResult;
+        % Update Brainstorm database
+        bst_set('Study', iStudy, sStudy);
+        
+        % ===== UPDATE DISPLAY =====
+        % Update tree
+        panel_protocols('UpdateNode', 'Study', iStudy);
+
+        % Store output filename
+        OutputFiles{end+1} = newResult.FileName;
+
+        % Expand data node
+        panel_protocols('SelectNode', [], newResult.FileName);
+    end
+
+    % Save database
+    db_save();
+end
+
+%% ===== CHECK INPUTS =====
+function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
+    
+    errMessage = '';
+
+    % If no MEG and no EEG selected
+    if isempty(OPTIONS.DataTypes)
+        errMessage = 'Please select at least one modality.';
+        return;
+    end
+
+    isShared = isempty(iDatas);
+    if isShared
+        errMessage = 'Cannot compute shared kernels with this method.';
+        return
+    end
+
+    % Get channel studies
+    [~, iChanStudies] = bst_get('ChannelForStudy', unique(iStudies));
+    sChanStudies = bst_get('Study', iChanStudies);
+    
+    % Check that there are channel files available
+    if any(cellfun(@isempty, {sChanStudies.Channel}))
+        errMessage = 'No channel file available.';
+        return;
+    end
+
+    % Check head model
+    if any(cellfun(@isempty, {sChanStudies.HeadModel}))
+        errMessage = 'No head model available.';
+        return;
+    end
+
+    % Check that head model is surface
+    for iStudy = 1:length(sChanStudies)
+        if ~strcmp(sChanStudies(iStudy).HeadModel(sChanStudies(iStudy).iHeadModel).HeadModelType, 'surface')
+            errMessage = [ 'MEM only support surface headmodel.' 10];
+            return;
+        end
+    end
+
+    % Check noise covariance
+    for i = 1:length(sChanStudies)
+        if isempty(sChanStudies(i).NoiseCov) || ~isfield(sChanStudies(i).NoiseCov(1), 'FileName') || isempty(sChanStudies(i).NoiseCov(1).FileName)
+            errMessage = 'No noise covariance matrix available.';
+            return;
+        end
+    end
+    
+    % Check that at least one modality is available
+    [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies);
+    if isempty(AllMod)
+        % If only NIRS sensors
+        if isOnlyNirs
+            errMessage = ['To estimate sources for NIRS, use process:' 10 'NIRS > Sources > Compute sources' 10 'NIRSTORM plugin is required'];
+        else
+            errMessage = 'No valid sensor types to estimate sources: please calculate an appropriate headmodel.';
+        end
+        return;
+    end
+
+    % Check for raw files and mixed head model
+    for iEntry = 1:length(iStudies)
+        sStudy = bst_get('Study',  iStudies(iEntry));
+        isRaw  = strcmpi(sStudy.Data(iDatas(iEntry)).DataType, 'raw');
+        if isRaw
+            errMessage = [ 'Cannot compute full results for raw files: import the files first.' 10];
+            return;
+        end
+    end
+end
+
+%% ===== GET MODALITY COMMENT =====
+function [OPTIONS, strMethod] = GetModalityComment(OPTIONS)
+    
+    Modalities = OPTIONS.DataTypes;
+
+    % Replace "MEG GRAD+MEG MAG" with "MEG ALL"
+    if all(ismember({'MEG GRAD', 'MEG MAG'}, Modalities))
+        Modalities = setdiff(Modalities, {'MEG GRAD', 'MEG MAG'});
+        Modalities{end+1} = 'MEG ALL';
+    end 
+    
+    if isempty(OPTIONS.Comment)
+        OPTIONS.Comment     = ['MEM : ' strjoin(Modalities, '+'), ' (Full)'];
+    end
+
+    strMethod   = file_standardize(['MEM_', strjoin(Modalities, '_')]);
+end
+
+function [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies)
+    % Loop through all the channel files to find the available modalities and head model types
+    AllMod = {};
+    for i = 1:length(sChanStudies)
+        AllMod = union(AllMod, sChanStudies(i).Channel.DisplayableSensorTypes);
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).MEGMethod)
+            AllMod = setdiff(AllMod, {'MEG GRAD','MEG MAG','MEG'});
+        end
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).EEGMethod)
+            AllMod = setdiff(AllMod, {'EEG'});
+        end
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).ECOGMethod)
+            AllMod = setdiff(AllMod, {'ECOG'});
+        end
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).SEEGMethod)
+            AllMod = setdiff(AllMod, {'SEEG'});
+        end
+        if isempty(sChanStudies(i).HeadModel(sChanStudies(i).iHeadModel).NIRSMethod)
+            AllMod = setdiff(AllMod, {'NIRS'});
+        end
+    end
+    
+    % Check for the presence of NIRS
+    isOnlyNirs = all(ismember(AllMod, {'NIRS'}));
+    % Keep only MEG and EEG
+    if any(ismember(AllMod, {'MEG GRAD','MEG MAG'}))
+        AllMod = intersect(AllMod, {'MEG GRAD', 'MEG MAG', 'EEG', 'ECOG', 'SEEG'});
+    else
+        AllMod = intersect(AllMod, {'MEG', 'EEG', 'ECOG', 'SEEG'});
+    end
+end
+
+function [NoiseCovMat, errMessage] = LoadNoiseCov(FileName, GoodChannel)
+    errMessage = '';
+
+    NoiseCovMat = load(file_fullpath(FileName));
+    % Check for NaN values in the noise covariance
+    if ~isempty(NoiseCovMat.NoiseCov) && (nnz(isnan(NoiseCovMat.NoiseCov(GoodChannel, GoodChannel))) > 0)
+        errMessage = [ 'The noise covariance contains NaN values. Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
+        return
+    end
+
+    % Check that bad channels in noise covariance are the same as bad channels in recordings
+    badChNoiseCov_goodChRecs = intersect(find(and(~any(NoiseCovMat.NoiseCov,1), ~any(NoiseCovMat.NoiseCov,2)')), GoodChannel);
+    if ~isempty(badChNoiseCov_goodChRecs)
+        errMessage = [ 'Bad channels in noise covariance are different from bad channels in recordings.' 10 'Please re-calculate it after tagging correctly the bad channels in the recordings.' 10];
+        return;
+    end
+end
+
+function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
+% Apply SSP from ChannelMat to HeadModel and NoiseCovMat
+
+    if isempty(ChannelMat.Projector)
+        return
+    end
+
+    % Rebuild projector in the expanded form (I-UUt)
+    Proj = process_ssp2('BuildProjector', ChannelMat.Projector, [1 2]);
+    % Apply projectors
+    if ~isempty(Proj)
+        % Get all sensors for which the gain matrix was successfully computed
+        iGainSensors = find(sum(isnan(HeadModel.Gain), 2) == 0);
+        % Apply projectors to gain matrix
+        HeadModel.Gain(iGainSensors,:) = Proj(iGainSensors,iGainSensors) * HeadModel.Gain(iGainSensors,:);
+        % Apply SSPs on both sides of the noise covariance matrix
+        NoiseCovMat.NoiseCov = Proj * NoiseCovMat.NoiseCov * Proj';
+    end
+end
+
+function [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat)
+    
+    ChannelMat.Channel = ChannelMat.Channel(GoodChannel);
+    HeadModel.Gain = HeadModel.Gain(GoodChannel, :);
+
+
+    NoiseCovMat.NoiseCov = NoiseCovMat.NoiseCov(GoodChannel, GoodChannel);
+    if isfield(NoiseCovMat, 'FourthMoment') && ~isempty(NoiseCovMat.FourthMoment)
+        NoiseCovMat.FourthMoment = NoiseCovMat.FourthMoment(GoodChannel, GoodChannel);
+    end
+    if isfield(NoiseCovMat, 'nSamples') && ~isempty(NoiseCovMat.nSamples)
+        NoiseCovMat.nSamples = NoiseCovMat.nSamples(GoodChannel, GoodChannel);
+    end
+
+    DataMat.F  = DataMat.F(GoodChannel,:);
+    DataMat.ChannelFlag = DataMat.ChannelFlag(GoodChannel);
+end
+
+function [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat)
+% Apply average reference: separately SEEG, ECOG, EEG
+    if ~any(ismember(unique({ChannelMat.Channel.Type}), {'EEG','ECOG','SEEG'}))
+        % Nothing to do
+        return;
+    end
+
+    % Create average reference montage
+    ChannelFlag     = ones(length(ChannelMat.Channel),1);
+    sMontage        = panel_montage('GetMontageAvgRef', [], ChannelMat.Channel, ChannelFlag , 0);
+    %  Apply average reference operator on the gain matrix
+    HeadModel.Gain  = sMontage.Matrix * HeadModel.Gain;
+    % Apply average reference operator on both sides of the noise covariance matrix
+    NoiseCovMat.NoiseCov = sMontage.Matrix * NoiseCovMat.NoiseCov * sMontage.Matrix';
+
+end
+
+function cleanupRoutine()
+    % Hide progress bar 
+    bst_progress('removeimage');
+    bst_progress('stop');
+end

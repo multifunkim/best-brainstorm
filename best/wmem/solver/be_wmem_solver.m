@@ -103,7 +103,7 @@ obj = struct('ImageGridAmp', []);
 
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
-if strcmp( OPTIONS.automatic.Comment(1:3), 'MEM' )
+if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1:3), 'MEM')
     OPTIONS.automatic.Comment   =   ['w' OPTIONS.optional.Comment];
 end
 
