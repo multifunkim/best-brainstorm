@@ -107,7 +107,7 @@ obj = struct();
 
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
-if strcmp( OPTIONS.automatic.Comment(1:3), 'MEM' )
+if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1:3), 'MEM')
     OPTIONS.automatic.Comment   =   ['c' OPTIONS.optional.Comment];
 end
 
