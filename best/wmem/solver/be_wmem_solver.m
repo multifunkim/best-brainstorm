@@ -1,4 +1,4 @@
-function [Results, OPTIONS] = be_wmem_solver(HeadModel, OPTIONS, Results)
+function [Results, OPTIONS] = be_wmem_solver(HeadModel, OPTIONS)
 % MEMSOLVER: Maximum Entropy on the Mean solution.
 %
 % NOTES:
@@ -87,7 +87,6 @@ function [Results, OPTIONS] = be_wmem_solver(HeadModel, OPTIONS, Results)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 %%
-global MEMglobal
 
 % pipeline starts here:
 if OPTIONS.optional.verbose

@@ -1,4 +1,4 @@
-function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS, Results)
+function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS)
 % cMEMSOLVER: Maximum Entropy on the Mean solution.
 %
 % NOTES:
