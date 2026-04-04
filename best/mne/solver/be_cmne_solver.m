@@ -68,7 +68,7 @@ if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
 end
 %% ===== Channels ===== %% 
 % we retrieve the channels name and the data
-[OPTIONS, obj]  = be_main_channel(HeadModel, obj, OPTIONS);
+OPTIONS             = be_main_channel(HeadModel, OPTIONS);
 
 %% ===== AVG reference ===== %% 
 % we average reference the data

@@ -1,4 +1,4 @@
-function [OPTIONS, obj] = be_main_channel(HeadModel, obj, OPTIONS)
+function [OPTIONS] = be_main_channel(HeadModel, OPTIONS)
 % BE_MAIN_CHANNEL retrieves the indices of channels for each modality contained
 %   in OPTIONS.DataTypes. The main objective is to fill OPTIONS.Modality with
 %   the appropriate information
@@ -59,7 +59,6 @@ end
 
 %% ---- MAIN LOOP ---- ALL MODALITIIES ---- %%
 cnt  = 0;
-obj.nb_channels = 0;
     
 for ii = 1 : nMod
     
@@ -77,7 +76,6 @@ for ii = 1 : nMod
     if isempty( OPTIONS.automatic.Modality(ii).channels )
         error(['MEM > Unable to find appropriate data. No '  OPTIONS.mandatory.DataTypes{ii} ' channels found.']);
     end
-    obj.nb_channels = cnt;
     
     if isempty(HeadModel)
         CH = OPTIONS.automatic.Modality(ii).nchannels;

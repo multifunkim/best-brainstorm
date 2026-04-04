@@ -105,7 +105,7 @@ end
 
 %% ===== Channels ===== %% 
 % we retrieve the channels name and the data
-[OPTIONS, obj]  = be_main_channel(HeadModel, obj, OPTIONS);
+OPTIONS                         = be_main_channel(HeadModel, OPTIONS);
 
 %% ===== Sources ===== %% 
 % we verify that all sources in the model have good leadfields

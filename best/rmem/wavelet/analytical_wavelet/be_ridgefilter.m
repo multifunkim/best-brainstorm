@@ -101,9 +101,9 @@ end
 
 % Compute ridges
 if isstandalone && ~isprocess
-    OPTIONS     =   be_main_channel([], [], OPTIONS);
+    OPTIONS     =   be_main_channel([], OPTIONS);
 elseif isprocess
-    OPTIONS     =   be_main_channel(1, [], OPTIONS);
+    OPTIONS     =   be_main_channel(1, OPTIONS);
 end
 nScalo      =   zeros( OPTIONS.wavelet.nb_levels+1, size(OPTIONS.automatic.Modality(1).data,2) );
 for ii  = 1 : numel(OPTIONS.mandatory.DataTypes)

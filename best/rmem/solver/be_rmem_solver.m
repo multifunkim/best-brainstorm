@@ -113,7 +113,7 @@ end
 
 %% ===== Channels ===== %% 
 
-[OPTIONS, obj] = be_main_channel(HeadModel, obj, OPTIONS);
+OPTIONS        = be_main_channel(HeadModel, OPTIONS);
 
 %% ===== Sources ===== %% 
 
@@ -377,7 +377,7 @@ function [OPTIONS, obj] = get_ridge_data(OPTIONS, obj, ii)
 %         OPTIONS.optional.iData  =   OPTIONS.optional.iData / RATIO;        
         
         % CREATE NEW MODALITY FIELD IN OPTIONS.AUTOMATIC
-        [OPTIONS, obj]  =   be_main_channel(0, obj, OPTIONS);
+        OPTIONS         =   be_main_channel(0, OPTIONS);
         OPTIONS         =   rmfield( OPTIONS, 'temporary' );
         OPTIONS.automatic.Modality.covariance   =   [];
         OPTIONS.solver.NoiseCov                 =   noise_covariance;

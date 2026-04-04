@@ -148,7 +148,6 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
     obj_const.gain          = obj.gain;
     obj_const.nb_sources    = obj.nb_sources;
-    obj_const.nb_channels   = obj.nb_channels;
     obj_const.nb_dipoles    = obj.nb_dipoles;
 
     OPTIONS.automatic   = rmfield(OPTIONS.automatic,'Modality');
