@@ -6,10 +6,8 @@ function [OPTIONS, VertConn] = be_vertex_connectivity(HeadModel, OPTIONS)
 
     if isfield(HeadModel, 'VertConn') && ~isempty(HeadModel.VertConn)
         VertConn = HeadModel.VertConn;    
-        return; 
     elseif isfield(HeadModel, 'vertex_connectivity') && ~isempty(HeadModel.vertex_connectivity)
         VertConn = HeadModel.vertex_connectivity; 
-        return;
     elseif isfield(HeadModel, 'Vertices') && isfield(HeadModel, 'Faces')
         VertConn = be_get_neighbor_matrix( size(HeadModel.Vertices,1), HeadModel.Faces);
     else
