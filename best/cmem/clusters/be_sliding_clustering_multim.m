@@ -45,7 +45,7 @@ function [OPTIONS, SCR, CLS] = be_sliding_clustering_multim(obj, OPTIONS, wtbOPT
 
 
 tW = OPTIONS.clustering.MSP_window; % window size
-[dum, tS, nT] = size( OPTIONS.automatic.Modality(1).data ); % data length
+[~, tS, nT] = size( OPTIONS.automatic.Modality(1).data ); % data length
 
 % Pads data left and right
 for ii  = 1 : numel( OPTIONS.mandatory.DataTypes )

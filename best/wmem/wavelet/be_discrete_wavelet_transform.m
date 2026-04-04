@@ -65,7 +65,7 @@ switch (OPTIONS.wavelet.type)
         else
             filter = ['rdw' num2str(OPTIONS.wavelet.vanish_moments)];
         end
-        [Ns,No] = size(Data);
+        [~,No] = size(Data);
         Nj    = fix(log2(No));
         Njs   = max(Nj-3,1);
         SData = zeros(size(Data));

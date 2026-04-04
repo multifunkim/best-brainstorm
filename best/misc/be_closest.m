@@ -4,7 +4,7 @@ function [idX] = be_closest(vecGuess, vecRef)
 
 idX     =   [];
 for ii  =   1 : numel(vecGuess)
-    [dum, idX(ii)]  =   min( abs(vecGuess(ii)-vecRef) );     
+    [~, idX(ii)]  =   min( abs(vecGuess(ii)-vecRef) );     
 end
 
 return

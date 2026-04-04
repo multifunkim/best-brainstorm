@@ -53,7 +53,7 @@ function [out_SDW, info] = be_sdwanalysis(in_C, Nb_Level, filter)
         disp('!! invalid complex filter: we use sdw2')
         filter = 'sdw2';
     end
-    [H0, G0, synF, synG] = be_makeqfb(filter);
+    [H0, G0, ~, ~] = be_makeqfb(filter);
 
     % let us compute the SDW transform:
     dim_H0 = size(H0,2);      % Get number of columns.

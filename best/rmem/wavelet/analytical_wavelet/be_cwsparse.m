@@ -52,7 +52,7 @@ dt      = diff( OPTIONS.mandatory.DataTime([1 2]) );
 
 [M,N] = size(data);
 % --- definition de l'ondelette
-[wmin,wmax] = Morse_support_spectral(n,m);
+[~,wmax] = Morse_support_spectral(n,m);
 [tmin,tmax] = Morse_support_temporel(n,m);
 f0          = (((n+0.5)/m).^(1/m))/2/pi; % frequence centrale de l'ondelette de Cauchy
 % --- echelles min et max

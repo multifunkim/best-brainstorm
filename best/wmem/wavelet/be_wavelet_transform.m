@@ -62,11 +62,11 @@ switch (OPTIONS.wavelet.type)
         else
         filter = ['rdw' num2str(OPTIONS.wavelet.vanish_moments)];
         end
-        [Ns,No] = size(Data);
+        [~,No] = size(Data);
         Nj    = fix(log2(No));
         Njs   = max(Nj-3,1);
         WData = zeros(size(Data));
-        [WData, info ] = be_dwanalysis( Data, Njs, filter );
+        [WData, ~ ] = be_dwanalysis( Data, Njs, filter );
         %WData(:,1:No/2^Njs) = 0.0;
         OPTIONS.automatic.scales(1,:) = 1:Njs;
         OPTIONS.automatic.scales(2,:) = 3./2.^(1:Njs)/4;

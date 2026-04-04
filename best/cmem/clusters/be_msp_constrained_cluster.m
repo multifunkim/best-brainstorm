@@ -201,7 +201,7 @@ while STOP == 0
                 if isempty(ambClus{k}) == 0
                     
                     scoreK = sum(CPM(ambClus{k},clusters{k}),2)./length(clusters{k});          % score of cluster k
-                    [c,ia,ib] = intersect(ambClus{k},ambiguous);                               % ib is estimated so that ambiguous(ib) = ambClusK;
+                    [~,~,ib] = intersect(ambClus{k},ambiguous);                               % ib is estimated so that ambiguous(ib) = ambClusK;
                     class(ib,k) = scoreK;
                     
                 end
@@ -219,7 +219,7 @@ while STOP == 0
             % 4.2- Look for minima of the criterion to discriminate clusters 
             for k = 1:length(ambiguous)
                 
-                [tmp,i] = sort(-class(k,:));                                  % i contains the indices of the row k of the class ordered by increasing order
+                [~,i] = sort(-class(k,:));                                  % i contains the indices of the row k of the class ordered by increasing order
                 stop2 = 0;
                 l = 0;
                 while stop2 == 0

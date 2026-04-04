@@ -11,7 +11,7 @@ nbF         =   numel( OPTIONS.wavelet.freqs_analyzed);
 O           =   OPTIONS;
 O.ridges.scalo_threshold    =   0;
 O.ridges.min_duration       =   3;
-[d, GRPS]   =   be_localmaxima(SLICE, O);
+[~, GRPS]   =   be_localmaxima(SLICE, O);
 GRPS        =   cellfun( @(a) a+( Tlims(1)-1 )*nbF, GRPS, 'uni', 0 );
 OPTIONS.automatic.Modality(iD).ridges_baseline  =   GRPS;
 
@@ -29,7 +29,7 @@ Tlims       =   be_closest( OPTIONS.optional.TimeSegment([1 end]), OPTIONS.manda
 SLICE       =   SCALO(:,Tlims(1):Tlims(2));
 
 % get maxima
-[d, GRPS]   =   be_localmaxima(SLICE, OPTIONS);
+[~, GRPS]   =   be_localmaxima(SLICE, OPTIONS);
 GRPS        =   cellfun(@(a) a + ( Tlims(1)-1 )*nbF, GRPS, 'uni', 0);
 OPTIONS.automatic.Modality(iD).ridges_data  =   GRPS;
 

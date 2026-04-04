@@ -51,7 +51,7 @@ if size(in_SDW,2)==1
     in_SDW = in_SDW'; flip = 1;
 end
 
-[Nb_line, extend, trial] = size(in_SDW);  % Dimensions of the input.
+[~, extend, ~] = size(in_SDW);  % Dimensions of the input.
 
 %Division des parties reelles et imaginaires.
 in_re   = real(in_SDW); in_im   = imag(in_SDW);

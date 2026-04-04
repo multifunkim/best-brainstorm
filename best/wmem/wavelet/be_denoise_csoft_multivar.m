@@ -93,12 +93,12 @@ function [WDataDen,OPTIONS] = be_denoise_csoft_multivar(...
         else
         filter = ['rdw' num2str(OPTIONS.wavelet.vanish_moments)];
         end
-        [Ns,No] = size(Data);
+        [~,No] = size(Data);
         Nj    = fix(log2(No));
         Njs   = max(Nj-3,1);
         SData = zeros(size(Data));
         WData = zeros(size(Data));
-        [WData, info ] = be_dwanalysis( Data, Njs, filter );
+        [WData, ~ ] = be_dwanalysis( Data, Njs, filter );
         WData(:,1:No/2^Njs) = 0.0;
         SData(:,1:No/2^Njs) = WData(:,1:No/2^Njs);
         wavbsl          = WData;
@@ -107,7 +107,7 @@ function [WDataDen,OPTIONS] = be_denoise_csoft_multivar(...
 
     % Init
     N_level = size(OPTIONS.automatic.scales,2);
-    [Nc,Nw] = size(wavdata);
+    [~,Nw] = size(wavdata);
     dw = cell(N_level,1);
     killed =[];
 
@@ -118,7 +118,7 @@ function [WDataDen,OPTIONS] = be_denoise_csoft_multivar(...
         WDatat_sc               = wavdata(:,end/(2^i_sc)+1:end/(2^(i_sc-1)));
         CovData                 = cov(WDatat_sc',1);    
         %  U(column)*S(i,i)*V(line)
-        [svd_u,svd_d,svd_v]     = svd(CovData);            
+        [svd_u,svd_d,~]     = svd(CovData);            
         diagD                   = diag(svd_d);
         EnergyConst             = 1;                
         accsumD                 = sqrt(cumsum(diagD.^2)/sum(diagD.^2));
@@ -231,7 +231,7 @@ function [WDataDen,OPTIONS] = be_denoise_csoft_multivar(...
         end        
         for j=1:size(OPTIONS.automatic.scales,2)
             fprintf(' j=%d (%d%% to 0)',j,fix(OPTIONS.automatic.scales(3,j)));
-            if mod(j,3)==0, fprintf('\n'); else fprintf(','); end
+            if mod(j,3)==0, fprintf('\n'); else, fprintf(','); end
         end
         fprintf('\n');
     end

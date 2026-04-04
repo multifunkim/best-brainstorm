@@ -45,11 +45,11 @@ function [groups, CtF] = be_make_groups( ridges, time, OPTIONS )
 % Get appropriate time segment
 [nbL, nbS]  = size( ridges );
 frqA        = OPTIONS.wavelet_freqs_analyzed;
-[dum, smp1] = min( abs(OPTIONS.time_analyzed(1) - time) );
-[dum, smp2] = min( abs(OPTIONS.time_analyzed(end) - time) );
+[~, smp1] = min( abs(OPTIONS.time_analyzed(1) - time) );
+[~, smp2] = min( abs(OPTIONS.time_analyzed(end) - time) );
 % Get appropriate frequency range
-[dum, frq1] = min( abs(OPTIONS.ridges_frequency_range(1) - frqA) );
-[dum, frq2] = min( abs(OPTIONS.ridges_frequency_range(2) - frqA) );
+[~, frq1] = min( abs(OPTIONS.ridges_frequency_range(1) - frqA) );
+[~, frq2] = min( abs(OPTIONS.ridges_frequency_range(2) - frqA) );
 
 ridges( :, [1:max(1,smp1-1) min(smp2+1,nbS):end] ) = 0; 
 ridges( [1:max(1,frq2-1) min(frq1+1,nbL):end], : ) = 0;
@@ -90,12 +90,12 @@ else
     
     if numel(lgts)
         crit = lgts .* strs;
-        [dum, indx] = sort(crit);
+        [~, indx] = sort(crit);
         groups(:) = groups(fliplr(indx));
         CtF(:) = CtF(fliplr(indx));
         
         if numel(nrjs)>1&&sum(nrjs> OPTIONS.ridges_energy_threshold*NRJ)
-            [dum, II] = find(cumsum(nrjs)>OPTIONS.ridges_energy_threshold*NRJ);
+            [~, II] = find(cumsum(nrjs)>OPTIONS.ridges_energy_threshold*NRJ);
             if numel(II)>1
                 groups( II(2) : end ) = [];
                 CtF( II(2) : end ) = [];

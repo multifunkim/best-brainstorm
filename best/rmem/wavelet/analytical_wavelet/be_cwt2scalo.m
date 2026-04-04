@@ -11,7 +11,7 @@ for ii = 1 : Chan
     switch OPTIONS.ridges.method
         case 'inhouse'
             % Compute ridge maps
-            [SKLO, www, OPTIONS]    = be_get_scalogram( WData{ii}, OPTIONS);
+            [SKLO, ~, OPTIONS]    = be_get_scalogram( WData{ii}, OPTIONS);
         case 'LillyOlhede2010'
             [ir,jr]                 =   ridgewalk( full(WData{ii}(lim1:lim2,:))', fliplr(OPTIONS.wavelet.freqs_analyzed(lim1:lim2)) ); 
             SKLO                    =   zeros( lim2-lim1+1,numel(OPTIONS.mandatory.DataTime) );

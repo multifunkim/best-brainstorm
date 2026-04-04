@@ -47,7 +47,7 @@ for ii      =   1 : nbS
         case 'correlation'
             nei     =   corrcoef( src_ampl([ii; neigh1_idx(ii,1:numel(n))'],:)' );            
         case {'plv','iplv'}
-            [d,nei] =   be_get_plv( src_ampl([ii; neigh1_idx(ii,1:numel(n))'],:), OPTIONS.sources.metric, 1 );            
+            [~,nei] =   be_get_plv( src_ampl([ii; neigh1_idx(ii,1:numel(n))'],:), OPTIONS.sources.metric, 1 );            
     end
     neigh1_val( ii,1:numel(n) ) =   single( abs( nei(2:end,1) ) );     
 end
@@ -94,7 +94,7 @@ for ii = 1 : nbS-1
     nei2        =   neigh1_idx( id_max2,:);  
     nei2        =   long_in_short( nei2(~~nei2) ); 
     neis        =   [nei1(~~nei1) nei2(~~nei2)];
-    [dum,ix1]   =   unique(neis, 'first');
+    [~,ix1]   =   unique(neis, 'first');
     neis        =   neis( sort(ix1) )';
     neis( neis==id_max1 ) = [];
     
@@ -102,7 +102,7 @@ for ii = 1 : nbS-1
     dtable  =   zeros( 2, numel(neis) );
     in11    =   ~~nei1;
     dtable(1, 1:sum(in11)) =   neigh1_val( id_max1, in11 );
-    [dum,in21,in22] =   intersect(nei2, neis);
+    [~,in21,in22] =   intersect(nei2, neis);
     dtable(2, in22) =   neigh1_val( id_max2, in21 );
     dtable(3,:)     =   mean( dtable );
     
@@ -121,7 +121,7 @@ for ii = 1 : nbS-1
         itable(~~itable)  =   long_in_short( itable(~~itable) );
         [r,c]   =   find( id_max1 == itable );
         if r
-            [s,s]   =   sort(r);
+            [~,s]   =   sort(r);
             r       =   r(s);
             c       =   c(s);
             neigh1_val( (c-1)*(size(neigh1_idx,1)) + neis(r) ) = dtable(3,r);
@@ -130,7 +130,7 @@ for ii = 1 : nbS-1
         
         [r2,c2] =   find( id_max2 == itable(r,:) );
         if r2
-            [s,s]   =   sort(r2);
+            [~,s]   =   sort(r2);
             r2      =   r2(s);
             c2      =   c2(s);
             neigh1_val( (c2-1)*(size(neigh1_idx,1)) + neis(r2) ) = 0;
@@ -139,7 +139,7 @@ for ii = 1 : nbS-1
         % find neighborhood with only max2
         [r3,c3] =   find( id_max2 == itable(avaix,:) );
         if r3
-            [s,s]   =   sort(r3);
+            [~,s]   =   sort(r3);
             r3      =   avaix( r3(s) );
             c3      =   c3(s);
             neigh1_idx( (c3-1)*(size(neigh1_idx,1)) + neis( r3 ) ) = short_in_long( id_max1 );

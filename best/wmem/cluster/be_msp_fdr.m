@@ -38,7 +38,7 @@ if ischar(OPTIONS.clustering.MSP_scores_threshold) && strcmp(OPTIONS.clustering.
     % FDR
     p_vH0 = p_valuesH0(scores,param_Beta.alpha,param_Beta.beta);
     scores(:,2)    = p_vH0;
-    [p_vout,Isout] = sort(p_vH0);
+    [~,Isout] = sort(p_vH0);
     scores         = scores(Isout,:);
     scores(:,3)    = (1:NS)/NS*P_VALUE;
     scores_select  = scores(scores(:,3)-scores(:,2)>=0,:);

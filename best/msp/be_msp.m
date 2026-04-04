@@ -77,7 +77,7 @@ gamma = Gstruct.U'*Mn;
 R2 = diag(gamma*gamma');
 
 % Reorder the singular values as a function of R2.
-[temp, indices] = sort(R2,'descend');
+[~, indices] = sort(R2,'descend');
 lambda = Gstruct.lambda(indices);
 
 % Select the columns of B as a function of the ordered singular values up

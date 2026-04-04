@@ -35,7 +35,7 @@ function [Kernel, J, alpha] = be_jmne(obj, OPTIONS)
 % -------------------------------------------------------------------------
 
 G = obj.gain; 
-[n_capt, n_sour] = size(G);
+[n_capt, ~] = size(G);
 
 % selection of the data:
 M = obj.data;

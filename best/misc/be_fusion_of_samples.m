@@ -51,13 +51,13 @@ if length(OPTIONS.mandatory.DataTypes)==2
     VAL = zeros(2,length(C12));
     TAB(1,:) = C12;
 
-    [tt,tt1,tt2]= intersect(C1,C12);
+    [~,tt1,tt2]= intersect(C1,C12);
     TAB(2,tt2)  = tt1; 
     VAL(1,tt2) = V1(tt1);
-    [tt,tt1,tt2]=intersect(C2,C12);
+    [~,tt1,tt2]=intersect(C2,C12);
     TAB(3,tt2)  = tt1; 
     VAL(2,tt2) = V2(tt1);
-    [v,i]=sort((VAL(1,:)+VAL(2,:))/2,'descend');
+    [~,i]=sort((VAL(1,:)+VAL(2,:))/2,'descend');
     OPTIONS.automatic.selected_samples = TAB(:,i);
 
     selected_jk1=OPTIONS.automatic.Modality(1).selected_jk;

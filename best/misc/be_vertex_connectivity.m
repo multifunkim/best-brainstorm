@@ -31,7 +31,7 @@ function [OPTIONS, VertConn] = be_vertex_connectivity(HeadModel, OPTIONS)
     else
 
         stdINF      = bst_get('Study', studID);
-        [dim, subID]= bst_get('Subject', stdINF.BrainStormSubject);
+        [~, subID]= bst_get('Subject', stdINF.BrainStormSubject);
         cxfile      = bst_get('SurfaceFileByType', subID, 'Cortex');
         VCfile      = be_fullfile(protoc.SUBJECTS, cxfile.FileName);
 

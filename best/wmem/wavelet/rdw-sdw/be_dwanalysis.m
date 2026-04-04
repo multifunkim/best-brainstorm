@@ -64,9 +64,9 @@ function [ out_SDW, info ] = be_dwanalysis( in_C, Nb_Level, filter )
     end
     if reel_fil==1
         
-        [H0, G0, synF, synG, Jcase] = be_makeqfbreal(filter);
+        [H0, G0, ~, ~, Jcase] = be_makeqfbreal(filter);
     else
-        [H0, G0, synF, synG, Jcase] = be_makeqfb(filter);
+        [H0, G0, ~, ~, Jcase] = be_makeqfb(filter);
     end
   
     % let us compute the SDW transform:

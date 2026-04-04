@@ -35,6 +35,6 @@ Nt = size(data,2);
 data = data-repmat(mean(data,2),1,Nt);
 COV  = data*data'/(Nt-1);
 
-[U,D,V] = svd(COV);
+[U,D,~] = svd(COV);
 W = diag(sqrt(1./diag(D)))*U';
 C = U*diag(sqrt(diag(D)));
