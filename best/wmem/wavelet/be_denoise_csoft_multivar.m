@@ -1,5 +1,4 @@
-function [WDataDen,OPTIONS] = be_denoise_csoft_multivar(...
-    wavdata, info_extension, wavscale, roomnoise, OPTIONS)
+function [WDataDen, OPTIONS] = be_denoise_csoft_multivar(wavdata, info_extension, wavscale, roomnoise, OPTIONS)
 % Garrote shrinkage with the possibility to use an extra recording to estimate the noise level.
 %
 %   INPUTS: 
@@ -97,7 +96,6 @@ function [WDataDen,OPTIONS] = be_denoise_csoft_multivar(...
         Nj    = fix(log2(No));
         Njs   = max(Nj-3,1);
         SData = zeros(size(Data));
-        WData = zeros(size(Data));
         [WData, ~ ] = be_dwanalysis( Data, Njs, filter );
         WData(:,1:No/2^Njs) = 0.0;
         SData(:,1:No/2^Njs) = WData(:,1:No/2^Njs);
