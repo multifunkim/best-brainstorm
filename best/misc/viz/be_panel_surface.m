@@ -1,4 +1,4 @@
-function varargout = panel_surface(varargin)
+function varargout = be_panel_surface(varargin)
 % PANEL_SURFACE: Panel to load and plot surfaces.
 % 
 % USAGE:  bstPanel = panel_surface('CreatePanel')

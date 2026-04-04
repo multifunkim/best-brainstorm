@@ -1,10 +1,10 @@
-function [outV outW] = ConvAnalysis(in_C, H, G, extend, Jcase)
+function [outV, outW] = be_convanalysis(in_C, H, G, extend, Jcase)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Project Name: EOG Correction Artifact
 % Filename:     ConvAnalysis.m
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% Modified by:  Benoit Décarie, Jr Eng.
+% Modified by:  Benoit DÃ©carie, Jr Eng.
 % Created on:   July 21st, 2008
 % Revised on:   August 1st, 2008
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -1,4 +1,4 @@
-function [index] = jk2index(N, j, k)
+function [index] = be_jk2index(N, j, k)
 % JK2INDEX obtains the wavelet index at position (j,k) 
 %
 %   INPUTS:

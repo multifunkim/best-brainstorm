@@ -61,7 +61,7 @@ switch OPTIONS.mandatory.pipeline
             % we normalize the cov of each modalities (we regularize the cov matrices)
             for ii = 1 : numel( OPTIONS.automatic.Modality )
                 if OPTIONS.solver.NoiseCov_method == 3
-                    [CovU CovD CovV] = svd(noise_var( OPTIONS.automatic.Modality(ii).channels,OPTIONS.automatic.Modality(ii).channels ));
+                    [CovU, CovD, CovV] = svd(noise_var( OPTIONS.automatic.Modality(ii).channels,OPTIONS.automatic.Modality(ii).channels ));
                     OPTIONS.automatic.Modality(ii).covariance = CovU(:,1:5)*CovD(1:5,1:5)*CovV(:,1:5)';
                 else
                     OPTIONS.automatic.Modality(ii).covariance = noise_var( OPTIONS.automatic.Modality(ii).channels,OPTIONS.automatic.Modality(ii).channels );

@@ -1,8 +1,5 @@
 function [hFig] = be_viz_topo(channels, data)
 
-global GlobalData
-
-
 % ===== SET UP NEW FIGURE =====
 FigureId            =   db_template('FigureId');
 FigureId.Type       =   '3DViz';

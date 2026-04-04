@@ -42,7 +42,7 @@ switch (OPTIONS.wavelet.type)
         Nj = fix(log2(No));
         Noff = min(Nj-1,3);
         WData = zeros(size(Data));
-        for i = 1:Ns;
+        for i = 1:Ns
             WData(i,:) = FWT_PO(Data(i,:),Noff,filtre);
         end
         WData(:,1:No/2^(Nj-Noff)) = 0.0;

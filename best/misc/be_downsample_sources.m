@@ -57,7 +57,7 @@ clear cortex src_ampl
 Z   =   zeros( nbS-1, 3, 'single' );
 nIx =   single( 1:nbS );
 time=   [];
-avL =   logical( ones(1,nbS) );
+avL =   true(1,nbS);
 for ii = 1 : nbS-1
     
     % get max - light

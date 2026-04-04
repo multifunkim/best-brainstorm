@@ -36,8 +36,7 @@ function Seed = be_find_nuclei(APM,Vertices,VertConn,AlreadyClustered,Scale,OPTI
 % -------------------------------------------------------------------------
 
 % Sort APM coefficients
-[tmp,I] = sort(-APM);
-clear tmp
+[~, I] = sort(-APM);
 
 % Neighbourhood matrix at a specific scale
 % Adds connectivity on the diagonal (there should be zeros on the diagonal of nm
@@ -87,7 +86,7 @@ end
 clear AlreadyClustered  ToCluster SelSeed ;
 
 if OPTIONS.optional.verbose
-	fprintf(' done\n', OPTIONS.mandatory.pipeline);
+	fprintf(' done\n');
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2- Search for seeds
@@ -111,7 +110,7 @@ for k = 1:length(clusters)
 end
 
 if OPTIONS.optional.verbose
-	fprintf(' done\n', OPTIONS.mandatory.pipeline);
+	fprintf(' done\n');
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 3- Cleaning of the seeds
@@ -144,10 +143,10 @@ while stop == 0
 end
 
 if OPTIONS.optional.verbose
-	fprintf(' done\n', OPTIONS.mandatory.pipeline);
+	fprintf(' done\n');
 end
 
-return 
+end 
 
 
 

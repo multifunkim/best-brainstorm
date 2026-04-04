@@ -44,7 +44,7 @@ end
 % we wavelet denoise (if selected) 
 % Equation (3) in ref.[1]
 if OPTIONS.wavelet.shrinkage
-    for ii = 1 : numel(OPTIONS.mandatory.DataTypes);
+    for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
         if OPTIONS.optional.verbose, fprintf('%s, wavelet processing of the %s\n',...
                 OPTIONS.mandatory.pipeline,OPTIONS.mandatory.DataTypes{ii}); 
         end        

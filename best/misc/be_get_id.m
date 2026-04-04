@@ -1,4 +1,4 @@
-function [iDs, iDi] = get_ID( OPTIONS )
+function [iDs, iDi] = be_get_id( OPTIONS )
 %GET_ID uses brainstorm built-in functions to get the study to which belongs the 
 % current dataset
 %

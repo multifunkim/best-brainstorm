@@ -1,4 +1,4 @@
-function [clusters,time] = be_downsample_sources(OPTIONS,FILE)
+function [clusters,time] = be_downsample_sources2(OPTIONS,FILE)
 % BE_DOWNSAMPLE_SOURCES: data-driven parcellisation of a sources intensity
 % matrix. Preliminary step for computing connectivity measures
 %

@@ -41,7 +41,7 @@ function [out]= be_sdwsynthesis(in_SDW, Nb_Level, filter)
         disp('!! invalid complex filter: we use sdw2')
         filter = 'sdw2';
     end
-    [analF analG H0 G0] = be_makeqfb(filter);
+    [analF, analG, H0, G0] = be_makeqfb(filter);
 
     % data are 1xN or NcxN with N = power of 2
     flip = 0;
@@ -50,7 +50,7 @@ function [out]= be_sdwsynthesis(in_SDW, Nb_Level, filter)
     end
     
     
-    [Nb_line extend trial] = size(in_SDW);  % Dimensions of the input.
+    [Nb_line, extend, trial] = size(in_SDW);  % Dimensions of the input.
     dim_H0 = size(H0,2);            % Get number of columns.
     Jcase    = (dim_H0-2)/2;        % Number of zero momentum of the HP filter.
 

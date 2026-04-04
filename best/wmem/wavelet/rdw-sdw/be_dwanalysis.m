@@ -38,11 +38,11 @@ function [ out_SDW, info ] = be_dwanalysis( in_C, Nb_Level, filter )
 % WE ASSUME THE DATA IN 2 DIMENSIONS
     % data are 1xN or NcxN with N = power of 2
     reel_fil=0;
-    [Nb_line Nb_samples] = size(in_C);
+    [Nb_line, Nb_samples] = size(in_C);
     flip = 0;
     if Nb_samples == 1
     in_C = in_C'; 
-    [Nb_line Nb_samples] = size(in_C);
+    [Nb_line, Nb_samples] = size(in_C);
     flip = 1;
     end
     % we validate the filter
@@ -64,9 +64,9 @@ function [ out_SDW, info ] = be_dwanalysis( in_C, Nb_Level, filter )
     end
     if reel_fil==1
         
-        [H0 G0 synF synG Jcase] = be_makeqfbreal(filter);
+        [H0, G0, synF, synG, Jcase] = be_makeqfbreal(filter);
     else
-        [H0 G0 synF synG Jcase] = be_makeqfb(filter);
+        [H0, G0, synF, synG, Jcase] = be_makeqfb(filter);
     end
   
     % let us compute the SDW transform:
@@ -99,7 +99,7 @@ function [ out_SDW, info ] = be_dwanalysis( in_C, Nb_Level, filter )
     if reel_fil == 1
          for i = 1:Nb_Level
             if mod(m,2)==0 
-                [temp(:,1:m/2,:) temp(:,m/2+1:m,:)] = ...
+                [temp(:,1:m/2,:), temp(:,m/2+1:m,:)] = ...
                 be_convanalysisreal( temp_2, H0, G0, m, Jcase); 
                 temp_2=temp(:,1:m/2,:);
                 m = bitshift(m,-1);
@@ -109,19 +109,19 @@ function [ out_SDW, info ] = be_dwanalysis( in_C, Nb_Level, filter )
     else
     for i = 1:Nb_Level
         if mod(m,2)==0
-            [temp_im(:,1:m/2,:) temp_im(:,m/2+1:m,:)] = ...
+            [temp_im(:,1:m/2,:), temp_im(:,m/2+1:m,:)] = ...
                 be_convanalysis( out_re, H_im, G_im, m, Jcase);
-            [temp_re(:,1:m/2,:) temp_re(:,m/2+1:m,:)] = ...
+            [temp_re(:,1:m/2,:), temp_re(:,m/2+1:m,:)] = ...
                 be_convanalysis( out_im, H_im, G_im, m, Jcase);
-            [re(:,1:m/2,:) re(:,m/2+1:m,:)] = ...
+            [re(:,1:m/2,:), re(:,m/2+1:m,:)] = ...
                 be_convanalysis( out_re, H_re, G_re, m, Jcase); 
-            [im(:,1:m/2,:) im(:,m/2+1:m,:)] = ...
+            [im(:,1:m/2,:), im(:,m/2+1:m,:)] = ...
                 be_convanalysis( out_im, H_re, G_re, m, Jcase);
 
             out_re(:,1:m,:) = re(:,1:m,:) - temp_re(:,1:m,:);
             out_im(:,1:m,:) = im(:,1:m,:) + temp_im(:,1:m,:);
        
-            [temp(:,1:m/2,:) temp(:,m/2+1:m,:)] = ...
+            [temp(:,1:m/2,:), temp(:,m/2+1:m,:)] = ...
             be_convanalysis( temp_2, H0, G0, m, Jcase); 
             temp_2=temp(:,1:m/2,:);
             m = bitshift(m,-1);

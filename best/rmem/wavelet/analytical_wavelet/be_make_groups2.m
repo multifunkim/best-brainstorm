@@ -44,7 +44,7 @@ function [GROUPS, CTF, OPTIONS] = be_make_groups2( RIDGES, OPTIONS, varargin )
 
 
 ID = 1;
-if numel(varargin) == 1 && isempty(varargin{1});
+if numel(varargin) == 1 && isempty(varargin{1})
     ID = varargin{1};
 end
 

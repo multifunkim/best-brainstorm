@@ -62,7 +62,7 @@ else
         groups(:)   =   groups(fliplr(indx));
         ctf(:)      =   ctf(fliplr(indx));
         
-        if numel(nrjs)>1&&sum(nrjs> energy*NRJ);
+        if numel(nrjs)>1&&sum(nrjs> energy*NRJ)
             [dum, II] = find(cumsum(nrjs)>energy*NRJ);
             if numel(II)>1
                 groups( II(2) : end )   = [];

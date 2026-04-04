@@ -1,4 +1,4 @@
-function [J, varargout] = solve_wmn(M, G , W, varargin)
+function [J, varargout] = be_solve_wmn(M, G , W, varargin)
 %SOLVE_WMN solves the WMN inverse problem
 %   J = SOLVE_WMN( M, G, W) solves the WMN inverse problem and
 %   returns the activations in J. M is a column vector representing the 

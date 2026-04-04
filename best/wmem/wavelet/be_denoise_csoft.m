@@ -69,7 +69,7 @@ killed =[];
         j=1; fprintf(' j=%d (%d%% to 0),',j,fix(OPTIONS.automatic.scales(3,j)));
         for j=2:size(OPTIONS.automatic.scales,2)
             fprintf(' j=%d (%d%% to 0)',j,fix(OPTIONS.automatic.scales(3,j)));
-            if mod(j,3)==0, fprintf('\n'); else fprintf(','); end;
+            if mod(j,3)==0, fprintf('\n'); else fprintf(','); end
         end
         fprintf('\n');
     end

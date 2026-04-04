@@ -50,9 +50,9 @@ if (is_threshold && is_fdr && isempty(OPTIONS.optional.clustering.clusters))
         [param, OPTIONS] = be_msp_h0beta_fit(BSL, OPTIONS.automatic.Modality(ii).gain_struct, OPTIONS);
         OPTIONS.automatic.Modality(ii).paramH0.alpha = param.alpha;
         OPTIONS.automatic.Modality(ii).paramH0.beta  = param.beta;
-        if OPTIONS.optional.verbose, fprintf('\t%s : %5.2f (alpha), %5.2f (beta)\n', OPTIONS.automatic.Modality(ii).name,param.alpha,param.beta); end;
+        if OPTIONS.optional.verbose, fprintf('\t%s : %5.2f (alpha), %5.2f (beta)\n', OPTIONS.automatic.Modality(ii).name,param.alpha,param.beta); end
         else
-        if OPTIONS.optional.verbose, fprintf('\tNo fdr possible'); end;
+        if OPTIONS.optional.verbose, fprintf('\tNo fdr possible'); end
         end
     end
     

@@ -231,7 +231,7 @@ function [WDataDen,OPTIONS] = be_denoise_csoft_multivar(...
         end        
         for j=1:size(OPTIONS.automatic.scales,2)
             fprintf(' j=%d (%d%% to 0)',j,fix(OPTIONS.automatic.scales(3,j)));
-            if mod(j,3)==0, fprintf('\n'); else fprintf(','); end;
+            if mod(j,3)==0, fprintf('\n'); else fprintf(','); end
         end
         fprintf('\n');
     end

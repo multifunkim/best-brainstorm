@@ -1,4 +1,4 @@
-function [sProcess, sInput] = build_ridge_structs(OPTIONS)
+function [sProcess, sInput] = be_build_ridge_structs(OPTIONS)
 %BUILD_RIDGE_STRUCTS translates BEst ridge signal output to Brainstorm-compatible result file
 %
 %   INPUTS:

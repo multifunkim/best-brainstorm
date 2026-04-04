@@ -1,4 +1,4 @@
-function viz(varargin)
+function be_viz(varargin)
 % This function displays the continuous time-frequency plane and linked 
 % ridges extracted using the RIDGEFILTER process. This function is  only
 % operational under brainstorm environment. A study must be selected before
