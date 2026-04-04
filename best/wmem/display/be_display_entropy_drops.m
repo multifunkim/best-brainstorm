@@ -38,16 +38,14 @@ function  be_display_entropy_drops(obj,OPTIONS)
                   'FontWeight','demi');
 
     set(hpc,'Title', 'Entropy drops', 'FontSize',8);
-
-    ax = axes('parent',hpc, ...
-    'outerPosition',[0.01 0.01 0.98 0.98]);
+    ax = axes('parent',hpc, 'outerPosition',[0.01 0.01 0.98 0.98]);
    
     if contains(OPTIONS.mandatory.pipeline,{'cMEM','cMNE'})
 
         DTs = be_closest( OPTIONS.optional.TimeSegment(1), OPTIONS.mandatory.DataTime );
         DTn = be_closest( OPTIONS.optional.TimeSegment(end), OPTIONS.mandatory.DataTime );
 
-        plot(ax,OPTIONS.automatic.DataInfo.Time(DTs:DTn), log(abs(OPTIONS.automatic.entropy_drops)),'-k','linewidth',2);
+        plot(ax,OPTIONS.mandatory.DataTime(DTs:DTn), log(abs(OPTIONS.automatic.entropy_drops)),'-k','linewidth',2);
         xlabel(ax,'time (s)'); 
 
     else

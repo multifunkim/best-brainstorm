@@ -22,7 +22,7 @@ function MEMoptions = be_option_from_bst(OPTIONS)
     MEMoptions.automatic.Comment                        =   OPTIONS.Comment;
     MEMoptions.automatic.iStudy                         =   be_get_id( MEMoptions );
     [~, MEMoptions.automatic.iItem]                     =   be_get_id( MEMoptions );
-    MEMoptions.automatic.DataInfo                       =   load( be_fullfile(MEMoptions.automatic.iProtocol.STUDIES, OPTIONS.DataFile) );
+    %MEMoptions.automatic.DataInfo                       =   load( be_fullfile(MEMoptions.automatic.iProtocol.STUDIES, OPTIONS.DataFile) );
     
     % Noise covariance
     if OPTIONS.MEMpaneloptions.solver.NoiseCov_recompute
