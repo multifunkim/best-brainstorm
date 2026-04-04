@@ -1,9 +1,5 @@
 function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS)
-% cMEMSOLVER: Maximum Entropy on the Mean solution.
-%
-% NOTES:
-%     - This function is not optimized for stand-alone command calls.
-%     - Please use the generic BST_SOURCEIMAGING function, or the GUI.a
+% be_cmem_solver: compute coherent Maximum Entropy on the Mean solution.
 %
 % INPUTS:
 %     - HeadModel  : Brainstorm head model structure
@@ -84,16 +80,6 @@ function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS)
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TO DO LIST %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%
-%%%%    INITIALIZE GLOBAL VARIABLE IF FIRST STUDY
-%%%%    CLEAR GLOBAL VARIABLE IF LAST STUDY
-%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END OF TO DO LIST %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline cMEM\n');

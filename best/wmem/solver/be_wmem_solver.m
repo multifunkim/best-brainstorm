@@ -1,9 +1,6 @@
 function [Results, OPTIONS] = be_wmem_solver(HeadModel, OPTIONS)
-% MEMSOLVER: Maximum Entropy on the Mean solution.
+% be_wmem_solver: compute wavelet Maximum Entropy on the Mean solution.
 %
-% NOTES:
-%     - This function is not optimized for stand-alone command calls.
-%     - Please use the generic BST_SOURCEIMAGING function, or the GUI.a
 %
 % INPUTS:
 %     - HeadModel  : Brainstorm head model structure

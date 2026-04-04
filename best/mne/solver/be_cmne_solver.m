@@ -1,5 +1,5 @@
 function [Results, OPTIONS] = be_cmne_solver(HeadModel, OPTIONS)
-% cMNESOLVER: Minimum Norm Estimate solution.
+% be_cmne_solver: Minimum Norm Estimate solution.
 %
 % NOTES:
 %     - This function is not optimized for stand-alone command calls.
