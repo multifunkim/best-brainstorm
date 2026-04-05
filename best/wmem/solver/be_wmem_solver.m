@@ -98,11 +98,22 @@ if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1
 end
 
 
-%% ===== Pre-whitening of the data ==== %%
-% it uses empty-room data if available
-% if PlOS one : nothing is done here
-% [OPTIONS] = be_prewhite(OPTIONS);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% EEG-MEG specific preprocessing
+if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+
+    %% ===== DC offset ===== %% 
+    % we remove the DC offset the data
+    [OPTIONS]       = be_remove_dc(OPTIONS);
+
+    %% ===== AVG reference ===== %% 
+    % we average reference the data
+    [OPTIONS]       = be_avg_reference(OPTIONS);
+
+    %% ===== Pre-whitening of the data ==== %%
+    % it uses empty-room data if available
+    % if PlOS one : nothing is done here
+    % [OPTIONS] = be_prewhite(OPTIONS);
+end
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
