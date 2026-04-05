@@ -100,30 +100,16 @@ for ii = 1 : nMod
     end
         
     %% =========================== COVARIANCE ========================== %%
-    % ====== we pick the covariance (if any) of each modality
-    % we then eliminate the OPTIONS.Baseline
     if ~isempty(OPTIONS.solver.NoiseCov)
-        NbjNoiseCov = size(OPTIONS.solver.NoiseCov,3);
-        for i_sc = 1: NbjNoiseCov
-            OPTIONS.automatic.Modality(ii).covariance(:,:,i_sc) = ...
-                OPTIONS.solver.NoiseCov(CH,CH,i_sc );
+        for i_sc = 1: size(OPTIONS.solver.NoiseCov,3)
+            OPTIONS.automatic.Modality(ii).covariance(:,:,i_sc) =  OPTIONS.solver.NoiseCov(CH, CH, i_sc);
         end
     end
     
-    
     %% ============================== GAIN ============================= %%
-    if isfield(HeadModel, 'Gain') && ~isempty(HeadModel.Gain)  
-        
-        Gain = HeadModel.Gain(CH,:);
-        
-        if isstruct(HeadModel) && isfield(HeadModel, 'GridOrient')
-            Gain = bst_gain_orient(Gain, HeadModel.GridOrient);
-        end
-        OPTIONS.automatic.Modality(ii).gain = Gain;
-        
-    
+    if isfield(HeadModel, 'Gain') && ~isempty(HeadModel.Gain)          
+        OPTIONS.automatic.Modality(ii).gain = HeadModel.Gain(CH,:);
      end      
-    
     
     %% ============================ MSP data =========================== %%
     % ====== we pick the temporal data needed for MSP
