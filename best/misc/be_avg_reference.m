@@ -34,5 +34,11 @@ function [OPTIONS] = be_avg_reference(OPTIONS)
         muM = ones(size(OPTIONS.automatic.Modality(ii).baseline,1),1)*mean(OPTIONS.automatic.Modality(ii).baseline);
         OPTIONS.automatic.Modality(ii).baseline = OPTIONS.automatic.Modality(ii).baseline - muM;
 
+        % average reference the gain matrix
+        if strcmpi(OPTIONS.mandatory.DataTypes{ii}, 'eeg')
+            avgref  =  ones( size(OPTIONS.automatic.Modality(ii).gain,1), 1) *  mean( OPTIONS.automatic.Modality(ii).gain );
+            OPTIONS.automatic.Modality(ii).gain     =   OPTIONS.automatic.Modality(ii).gain -  avgref;
+        end    
+
     end
 end
