@@ -90,9 +90,7 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
         case 'wmem' 
             [Results, OPTIONS]   = be_wmem_solver(obj, OPTIONS);
         case 'rmem' 
-            [Results, OPTIONS]   = be_rmem_solver(HeadModel, OPTIONS);
-        case 'rwmem' 
-            [Results, OPTIONS]   = be_rwmem_solver(HeadModel, OPTIONS);
+            [Results, OPTIONS]   = be_rmem_solver(obj, OPTIONS);
         case 'cmne' 
             [Results, OPTIONS]   = be_cmne_solver(obj, OPTIONS);
         otherwise
