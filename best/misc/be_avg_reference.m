@@ -26,11 +26,13 @@ function [OPTIONS] = be_avg_reference(OPTIONS)
 
     for ii = 1:numel(OPTIONS.mandatory.DataTypes)
              
-        % Compute mean along channels for every time sample
+        % Compute mean along channels for every time sample and substract from the data
         muM = ones(size(OPTIONS.automatic.Modality(ii).data,1),1)*mean(OPTIONS.automatic.Modality(ii).data);
-    
-        % subtract from data
         OPTIONS.automatic.Modality(ii).data = OPTIONS.automatic.Modality(ii).data - muM;
         
+        % Compute mean along channels for every time sample and substract from the baseline
+        muM = ones(size(OPTIONS.automatic.Modality(ii).baseline,1),1)*mean(OPTIONS.automatic.Modality(ii).baseline);
+        OPTIONS.automatic.Modality(ii).baseline = OPTIONS.automatic.Modality(ii).baseline - muM;
+
     end
 end

@@ -1,4 +1,4 @@
-function [Results, OPTIONS] = be_cmne_solver(HeadModel, OPTIONS)
+function [Results, OPTIONS] = be_cmne_solver(obj, OPTIONS)
 % be_cmne_solver: Minimum Norm Estimate solution.
 %
 % NOTES:
@@ -52,12 +52,6 @@ if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline cMNE\n');
 end 
 
-obj = struct('hfig', [] , 'hfigtab', [] );
-[obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
-
- %% Retrieve vertex connectivity - needed for clustering
-[OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
-
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   'cMNE';
 
@@ -65,20 +59,8 @@ OPTIONS.automatic.Comment       =   'cMNE';
 % we remove the DC offset the data
 if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
     [OPTIONS]       = be_remove_dc(OPTIONS);
-end
-%% ===== Channels ===== %% 
-% we retrieve the channels name and the data
-OPTIONS             = be_main_channel(HeadModel, OPTIONS);
-
-%% ===== AVG reference ===== %% 
-% we average reference the data
-if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
     [OPTIONS]       = be_avg_reference(OPTIONS);
 end
-
-%% ===== Sources ===== %% 
-% we verify that all sources in the model have good leadfields
-[OPTIONS, obj]  = be_main_sources(obj, OPTIONS);
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
@@ -87,7 +69,6 @@ end
 %% ===== Apply temporal data window  ===== %%
 % check for a time segment to be localized
 [OPTIONS] = be_apply_window( OPTIONS, [] );
-
 
 %% ===== Noise estimation ===== %%   
 [OPTIONS, obj] = be_main_data_preprocessing(obj, OPTIONS);

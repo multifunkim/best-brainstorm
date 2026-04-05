@@ -1,4 +1,4 @@
-function [Results, OPTIONS] = be_wmem_solver(HeadModel, OPTIONS)
+function [Results, OPTIONS] = be_wmem_solver(obj, OPTIONS)
 % be_wmem_solver: compute wavelet Maximum Entropy on the Mean solution.
 %
 %
@@ -85,17 +85,11 @@ function [Results, OPTIONS] = be_wmem_solver(HeadModel, OPTIONS)
 % -------------------------------------------------------------------------   
 %%
 
-% pipeline starts here:
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline wMEM\n');
 end        
 time_it_starts = tic();
         
-%% Useful variables
-obj = struct('ImageGridAmp', []);
-[obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
-
-[OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
@@ -103,13 +97,6 @@ if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1
     OPTIONS.automatic.Comment   =   ['w' OPTIONS.optional.Comment];
 end
 
-%% ===== Channels ===== %% 
-% we retrieve the channels name and the data
-OPTIONS                         = be_main_channel(HeadModel, OPTIONS);
-
-%% ===== Sources ===== %% 
-% we verify that all sources in the model have good leadfields
-[OPTIONS, obj]  = be_main_sources(obj, OPTIONS);
 
 %% ===== Pre-whitening of the data ==== %%
 % it uses empty-room data if available
@@ -140,7 +127,7 @@ OPTIONS = be_model_of_null_hypothesis(OPTIONS);
 % for the data: normalization/wavelet/denoise
 [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS);
 if OPTIONS.optional.display
-    [obj.hfig, obj.hfigtab] = be_display_time_scale_boxes(obj,OPTIONS);
+    [obj.hfig, obj.hfigtab] = be_display_time_scale_boxes(obj, OPTIONS);
 end
 
 %% ===== Compute Minimum Norm Solution ==== %% 
@@ -159,7 +146,7 @@ end
 
 %% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
 % matrix W'W from the Henson paper
-[OPTIONS, obj.GreenM2] = be_spatial_priorw( OPTIONS, obj.VertConn);
+[OPTIONS, obj.GreenM2] = be_spatial_priorw(OPTIONS, obj.VertConn);
 
 %% ===== Fuse modalities ===== %%   
 obj = be_fusion_of_modalities(obj, OPTIONS);

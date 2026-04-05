@@ -64,6 +64,17 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
     % ==== Check Data and Options
     [HeadModel, OPTIONS, FLAG] = be_checkio( HeadModel, OPTIONS);    
     assert(~FLAG, 'MEM: unable to compute MEM.')
+    
+    % Initialize obj 
+    obj = struct();
+    [obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
+    [~, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
+
+    % Channels: we retrieve the channels name and the data
+    OPTIONS             = be_main_channel(HeadModel, OPTIONS);
+
+    % Sources: we verify that all sources in the model have good leadfields
+    [OPTIONS, obj]  = be_main_sources(obj, OPTIONS);
 
     % ====  Initialize parallel computing
     close_pool = false;
@@ -75,15 +86,15 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
     % ==== LAUNCH PIPELINE ==== %
     switch lower(OPTIONS.mandatory.pipeline)
         case 'cmem'
-            [Results, OPTIONS]   = be_cmem_solver(HeadModel, OPTIONS);
+            [Results, OPTIONS]   = be_cmem_solver(obj, OPTIONS);
         case 'wmem' 
-            [Results, OPTIONS]   = be_wmem_solver(HeadModel, OPTIONS);
+            [Results, OPTIONS]   = be_wmem_solver(obj, OPTIONS);
         case 'rmem' 
             [Results, OPTIONS]   = be_rmem_solver(HeadModel, OPTIONS);
         case 'rwmem' 
             [Results, OPTIONS]   = be_rwmem_solver(HeadModel, OPTIONS);
         case 'cmne' 
-            [Results, OPTIONS]   = be_cmne_solver(HeadModel, OPTIONS);
+            [Results, OPTIONS]   = be_cmne_solver(obj, OPTIONS);
         otherwise
             error('Unknown pipeline %s', lower(OPTIONS.mandatory.pipeline))
     end
