@@ -56,8 +56,15 @@ obj.nb_sources = numel(obj.iModS);
 
 assert(obj.nb_sources > 0, 'The source space is empty' );
 
+
+for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
+    OPTIONS.automatic.Modality(ii).gain = OPTIONS.automatic.Modality(ii).gain(:, obj.iModS);
+    obj.VertConn = obj.VertConn(obj.iModS,obj.iModS);
+end
+
+
 if OPTIONS.optional.verbose
     fprintf(' done.\n'); 
 end  
 
-return
+end
