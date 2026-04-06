@@ -121,9 +121,14 @@ for ii = 1 : nMod
     
 end
 
-OPTIONS.mandatory   =   rmfield(OPTIONS.automatic,  'Data' );
-OPTIONS.optional    =   rmfield(OPTIONS.optional,   'Baseline');
-OPTIONS.automatic   =   rmfield(OPTIONS.automatic,  'mspDATA' );
+% Remove used fields
+OPTIONS.mandatory   =   rmfield(OPTIONS.mandatory,  'Data' );
+if isfield(OPTIONS.optional,  'Baseline' )
+    OPTIONS.optional    =   rmfield(OPTIONS.optional,   'Baseline');
+end
+if isfield(OPTIONS.automatic,  'mspDATA' )
+    OPTIONS.automatic   =   rmfield(OPTIONS.automatic,  'mspDATA' );
+end
 
 end
 
