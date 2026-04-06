@@ -30,10 +30,6 @@ function [OPTIONS] = be_avg_reference(OPTIONS)
         muM = ones(size(OPTIONS.automatic.Modality(ii).data,1),1)*mean(OPTIONS.automatic.Modality(ii).data);
         OPTIONS.automatic.Modality(ii).data = OPTIONS.automatic.Modality(ii).data - muM;
         
-        % Compute mean along channels for every time sample and substract from the baseline
-        muM = ones(size(OPTIONS.automatic.Modality(ii).baseline,1),1)*mean(OPTIONS.automatic.Modality(ii).baseline);
-        OPTIONS.automatic.Modality(ii).baseline = OPTIONS.automatic.Modality(ii).baseline - muM;
-
         % average reference the gain matrix
         if strcmpi(OPTIONS.mandatory.DataTypes{ii}, 'eeg')
             avgref  =  ones( size(OPTIONS.automatic.Modality(ii).gain,1), 1) *  mean( OPTIONS.automatic.Modality(ii).gain );
