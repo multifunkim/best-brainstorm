@@ -91,23 +91,19 @@ if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1
     OPTIONS.automatic.Comment   =   ['c' OPTIONS.optional.Comment];
 end
 
-% EEG-MEG specific preprocessing
-if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+%% ===== DC offset ===== %% 
+% Remove the DC offset the data (using baseline)
+[OPTIONS]       = be_remove_dc(OPTIONS);
 
-    %% ===== DC offset ===== %% 
-    % we remove the DC offset the data
-    [OPTIONS]       = be_remove_dc(OPTIONS);
+%% ===== AVG reference ===== %% 
+% Convert to average reference (only for EEG / iEEG)
+[OPTIONS]       = be_avg_reference(OPTIONS);
 
-    %% ===== AVG reference ===== %% 
-    % we average reference the data
-    [OPTIONS]       = be_avg_reference(OPTIONS);
+%% ===== Pre-whitening of the data ==== %%
+% it uses empty-room data if available
+% if PlOS one : nothing is done here
+% [OPTIONS] = be_prewhite(OPTIONS);
 
-    %% ===== Pre-whitening of the data ==== %%
-    % it uses empty-room data if available
-    % if PlOS one : nothing is done here
-    % [OPTIONS] = be_prewhite(OPTIONS);
-
-end
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
@@ -115,11 +111,11 @@ end
 
 %% ===== Apply temporal data window  ===== %%
 % check for a time segment to be localized
-[OPTIONS] = be_apply_window(OPTIONS, [] );
+[OPTIONS] = be_apply_window(OPTIONS, []);
 
 %% ===== Normalization ==== %% 
-% we absorb units (pT, nA) in the data, leadfields; we normalize the data
-% and the leadfields
+% we absorb units (pT, nA) in the data, leadfields; 
+% we normalize the data and the leadfields
 [OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
 %% ===== Clusterize cortical surface ===== %%
@@ -138,7 +134,6 @@ end
 obj = be_fusion_of_modalities(obj, OPTIONS);
          	
 %% ===== Solve the MEM ===== %%
-
 [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
 if OPTIONS.optional.display
     be_display_entropy_drops(obj,OPTIONS);
@@ -147,10 +142,8 @@ end
 %% ===== Un-Normalization  ===== %%
 [obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
 
-
 %% ===== Inverse temporal data window  ===== %%
 [OPTIONS, obj] = be_apply_window( OPTIONS, obj );
-
 
 %% ===== Prepare output  ===== %%
 Results = be_template('resultsmat');
