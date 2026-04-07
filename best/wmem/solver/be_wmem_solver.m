@@ -97,41 +97,27 @@ if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1
     OPTIONS.automatic.Comment   =   ['w' OPTIONS.optional.Comment];
 end
 
-
-% EEG-MEG specific preprocessing
-if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-
-    %% ===== DC offset ===== %% 
-    % we remove the DC offset the data
-    %[OPTIONS]       = be_remove_dc(OPTIONS);
-
-    %% ===== AVG reference ===== %% 
-    % we average reference the data
-    %[OPTIONS]       = be_avg_reference(OPTIONS);
-
-    %% ===== Pre-whitening of the data ==== %%
-    % it uses empty-room data if available
-    % if PlOS one : nothing is done here
-    % [OPTIONS] = be_prewhite(OPTIONS);
-end
+%% ===== AVG reference ===== %% 
+% Convert to average reference (only for EEG / iEEG)
+[OPTIONS]       = be_avg_reference(OPTIONS);
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
 
-
+%% ===== Baseline shuffle ==== %% 
+% If resting-state, generate artificial baseline based on phase reshufling 
 if OPTIONS.optional.baseline_shuffle
     OPTIONS = be_shufle_baseline(OPTIONS);
 end
 
 %% ===== Normalization ==== %% 
-% we absorb units (pT, nA) in the data, leadfields; we normalize the data
-% and the leadfields
+% we absorb units (pT, nA) in the data, leadfields; 
+% we normalize the data and the leadfields
 [OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
 %% ===== Null hypothesis (for the threshold for the msp scores)
 % from the baseline, compute the distribution of the msp scores. 
-% More details in Appendix B in ref[1]
 OPTIONS = be_model_of_null_hypothesis(OPTIONS);
 
 %% ===== Data Processing (and noise) ===== %%
