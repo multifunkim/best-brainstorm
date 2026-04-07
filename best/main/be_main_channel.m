@@ -1,4 +1,4 @@
-function [OPTIONS, obj] = be_main_channel(HeadModel, obj, OPTIONS)
+function [OPTIONS] = be_main_channel(HeadModel, OPTIONS)
 % BE_MAIN_CHANNEL retrieves the indices of channels for each modality contained
 %   in OPTIONS.DataTypes. The main objective is to fill OPTIONS.Modality with
 %   the appropriate information
@@ -15,7 +15,6 @@ function [OPTIONS, obj] = be_main_channel(HeadModel, obj, OPTIONS)
 % --------
 %
 %   OPTIONS     :   Updated options fields
-%	obj			:	Updated structure
 %
 % -------------------------------------------------------------------------
 %% ==============================================
@@ -54,47 +53,25 @@ for ii = 1:nMod
     OPTIONS.automatic.Modality(ii).mspDATA        = struct;
     OPTIONS.automatic.Modality(ii).emptyroom      = [];
 end
-
-
-
-%% ---- MAIN LOOP ---- ALL MODALITIIES ---- %%
-cnt  = 0;
-obj.nb_channels = 0;
-    
+   
 for ii = 1 : nMod
     
-    
-    
     %% ============================ CHANNELS =========================== %%
-    % retrieve MEG/EEG channels (i.e get indices of channels for all modalities)
+    % retrieve channels (i.e get indices of channels for all modalities)
     % the order will be the order the modalities have been listed in
     % OPTIONS.DataTypes
     
-    % stand-alone
-    OPTIONS.automatic.Modality(ii).channels   = find( strcmpi(OPTIONS.mandatory.ChannelTypes,OPTIONS.mandatory.DataTypes{ii}) );
-    OPTIONS.automatic.Modality(ii).nchannels  = cnt + ( 1 : numel( OPTIONS.automatic.Modality(ii).channels ) )';
-    cnt     = cnt + numel( OPTIONS.automatic.Modality(ii).channels );
-    if isempty( OPTIONS.automatic.Modality(ii).channels )
+    CH = find(strcmpi(OPTIONS.mandatory.ChannelTypes, OPTIONS.mandatory.DataTypes{ii}));
+    if isempty(CH)
         error(['MEM > Unable to find appropriate data. No '  OPTIONS.mandatory.DataTypes{ii} ' channels found.']);
     end
-    obj.nb_channels = cnt;
-    
-    if isempty(HeadModel)
-        CH = OPTIONS.automatic.Modality(ii).nchannels;
-    else
-        CH = OPTIONS.automatic.Modality(ii).channels;
-    end
-   
-    
+    OPTIONS.automatic.Modality(ii).channels   = CH;
+
     %% ============================== DATA ============================= %%
-    % ====== we pick the data of each modality
-    % we then eliminate the OPTIONS.Data (we may introduce the iData field in
-    % the OPTIONS.automatic.Modality()
-    
-    % Case of a ridge-filtered signal
     if isfield(OPTIONS.mandatory, 'Data') && ~isempty(OPTIONS.mandatory.Data)
         OPTIONS.automatic.Modality(ii).data = OPTIONS.mandatory.Data( CH,: );
     end
+
     % Case of a ridge-filtered signal
     if isfield(OPTIONS.optional, 'iData') && ~isempty(OPTIONS.optional.iData)
         OPTIONS.automatic.Modality(ii).idata          =   OPTIONS.optional.iData( CH,: );
@@ -105,65 +82,34 @@ for ii = 1 : nMod
         OPTIONS.automatic.Modality(ii).mspDATA.FRQs   =   OPTIONS.automatic.mspDATA.FRQs;
         OPTIONS.automatic.Modality(ii).mspDATA.Time   =   OPTIONS.automatic.mspDATA.Time;
         OPTIONS.automatic.Modality(ii).mspDATA.F      =   OPTIONS.automatic.mspDATA.F( CH,: );
-        OPTIONS.automatic   =   rmfield( OPTIONS.automatic,  'mspDATA' );
     end
     
     
     %% ============================ BASELINE =========================== %%
-    % ====== we pick the baseline (if any) of each modality
-    % we then eliminate the OPTIONS.Baseline
     if ~isempty(OPTIONS.optional.Baseline) 
         OPTIONS.automatic.Modality(ii).baseline = OPTIONS.optional.Baseline( CH,: );
     end
 
-
     %% ============================ EMPTY ROOM =========================== %%
-    % ====== we pick the empty room data (if any) of each modality    
     if isfield(OPTIONS.automatic, 'Emptyroom_data') 
-        ERD     =   OPTIONS.automatic.Emptyroom_data( CH,: );
+        ERD     =   OPTIONS.automatic.Emptyroom_data(CH,: );
         if any(ERD(:))
             % emptyroom data available for this modality
             OPTIONS.automatic.Modality(ii).emptyroom = ERD;
         end
     end
-    
-    
+        
     %% =========================== COVARIANCE ========================== %%
-    % ====== we pick the covariance (if any) of each modality
-    % we then eliminate the OPTIONS.Baseline
     if ~isempty(OPTIONS.solver.NoiseCov)
-        NbjNoiseCov = size(OPTIONS.solver.NoiseCov,3);
-        for i_sc = 1: NbjNoiseCov
-            OPTIONS.automatic.Modality(ii).covariance(:,:,i_sc) = ...
-                OPTIONS.solver.NoiseCov(CH,CH,i_sc );
+        for i_sc = 1: size(OPTIONS.solver.NoiseCov,3)
+            OPTIONS.automatic.Modality(ii).covariance(:,:,i_sc) =  OPTIONS.solver.NoiseCov(CH, CH, i_sc);
         end
     end
     
-    
     %% ============================== GAIN ============================= %%
-    % ====== We pick the gain matrix of each modality 
-    % the gain matrix is associated with each modality; we no more keep it in
-    % obj
-    if isfield(HeadModel, 'Gain') && ~isempty(HeadModel.Gain)  % stand-alone
-        % WE PICK THE GAIN MATRIX IN THE ORDER OF THE MODALITIES INDICATED IN
-        % OPTIONS.DATATYPES. IN THE HEADMODEL, WE INDICATE THE TYPE OF THE
-        % MATIX
-        
-        Gain = HeadModel.Gain(CH,:);
-        
-        if isstruct(HeadModel) && isfield(HeadModel, 'GridOrient')
-            Gain = bst_gain_orient(Gain, HeadModel.GridOrient);
-        end
-        OPTIONS.automatic.Modality(ii).gain = Gain;
-        
-        % average reference the gain matrix
-        if strcmpi(OPTIONS.mandatory.DataTypes{ii}, 'eeg')
-            avgref  =   mean( OPTIONS.automatic.Modality(ii).gain );
-            OPTIONS.automatic.Modality(ii).gain     =   OPTIONS.automatic.Modality(ii).gain - ...
-                                                        ones( numel(CH),1 ) * avgref;
-        end        
+    if isfield(HeadModel, 'Gain') && ~isempty(HeadModel.Gain)          
+        OPTIONS.automatic.Modality(ii).gain = HeadModel.Gain(CH,:);
      end      
-    
     
     %% ============================ MSP data =========================== %%
     % ====== we pick the temporal data needed for MSP
@@ -173,6 +119,16 @@ for ii = 1 : nMod
         OPTIONS.automatic.Modality(ii).mspDATA.F    = OPTIONS.automatic.Modality(ii).mspDATA.F( CH, : );
     end    
     
-    
+end
+
+% Remove used fields
+OPTIONS.mandatory   =   rmfield(OPTIONS.mandatory,  'Data' );
+if isfield(OPTIONS.optional,  'Baseline' )
+    OPTIONS.optional    =   rmfield(OPTIONS.optional,   'Baseline');
+end
+if isfield(OPTIONS.automatic,  'mspDATA' )
+    OPTIONS.automatic   =   rmfield(OPTIONS.automatic,  'mspDATA' );
+end
+
 end
 

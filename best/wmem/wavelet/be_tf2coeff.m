@@ -1,4 +1,4 @@
-function [coeffs,j,k] = time_freq2coeff( obj, time, frequency)
+function [coeffs,j,k] = be_tf2coeff( obj, time, frequency)
 % TIME_FREQ2COEFF obtains coefficients from wavelet transform
 %
 %   INPUTS:
@@ -42,7 +42,7 @@ elseif frequency<freq(end)
     disp('---! requested frequency out of lower bound.');
     frequency = freq(end);
 end
-[I J] = sort(abs(frequency-freq));
+[~, J] = sort(abs(frequency-freq));
 j_found = J(1);
 
 times = obj.time_analyzed;
@@ -56,7 +56,7 @@ elseif time<times(1)
     disp('---! requested time out of lower bound.');
     time = times(1);
 end
-[I J] = sort(abs(times-time));
+[~, J] = sort(abs(times-time));
 k_found  = J(1);
 coeffs_j = obj.coefficients('levels',j_found,'channel',[1:obj.nb_channels]);
 coeffs   = coeffs_j(:,k_found);

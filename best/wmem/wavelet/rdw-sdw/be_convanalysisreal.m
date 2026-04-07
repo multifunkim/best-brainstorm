@@ -1,4 +1,4 @@
-function [outV outW] = be_convanalysisreal(in_C, H, G, extend, Jcase)
+function [outV, outW] = be_convanalysisreal(in_C, H, G, extend, Jcase)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Project Name: EOG Correction Artifact

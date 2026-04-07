@@ -1,4 +1,4 @@
-function [hp,hptab] = display_time_scale_boxes(obj,OPTIONS) 
+function [hp,hptab] = be_display_time_scale_boxesmod(obj,OPTIONS) 
 %DISPLAY_ENTROPY_DROPS displays a graphical window with MEM entropy drops at 
 % each  iteration
 %

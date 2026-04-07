@@ -33,7 +33,7 @@ if isempty(G)
 end
 
 Gn = bsxfun(@rdivide, G, sqrt(sum(G.^2, 1)));
-[temp,lambda,U] = svd(Gn',0);
+[~,lambda,U] = svd(Gn',0);
 Gstruct.Gn = Gn;
 Gstruct.lambda = diag(lambda);
 Gstruct.U = U;

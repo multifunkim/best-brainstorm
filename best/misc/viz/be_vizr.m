@@ -1,4 +1,4 @@
-function vizr(varargin)
+function be_vizr(varargin)
 % This function displays the continuous time-frequency plane and linked 
 % ridges extracted using the RIDGEFILTER process. This function is  only
 % operational under brainstorm environment. A study must be selected before
@@ -109,8 +109,8 @@ for ii = 1 : nargin
             Tlims = fix( (Tlims - TF.Time(1)) / dt ) + 1;
             
             Flims    = TF.Options.RidgesFRange;
-            [dum,Fl1]= min( abs(TF.Freqs-Flims(1)) );
-            [dum,Fl2]= min( abs(TF.Freqs-Flims(2)) );
+            [~,Fl1]= min( abs(TF.Freqs-Flims(1)) );
+            [~,Fl2]= min( abs(TF.Freqs-Flims(2)) );
             Flims    = [Fl1 Fl2];
         case {'meg','eeg'}
             iDm     =   [iDm varargin{ii}]; 
@@ -141,7 +141,7 @@ if ~exist('iD')
     iD = TF.iD;
 end
 if ~isempty(iDn)
-    [dum, pnt] = ismember(iDn, [TF.iD{:,2}] );
+    [~, pnt] = ismember(iDn, [TF.iD{:,2}] );
     iD = TF.iD(pnt, :);
 end
 if isempty(iDm)

@@ -3,7 +3,7 @@
 % IT WAS COPY/PASTED FOR USE WITH be_viz_topo.m
 %
 % Create source space for a given channel file
-function sourcespace = ComputeSphereGrid(bfs_center, bfs_radius)
+function sourcespace = be_computespheregrid(bfs_center, bfs_radius)
     % Build a full grid
     x = .01:.01:bfs_radius;
     x = [-x 0 x];

@@ -66,8 +66,8 @@ if size( OPTIONS.optional.EmptyRoom_data,1 )== numel(OPTIONS.mandatory.ChannelTy
 elseif ~isempty(OPTIONS.optional.Channel)
     % Check in EmptyRoom_channels for a match with data    
     chN     =   {OPTIONS.optional.Channel.Name};
-    [a,b,c] =   intersect(OPTIONS.optional.EmptyRoom_channels, chN);
-    [d,e]   =   sort(b);
+    [~,b,c] =   intersect(OPTIONS.optional.EmptyRoom_channels, chN);
+    [~,e]   =   sort(b);
     ERdata  =   OPTIONS.optional.EmptyRoom_data( c(e),: );
 else
     % No usable empty room data

@@ -45,7 +45,7 @@ function [OPTIONS, SCR, CLS] = be_stepwise_clustering_multim(obj, OPTIONS, wtbOP
 
 
 tW = OPTIONS.clustering.MSP_window; % window size
-[dum, tS, nT] = size( OPTIONS.automatic.Modality(1).data ); % data length
+[~, tS, nT] = size( OPTIONS.automatic.Modality(1).data ); % data length
 
 % Creates pointers for data segmentation into sub-windows of length tW
 if tS <= tW

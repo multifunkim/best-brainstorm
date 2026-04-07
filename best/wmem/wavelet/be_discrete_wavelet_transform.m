@@ -43,7 +43,7 @@ switch (OPTIONS.wavelet.type)
         Nj = fix(log2(No));
         Noff = min(Nj-1,3);
         WData = zeros(size(Data));
-        for i = 1:Ns;
+        for i = 1:Ns
             WData(i,:) = FWT_PO(Data(i,:),Noff,filtre);
         end
         SData(:,1:No/2^(Nj-Noff)) = WData(:,1:No/2^(Nj-Noff));
@@ -65,7 +65,7 @@ switch (OPTIONS.wavelet.type)
         else
             filter = ['rdw' num2str(OPTIONS.wavelet.vanish_moments)];
         end
-        [Ns,No] = size(Data);
+        [~,No] = size(Data);
         Nj    = fix(log2(No));
         Njs   = max(Nj-3,1);
         SData = zeros(size(Data));

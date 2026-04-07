@@ -1,9 +1,5 @@
-function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS, Results)
-% cMEMSOLVER: Maximum Entropy on the Mean solution.
-%
-% NOTES:
-%     - This function is not optimized for stand-alone command calls.
-%     - Please use the generic BST_SOURCEIMAGING function, or the GUI.a
+function [Results, OPTIONS] = be_cmem_solver(obj, OPTIONS)
+% be_cmem_solver: compute coherent Maximum Entropy on the Mean solution.
 %
 % INPUTS:
 %     - HeadModel  : Brainstorm head model structure
@@ -85,25 +81,9 @@ function [Results, OPTIONS] = be_cmem_solver(HeadModel, OPTIONS, Results)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TO DO LIST %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%
-%%%%    INITIALIZE GLOBAL VARIABLE IF FIRST STUDY
-%%%%    CLEAR GLOBAL VARIABLE IF LAST STUDY
-%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END OF TO DO LIST %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline cMEM\n');
 end 
-
-obj = struct();
-[obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
-
-%% Retrieve vertex connectivity - needed for clustering
-[OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
@@ -111,28 +91,23 @@ if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1
     OPTIONS.automatic.Comment   =   ['c' OPTIONS.optional.Comment];
 end
 
-%% ===== DC offset ===== %% 
-% we remove the DC offset the data
+% EEG-MEG specific preprocessing
 if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+
+    %% ===== DC offset ===== %% 
+    % we remove the DC offset the data
     [OPTIONS]       = be_remove_dc(OPTIONS);
-end
-%% ===== Channels ===== %% 
-% we retrieve the channels name and the data
-[OPTIONS, obj]  = be_main_channel(HeadModel, obj, OPTIONS);
 
-%% ===== AVG reference ===== %% 
-% we average reference the data
-if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
+    %% ===== AVG reference ===== %% 
+    % we average reference the data
     [OPTIONS]       = be_avg_reference(OPTIONS);
-end
-%% ===== Sources ===== %% 
-% we verify that all sources in the model have good leadfields
-[OPTIONS, obj]  = be_main_sources(obj, OPTIONS);
 
-%% ===== Pre-whitening of the data ==== %%
-% it uses empty-room data if available
-% if PlOS one : nothing is done here
-% [OPTIONS] = be_prewhite(OPTIONS);
+    %% ===== Pre-whitening of the data ==== %%
+    % it uses empty-room data if available
+    % if PlOS one : nothing is done here
+    % [OPTIONS] = be_prewhite(OPTIONS);
+
+end
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
@@ -140,36 +115,26 @@ end
 
 %% ===== Apply temporal data window  ===== %%
 % check for a time segment to be localized
-[OPTIONS] = be_apply_window( OPTIONS, [] );
+[OPTIONS] = be_apply_window(OPTIONS, [] );
 
 %% ===== Normalization ==== %% 
 % we absorb units (pT, nA) in the data, leadfields; we normalize the data
 % and the leadfields
 [OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
-%% ===== Double precision to single  ===== %%
-% relax the double precision for the msp (leadfield and data)
-[OPTIONS] = be_switch_precision( OPTIONS, 'single' );
-
 %% ===== Clusterize cortical surface ===== %%
-
-[OPTIONS, obj] = be_main_clustering(obj, OPTIONS);
-
-%% ===== Single precision to double  ===== %%
-
-[OPTIONS] = be_switch_precision( OPTIONS, 'double' );
+[OPTIONS]       = be_switch_precision(OPTIONS, 'single' );
+[OPTIONS, obj]  = be_main_clustering(obj, OPTIONS);
+[OPTIONS]       = be_switch_precision( OPTIONS, 'double' );
 
 %% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
 % matrix W'W from the Henson paper
 [OPTIONS, obj.GreenM2] = be_spatial_priorw( OPTIONS, obj.VertConn);
 
-
 %% ===== Noise estimation ===== %%   
-
 [OPTIONS, obj] = be_main_data_preprocessing(obj, OPTIONS);
 
 %% ===== Fuse modalities ===== %%   
-
 obj = be_fusion_of_modalities(obj, OPTIONS);
          	
 %% ===== Solve the MEM ===== %%
@@ -184,7 +149,6 @@ end
 
 
 %% ===== Inverse temporal data window  ===== %%
-
 [OPTIONS, obj] = be_apply_window( OPTIONS, obj );
 
 

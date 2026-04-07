@@ -22,9 +22,9 @@ function filter = be_get_filter(filter)
     end
     
     if reel_fil == 1
-        [H0, G0, synF, synG, Jcase] = be_makeqfbreal(filter);
+        [H0, G0, ~, ~, Jcase] = be_makeqfbreal(filter);
     else
-        [var1, var2, H0, G0, Jcase] = be_makeqfb(filter);
+        [~, ~, H0, G0, Jcase] = be_makeqfb(filter);
     end
     
 

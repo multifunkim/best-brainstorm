@@ -73,7 +73,7 @@ VertConn = obj.VertConn;
 
 % ==== clustering technique
 nbS     = size(OPTIONS.automatic.Modality(1, 1).gain,2);        % Nb of sources                                         
-tS      = size(OPTIONS.automatic.Modality(1, 1).data,2);        % échantillon temp.                                     
+tS      = size(OPTIONS.automatic.Modality(1, 1).data,2);        % Ã©chantillon temp.                                     
 SCR     = zeros(nbS,tS);                                        % nb sources fct of time                               
 
 %% MSP Calculation for each modalities
@@ -132,7 +132,7 @@ end
 % Contains labels ranging from 0 to number of parcels (1 column / time sample) for each sources.
 
 nb_time = size(SCR,2);
-[OPTIONS, CLS,cellstruct_cls] = be_create_clusters(VertConn, mean(SCR,2), OPTIONS );
+[OPTIONS, CLS,~] = be_create_clusters(VertConn, mean(SCR,2), OPTIONS );
 CLS = repmat(CLS,1, nb_time);
 
 

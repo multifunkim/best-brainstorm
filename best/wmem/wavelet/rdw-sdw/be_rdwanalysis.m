@@ -35,11 +35,11 @@ function [out_RDW, info] = be_rdwanalysis(in_C, Nb_Levels, filter)
 
     % WE ASSUME THE DATA IN 2 DIMENSIONS
     % data are 1xN or NcxN with N = power of 2
-    [Nb_line Nb_samples] = size(in_C);
+    [Nb_line, Nb_samples] = size(in_C);
     flip = 0;
     if Nb_samples == 1
     in_C = in_C'; 
-    [Nb_line Nb_samples] = size(in_C);
+    [Nb_line, Nb_samples] = size(in_C);
     flip = 1;
     end
     % dyadic extension of rhe data (if necessary)

@@ -80,7 +80,6 @@ function [OPTIONS, mem, active_var_out] = be_memstruct(OPTIONS, obj)
 % some basic parameters
 nb_clusters = max(obj.clusters);
 nb_sources  = obj.nb_sources;
-nb_sensors  = obj.nb_channels;
 
 % some definitions 
 clusters_struct(nb_clusters) = struct;
@@ -146,10 +145,10 @@ mem.G_active_var_Gt                  = cat(3,obj.G_active_var_Gt{:});
 switch OPTIONS.model.initial_lambda 
     
     case 0
-        mem.lambda	=   zeros(nb_sensors,1);
+        mem.lambda	=   zeros(size(mem.M));
     
     case 1
-        mem.lambda	=   randn(nb_sensors,1) /mean( abs(mem.M) ); % initial value for threshold diff 0
+        mem.lambda	=   randn(size(mem.M)) / mean( abs(mem.M) ); % initial value for threshold diff 0
 
 end
 

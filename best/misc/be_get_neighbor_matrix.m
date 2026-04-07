@@ -43,3 +43,5 @@ N(nb_vertices*(y-1)+x) = 1;
 N(Q1+x) = 1;
 N(Q1+y) = 1;
 N = ceil((N+N')/2);
+
+end

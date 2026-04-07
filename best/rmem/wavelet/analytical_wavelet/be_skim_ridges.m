@@ -35,11 +35,11 @@ function [slice] = be_skim_ridges(slice)
         CND = cands(1);
         [Dwn] = scan_down(CND, slice);
         vec = [CND Dwn];
-        [dum, ind] = max( slice(vec) );
+        [~, ind] = max( slice(vec) );
         slice(vec) = 0;
         slice( vec(ind) ) = 1;
         
-        [dum, ind] = ismember(vec, cands);
+        [~, ind] = ismember(vec, cands);
         cands(ind) = [];
     end
 

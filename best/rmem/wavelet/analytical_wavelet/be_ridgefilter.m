@@ -101,9 +101,9 @@ end
 
 % Compute ridges
 if isstandalone && ~isprocess
-    OPTIONS     =   be_main_channel([], [], OPTIONS);
+    OPTIONS     =   be_main_channel([], OPTIONS);
 elseif isprocess
-    OPTIONS     =   be_main_channel(1, [], OPTIONS);
+    OPTIONS     =   be_main_channel(1, OPTIONS);
 end
 nScalo      =   zeros( OPTIONS.wavelet.nb_levels+1, size(OPTIONS.automatic.Modality(1).data,2) );
 for ii  = 1 : numel(OPTIONS.mandatory.DataTypes)
@@ -332,10 +332,10 @@ function [OPTIONS]          =   get_selected_channels(OPTIONS)
     
     %% ====== Sort modalities according to BS ========================== %%
     TypeList    = {ChannelMat.Channel.Type};
-    [dum, pos]  = unique(TypeList);
+    [~, pos]  = unique(TypeList);
     TypeList    = TypeList( sort(pos) );
-    [dum, pos]  = ismember( OPTIONS.mandatory.DataTypes, TypeList );
-    [dum, pos]  = sort(pos);
+    [~, pos]  = ismember( OPTIONS.mandatory.DataTypes, TypeList );
+    [~, pos]  = sort(pos);
     OPTIONS.mandatory.DataTypes = OPTIONS.mandatory.DataTypes(pos);
     
     

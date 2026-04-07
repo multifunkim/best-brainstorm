@@ -1,4 +1,4 @@
-function [Results, OPTIONS] = be_rmem_solver(HeadModel, OPTIONS, Results)
+function [Results, OPTIONS] = be_rmem_solver(obj, OPTIONS)
 % MEMSOLVER: Maximum Entropy on the Mean solution.
 %
 % NOTES:
@@ -84,40 +84,12 @@ function [Results, OPTIONS] = be_rmem_solver(HeadModel, OPTIONS, Results)
 % -------------------------------------------------------------------------   
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TO DO LIST %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%
-%%%%    INITIALIZE GLOBAL VARIABLE IF FIRST STUDY
-%%%%    CLEAR GLOBAL VARIABLE IF LAST STUDY
-%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END OF TO DO LIST %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-obj.ImageGridAmp = []; 
-
-% Display progress
-if OPTIONS.optional.waitbar
-    obj.hmem = waitbar(0, {'Step 1/2 : Preparing MEM routine ...'});
-end
-
-
-%% Retrieve vertex connectivity - needed for clustering
-[OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
-
-
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
 if strcmp( OPTIONS.automatic.Comment(1:3), 'MEM' )
     OPTIONS.automatic.Comment   =   ['r' OPTIONS.optional.Comment];
 end
 
-%% ===== Channels ===== %% 
-
-[OPTIONS, obj] = be_main_channel(HeadModel, obj, OPTIONS);
-
-%% ===== Sources ===== %% 
-
-[OPTIONS, obj] = be_main_sources(obj, OPTIONS);
 
 %% ===== Pre-process the leadfield(s) ===== %% 
 
@@ -377,7 +349,7 @@ function [OPTIONS, obj] = get_ridge_data(OPTIONS, obj, ii)
 %         OPTIONS.optional.iData  =   OPTIONS.optional.iData / RATIO;        
         
         % CREATE NEW MODALITY FIELD IN OPTIONS.AUTOMATIC
-        [OPTIONS, obj]  =   be_main_channel(0, obj, OPTIONS);
+        OPTIONS         =   be_main_channel(0, OPTIONS);
         OPTIONS         =   rmfield( OPTIONS, 'temporary' );
         OPTIONS.automatic.Modality.covariance   =   [];
         OPTIONS.solver.NoiseCov                 =   noise_covariance;

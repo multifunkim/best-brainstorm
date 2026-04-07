@@ -1,4 +1,4 @@
-function [PLAN, params, OPTIONS] = focus_on_window( PLAN, OPTIONS, REMOV, varargin )
+function [PLAN, params, OPTIONS] = be_focus_on_window( PLAN, OPTIONS, REMOV, varargin )
 %FOCUS_ON_WINDOW extracts data segment corresponding to a ridge line
 %
 %   INPUTS:

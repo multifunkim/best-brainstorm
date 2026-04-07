@@ -40,11 +40,11 @@ function [out_SDW, info] = be_sdwanalysis(in_C, Nb_Level, filter)
 
 % WE ASSUME THE DATA IN 2 DIMENSIONS
     % data are 1xN or NcxN with N = power of 2
-    [Nb_line Nb_samples] = size(in_C);
+    [Nb_line, Nb_samples] = size(in_C);
     flip = 0;
     if Nb_samples == 1
     in_C = in_C'; 
-    [Nb_line Nb_samples] = size(in_C);
+    [Nb_line, Nb_samples] = size(in_C);
     flip = 1;
     end
     % we validate the filter
@@ -53,7 +53,7 @@ function [out_SDW, info] = be_sdwanalysis(in_C, Nb_Level, filter)
         disp('!! invalid complex filter: we use sdw2')
         filter = 'sdw2';
     end
-    [H0 G0 synF synG] = be_makeqfb(filter);
+    [H0, G0, ~, ~] = be_makeqfb(filter);
 
     % let us compute the SDW transform:
     dim_H0 = size(H0,2);      % Get number of columns.
@@ -73,13 +73,13 @@ function [out_SDW, info] = be_sdwanalysis(in_C, Nb_Level, filter)
     n = 0;
     for i = 1:Nb_Level
         if mod(m,2)==0
-        [temp_im(:,1:m/2,:) temp_im(:,m/2+1:m,:)] = ...
+        [temp_im(:,1:m/2,:), temp_im(:,m/2+1:m,:)] = ...
             be_convanalysis( out_re, H_im, G_im, m, Jcase);
-        [temp_re(:,1:m/2,:) temp_re(:,m/2+1:m,:)] = ...
+        [temp_re(:,1:m/2,:), temp_re(:,m/2+1:m,:)] = ...
             be_convanalysis( out_im, H_im, G_im, m, Jcase);
-        [re(:,1:m/2,:) re(:,m/2+1:m,:)] = ...
+        [re(:,1:m/2,:), re(:,m/2+1:m,:)] = ...
             be_convanalysis( out_re, H_re, G_re, m, Jcase); 
-        [im(:,1:m/2,:) im(:,m/2+1:m,:)] = ...
+        [im(:,1:m/2,:), im(:,m/2+1:m,:)] = ...
             be_convanalysis( out_im, H_re, G_re, m, Jcase);
 
         out_re(:,1:m,:) = re(:,1:m,:) - temp_re(:,1:m,:);

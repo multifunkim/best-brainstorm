@@ -24,18 +24,21 @@ function [OPTIONS] = be_remove_dc(OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
+    for iMod  = 1:length(OPTIONS.automatic.Modality)
+    
+        % Compute mean during baseline
+        mu      =   mean(OPTIONS.automatic.Modality(iMod).baseline, 2);
+        
+        % subtract from baseline
+        nSb     =   size(OPTIONS.automatic.Modality(iMod).baseline,2 );
+        muM     =   mu * ones(1, nSb);
+        OPTIONS.automatic.Modality(iMod).baseline = OPTIONS.automatic.Modality(iMod).baseline - muM;
+        
+        % subtract from data
+        nSd     =   size(OPTIONS.automatic.Modality(iMod).data ,2 );
+        muM     =   mu * ones(1, nSd);
+        OPTIONS.automatic.Modality(iMod).data  = OPTIONS.automatic.Modality(iMod).data - muM;
+    
+    end
 
-% Compute mean during baseline
-mu      =   mean( OPTIONS.optional.Baseline,2 );
-
-% subtract from baseline
-nSb     =   size( OPTIONS.optional.Baseline,2 );
-muM     =   mu * ones(1, nSb);
-OPTIONS.optional.Baseline = OPTIONS.optional.Baseline - muM;
-
-% subtract from data
-nSd     =   size( OPTIONS.mandatory.Data,2 );
-muM     =   mu * ones(1, nSd);
-OPTIONS.mandatory.Data = OPTIONS.mandatory.Data - muM;
-
-return
+end

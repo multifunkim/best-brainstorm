@@ -66,11 +66,11 @@ for i = 1:length(i_win)
     [scores_i, OPTIONS] = be_msp(M(:,n_win(i):n_win(i)+w_win(i)-1), Gstruct, OPTIONS);
     scores = (scores+scores_i)/i;
 end
-[param.alpha param.beta] = our_betafit(scores);
+[param.alpha, param.beta] = our_betafit(scores);
 end
 
 % ------ functions
-function [alpha beta] = our_betafit(x)
+function [alpha, beta] = our_betafit(x)
 % parameters of the beta fit
 if ((min(x) <= 0) || (max(x) >= 1)) || (min(x) == max(x))
    disp('---! All msp values must be different, > 0 and < 1.');

@@ -58,12 +58,12 @@ else
     
     if numel(lgts)
         crit        =   lgts .* strs;
-        [dum, indx] =   sort(crit);
+        [~, indx] =   sort(crit);
         groups(:)   =   groups(fliplr(indx));
         ctf(:)      =   ctf(fliplr(indx));
         
-        if numel(nrjs)>1&&sum(nrjs> energy*NRJ);
-            [dum, II] = find(cumsum(nrjs)>energy*NRJ);
+        if numel(nrjs)>1&&sum(nrjs> energy*NRJ)
+            [~, II] = find(cumsum(nrjs)>energy*NRJ);
             if numel(II)>1
                 groups( II(2) : end )   = [];
                 ctf( II(2) : end )      = [];

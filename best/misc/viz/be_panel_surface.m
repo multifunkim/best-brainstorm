@@ -1,4 +1,4 @@
-function varargout = panel_surface(varargin)
+function varargout = be_panel_surface(varargin)
 % PANEL_SURFACE: Panel to load and plot surfaces.
 % 
 % USAGE:  bstPanel = panel_surface('CreatePanel')
@@ -1015,7 +1015,7 @@ end
 function isOk = SetSurfaceData(hFig, iTess, dataType, dataFile, isStat) %#ok<DEFNU>
     global GlobalData;
     % Get figure index in DataSet figures list
-    [tmp__, iFig, iDS] = bst_figures('GetFigure', hFig);
+    [~, ~, iDS] = bst_figures('GetFigure', hFig);
     if isempty(iDS)
         error('No DataSet acessible for this 3D figure');
     end
@@ -1090,7 +1090,7 @@ function isOk = SetSurfaceData(hFig, iTess, dataType, dataFile, isStat) %#ok<DEF
             
         case 'Timefreq'
             % Get study
-            [sStudy, iStudy, iTf] = bst_get('TimefreqFile', dataFile);
+            [sStudy, ~, iTf] = bst_get('TimefreqFile', dataFile);
             if isempty(sStudy)
                 error('File is not registered in database.');
             end
@@ -1192,7 +1192,7 @@ function isOk = UpdateSurfaceData(hFig, iSurfaces)
     end
         
     % Get figure index (in DataSet structure)
-    [tmp__, iFig, iDS] = bst_figures('GetFigure', hFig);
+    [~, iFig, iDS] = bst_figures('GetFigure', hFig);
     % Find the DataSet indice that corresponds to the current figure
     if isempty(iDS)
         error('No DataSet acessible for this 3D figure');
@@ -1210,7 +1210,7 @@ function isOk = UpdateSurfaceData(hFig, iSurfaces)
         switch (TessInfo(iTess).DataSource.Type)
             case 'Data'
                 % Get TimeVector and current time indice
-                [TimeVector, CurrentTimeIndex] = bst_memory('GetTimeVector', iDS);
+                [~, CurrentTimeIndex] = bst_memory('GetTimeVector', iDS);
                 % If surface is displayed : update it
                 if ~isempty(TessInfo(iTess).hPatch) && ishandle(TessInfo(iTess).hPatch)
                     % Get vertices of surface
@@ -1413,7 +1413,7 @@ function UpdateSurfaceColormap(hFig, iSurfaces)
              findobj(hFig, '-depth', 1, 'Tag', 'axs')];
     
     % Get figure index (in DataSet structure)
-    [tmp__, iFig, iDS] = bst_figures('GetFigure', hFig);
+    [~, ~, iDS] = bst_figures('GetFigure', hFig);
     % Find the DataSet indice that corresponds to the current figure
     if isempty(iDS)
         error('No DataSet acessible for this 3D figure');
@@ -1648,7 +1648,7 @@ end
 %% ===== UPDATE OVERLAY MASKS =====
 function UpdateOverlayCubes(hFig) %#ok<DEFNU>
     for i = 1:length(hFig)
-        [sMri, TessInfo, iTess] = GetSurfaceMri(hFig(i));
+        [~, TessInfo, iTess] = GetSurfaceMri(hFig(i));
         if ~isempty(iTess) && ~isempty(TessInfo(iTess).Data)
             UpdateOverlayCube(hFig(i), iTess);
         end
@@ -1720,7 +1720,7 @@ function TessInfo = UpdateOverlayCube(hFig, iTess)
     % ===== DISPLAY SURFACE/GRIDS =====
     else
         % === INTERPOLATION MRI<->SURFACE ===
-        [sSurf, iSurf] = bst_memory('LoadSurface', SurfaceFile);
+        [~, iSurf] = bst_memory('LoadSurface', SurfaceFile);
         tess2mri_interp = bst_memory('GetTess2MriInterp', iSurf);
         % If no interpolation tess<->mri accessible : exit
         if isempty(tess2mri_interp)

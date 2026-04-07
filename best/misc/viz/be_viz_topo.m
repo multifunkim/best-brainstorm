@@ -1,8 +1,5 @@
 function [hFig] = be_viz_topo(channels, data)
 
-global GlobalData
-
-
 % ===== SET UP NEW FIGURE =====
 FigureId            =   db_template('FigureId');
 FigureId.Type       =   '3DViz';
@@ -68,7 +65,7 @@ for i = 1:length(Vertices)
 end
 
 % Compute interpolation
-[WExtrap, src_xyz]      = 	be_computeinterp(channels, destChan, bfs_center, bfs_radius, Whitener, epsilon);
+[WExtrap, ~]      = 	be_computeinterp(channels, destChan, bfs_center, bfs_radius, Whitener, epsilon);
 
 % Apply interpolation matrix sensors => display surface
 DataToPlot              =   WExtrap * data;

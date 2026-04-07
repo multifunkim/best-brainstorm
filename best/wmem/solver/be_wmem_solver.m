@@ -1,9 +1,6 @@
-function [Results, OPTIONS] = be_wmem_solver(HeadModel, OPTIONS, Results)
-% MEMSOLVER: Maximum Entropy on the Mean solution.
+function [Results, OPTIONS] = be_wmem_solver(obj, OPTIONS)
+% be_wmem_solver: compute wavelet Maximum Entropy on the Mean solution.
 %
-% NOTES:
-%     - This function is not optimized for stand-alone command calls.
-%     - Please use the generic BST_SOURCEIMAGING function, or the GUI.a
 %
 % INPUTS:
 %     - HeadModel  : Brainstorm head model structure
@@ -87,19 +84,12 @@ function [Results, OPTIONS] = be_wmem_solver(HeadModel, OPTIONS, Results)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 %%
-global MEMglobal
 
-% pipeline starts here:
 if OPTIONS.optional.verbose
     fprintf('\n\n===== pipeline wMEM\n');
 end        
 time_it_starts = tic();
         
-%% Useful variables
-obj = struct('ImageGridAmp', []);
-[obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
-
-[OPTIONS, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 
 %% ===== Comment ===== %%
 OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
@@ -107,19 +97,23 @@ if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1
     OPTIONS.automatic.Comment   =   ['w' OPTIONS.optional.Comment];
 end
 
-%% ===== Channels ===== %% 
-% we retrieve the channels name and the data
-[OPTIONS, obj]  = be_main_channel(HeadModel, obj, OPTIONS);
 
-%% ===== Sources ===== %% 
-% we verify that all sources in the model have good leadfields
-[OPTIONS, obj]  = be_main_sources(obj, OPTIONS);
+% EEG-MEG specific preprocessing
+if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
 
-%% ===== Pre-whitening of the data ==== %%
-% it uses empty-room data if available
-% if PlOS one : nothing is done here
-% [OPTIONS] = be_prewhite(OPTIONS);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% ===== DC offset ===== %% 
+    % we remove the DC offset the data
+    %[OPTIONS]       = be_remove_dc(OPTIONS);
+
+    %% ===== AVG reference ===== %% 
+    % we average reference the data
+    %[OPTIONS]       = be_avg_reference(OPTIONS);
+
+    %% ===== Pre-whitening of the data ==== %%
+    % it uses empty-room data if available
+    % if PlOS one : nothing is done here
+    % [OPTIONS] = be_prewhite(OPTIONS);
+end
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
@@ -144,7 +138,7 @@ OPTIONS = be_model_of_null_hypothesis(OPTIONS);
 % for the data: normalization/wavelet/denoise
 [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS);
 if OPTIONS.optional.display
-    [obj.hfig, obj.hfigtab] = be_display_time_scale_boxes(obj,OPTIONS);
+    [obj.hfig, obj.hfigtab] = be_display_time_scale_boxes(obj, OPTIONS);
 end
 
 %% ===== Compute Minimum Norm Solution ==== %% 
@@ -163,7 +157,7 @@ end
 
 %% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
 % matrix W'W from the Henson paper
-[OPTIONS, obj.GreenM2] = be_spatial_priorw( OPTIONS, obj.VertConn);
+[OPTIONS, obj.GreenM2] = be_spatial_priorw(OPTIONS, obj.VertConn);
 
 %% ===== Fuse modalities ===== %%   
 obj = be_fusion_of_modalities(obj, OPTIONS);

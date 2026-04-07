@@ -50,7 +50,7 @@ selected_samples(2,:) = Nj;
 selected_samples(3,:) = selected_k;
 
 OPTIONS.automatic.selected_samples = selected_samples;
-[obj_scaling, OPTIONS_scaling] = be_launch_mem(obj, OPTIONS);
+[obj_scaling, ~] = be_launch_mem(obj, OPTIONS);
 % we do not keep this OPTIONS in the output
 % WE HAVE TO THINK ABOUT THE CLUSTERING ASSOCIATED TO THIS PART OF THE
 % ESTIMATOR

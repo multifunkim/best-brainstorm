@@ -1,4 +1,4 @@
-function [time] = jk2time(fs, j, k)
+function [time] = be_jk2time(fs, j, k)
 % JK2TIME obtains the time (0 being the start) at position (j,k) 
 %
 %   INPUTS:

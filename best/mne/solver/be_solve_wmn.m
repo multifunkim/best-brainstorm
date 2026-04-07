@@ -1,4 +1,4 @@
-function [J, varargout] = solve_wmn(M, G , W, varargin)
+function [J, alpha] = be_solve_wmn(M, G , W, alpha)
 %SOLVE_WMN solves the WMN inverse problem
 %   J = SOLVE_WMN( M, G, W) solves the WMN inverse problem and
 %   returns the activations in J. M is a column vector representing the 
@@ -39,9 +39,8 @@ function [J, varargout] = solve_wmn(M, G , W, varargin)
 
 
 %% INITIALIZATION
-alpha = 0.01;
-if numel(varargin)
-    alpha = varargin{1};
+if nargin < 4
+    alpha = 0.01;
 end
 
 %% SOLVING THE EQUATION
@@ -53,8 +52,7 @@ pinvG = inv_wGt * (G * inv_wGt + regularization)^(-1);
 
 J = pinvG * M;
 
-%% END
-return
+end
 
 %% HISTORY
 %

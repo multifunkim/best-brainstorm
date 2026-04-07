@@ -36,11 +36,11 @@ function [out]= be_rdwsynthesis(in_RDW, Nb_Levels, filter)
 
 % WE ASSUME THE DATA IN 2 DIMENSIONS
     % data are 1xN or NcxN with N = power of 2
-    [Nb_line Nb_samples] = size(in_RDW);
+    [Nb_line, Nb_samples] = size(in_RDW);
     flip = 0;
     if Nb_samples == 1
     in_RDW = in_RDW'; 
-    [Nb_line Nb_samples] = size(in_RDW);
+    [Nb_line, Nb_samples] = size(in_RDW);
     flip = 1;
     end
     % we construct the filter

@@ -182,7 +182,11 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         bst_progress('text', 'Loading head model...');
         bst_progress('inc', 1);
         HeadModelFile   = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
-        HeadModel       = in_bst_headmodel(HeadModelFile, 0, 'Gain', 'GridLoc', 'GridOrient', 'GridAtlas', 'SurfaceFile', 'MEGMethod', 'EEGMethod', 'ECOGMethod', 'SEEGMethod', 'HeadModelType');
+        HeadModel       = in_bst_headmodel(HeadModelFile, 1, 'Gain',  'SurfaceFile',  'HeadModelType');
+
+        % Load vertex connectivity
+        sCortex = in_tess_bst(HeadModel.SurfaceFile);
+        HeadModel.vertex_connectivity = sCortex.VertConn;
 
         % ===== Load NoiseCov file =====
         [NoiseCovMat, errMessage] = LoadNoiseCov(sStudyChannel.NoiseCov(1).FileName, GoodChannel);
@@ -240,11 +244,9 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         ResultsMat.DataFile      = OPTIONS.DataFile;
         ResultsMat.HeadModelFile = HeadModelFile;
         ResultsMat.HeadModelType = HeadModel.HeadModelType;
+        ResultsMat.SurfaceFile   = file_short(HeadModel.SurfaceFile);        
         ResultsMat.ChannelFlag   = DataMat.ChannelFlag;
         ResultsMat.GoodChannel   = GoodChannel;
-        ResultsMat.SurfaceFile   = file_short(HeadModel.SurfaceFile);        
-        ResultsMat.GridLoc       = [];
-        ResultsMat.GridAtlas     = HeadModel.GridAtlas;
         ResultsMat.nAvg          = DataMat.nAvg;
         ResultsMat.Leff          = DataMat.Leff;
         ResultsMat.Options       = OPTIONS;

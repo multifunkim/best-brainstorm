@@ -32,7 +32,7 @@ function [CFs] = be_get_coeffs(TF, frequencies, line, varargin)
 % -------------------------------------------------------------------------   
 
     % Set default
-    [nbC, nbF, nbS] = size(TF);
+    [~, ~, ~] = size(TF);
     method      = 'strict';
     tolerance   = 2;
     if numel(varargin) && ~isempty(varargin{1})
@@ -71,7 +71,7 @@ function [CFs] = be_get_coeffs(TF, frequencies, line, varargin)
             for ii = 1 : numel(line)
                 Frng = minF(ii) : maxF(ii);
                 cand = TF(:, Frng, ii+init-1)';
-                [dum, idx] = max( abs(cand), [], 1 );
+                [~, idx] = max( abs(cand), [], 1 );
                 dec =  [0:size(CFs,1)-1] * numel(Frng);
                 CFs(:,ii) = cand(idx+dec)';
             end
