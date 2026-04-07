@@ -103,11 +103,11 @@ if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
 
     %% ===== DC offset ===== %% 
     % we remove the DC offset the data
-    [OPTIONS]       = be_remove_dc(OPTIONS);
+    %[OPTIONS]       = be_remove_dc(OPTIONS);
 
     %% ===== AVG reference ===== %% 
     % we average reference the data
-    [OPTIONS]       = be_avg_reference(OPTIONS);
+    %[OPTIONS]       = be_avg_reference(OPTIONS);
 
     %% ===== Pre-whitening of the data ==== %%
     % it uses empty-room data if available
