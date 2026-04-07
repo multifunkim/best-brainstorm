@@ -200,9 +200,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         % ===== Select only good channels =====
         [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat);
 
-        % ===== Apply average reference: separately SEEG, ECOG, EEG =====
-        [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat);
-
         % ===== Finalize Options struct =====
         OPTIONS.NoiseCovMat = NoiseCovMat;
         OPTIONS.ChannelTypes  = {ChannelMat.Channel.Type};
@@ -466,22 +463,6 @@ function [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodC
     DataMat.ChannelFlag = DataMat.ChannelFlag(GoodChannel);
 end
 
-function [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat)
-% Apply average reference: separately SEEG, ECOG, EEG
-    if ~any(ismember(unique({ChannelMat.Channel.Type}), {'EEG','ECOG','SEEG'}))
-        % Nothing to do
-        return;
-    end
-
-    % Create average reference montage
-    ChannelFlag     = ones(length(ChannelMat.Channel),1);
-    sMontage        = panel_montage('GetMontageAvgRef', [], ChannelMat.Channel, ChannelFlag , 0);
-    %  Apply average reference operator on the gain matrix
-    HeadModel.Gain  = sMontage.Matrix * HeadModel.Gain;
-    % Apply average reference operator on both sides of the noise covariance matrix
-    NoiseCovMat.NoiseCov = sMontage.Matrix * NoiseCovMat.NoiseCov * sMontage.Matrix';
-
-end
 
 function cleanupRoutine()
     % Hide progress bar 

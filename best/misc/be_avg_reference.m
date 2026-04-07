@@ -1,11 +1,12 @@
 function [OPTIONS] = be_avg_reference(OPTIONS)
-% This function average reference the data of every channels,
-% along every time samples
-%
+% be_avg_reference Re-reference the data to the average reference montage.
+% Only for EEG data. This is applied for each modality separatly
 %% ==============================================
 % Copyright (C) 2011 - LATIS Team
 %
-%  Authors: LATIS team, 2015
+%  Authors: 
+%           LATIS team, 2015
+%           Edouard Delaire, 2026
 %
 %% ==============================================
 % License
@@ -25,16 +26,29 @@ function [OPTIONS] = be_avg_reference(OPTIONS)
 % -------------------------------------------------------------------------
 
     for ii = 1:numel(OPTIONS.mandatory.DataTypes)
-             
-        % Compute mean along channels for every time sample and substract from the data
-        muM = ones(size(OPTIONS.automatic.Modality(ii).data,1),1)*mean(OPTIONS.automatic.Modality(ii).data);
-        OPTIONS.automatic.Modality(ii).data = OPTIONS.automatic.Modality(ii).data - muM;
+
+        if ~ismember(OPTIONS.mandatory.DataTypes{ii}, {'EEG','SEEG','ECOG','ECOG+SEEG'})
+            % Nothing to do
+            continue;
+        end
+    
+        % Compute the average montage projection
+        nChan = size(OPTIONS.automatic.Modality(ii).data,1);
+        projector = eye(nChan) - ones(nChan) ./ nChan;
+
+        % Apply to the data, and baseline
+        OPTIONS.automatic.Modality(ii).data = projector * OPTIONS.automatic.Modality(ii).data;
+        OPTIONS.automatic.Modality(ii).baseline = projector * OPTIONS.automatic.Modality(ii).baseline;
         
-        % average reference the gain matrix
-        if strcmpi(OPTIONS.mandatory.DataTypes{ii}, 'eeg')
-            avgref  =  ones( size(OPTIONS.automatic.Modality(ii).gain,1), 1) *  mean( OPTIONS.automatic.Modality(ii).gain );
-            OPTIONS.automatic.Modality(ii).gain     =   OPTIONS.automatic.Modality(ii).gain -  avgref;
-        end    
+        % Apply to the noise covariance
+        if ~isempty(OPTIONS.automatic.Modality(ii).covariance)
+            for i_sc = 1: size(OPTIONS.solver.NoiseCov, 3)
+                OPTIONS.automatic.Modality(ii).covariance(:, :, i_sc) =  projector *  OPTIONS.automatic.Modality(ii).covariance(:, :, i_sc) * projector';
+            end
+        end
+
+        % Apply to the gain matrix
+        OPTIONS.automatic.Modality(ii).gain     =   projector * OPTIONS.automatic.Modality(ii).gain;
 
     end
 end
