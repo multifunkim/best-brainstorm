@@ -123,6 +123,12 @@ for ii = 1 : nMod
     
 end
 
+if isfield(HeadModel, 'GoodVertex') && ~isempty(HeadModel.GoodVertex)
+    OPTIONS.automatic.GoodVertex = HeadModel.GoodVertex;
+else
+    OPTIONS.automatic.GoodVertex = 1:size(HeadModel.Gain, 2);
+end
+
 % Remove used fields
 OPTIONS.mandatory   =   rmfield(OPTIONS.mandatory,  'Data' );
 if isfield(OPTIONS.optional,  'Baseline' )

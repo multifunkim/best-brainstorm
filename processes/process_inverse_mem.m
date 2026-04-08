@@ -205,9 +205,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         OPTIONS.Channel       = ChannelMat.Channel;
         OPTIONS.Data          = DataMat.F;
         OPTIONS.ChannelFlag   = DataMat.ChannelFlag;
-        OPTIONS.ResultFile    = [];
         OPTIONS.HeadModelFile = HeadModelFile;
-        OPTIONS.GoodChannel   = GoodChannel;
         OPTIONS.FunctionName  = 'mem';
         
         % ===== COMPUTE INVERSE SOLUTION =====
