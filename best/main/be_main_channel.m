@@ -65,8 +65,14 @@ for ii = 1 : nMod
     if isempty(CH)
         error(['MEM > Unable to find appropriate data. No '  OPTIONS.mandatory.DataTypes{ii} ' channels found.']);
     end
-    OPTIONS.automatic.Modality(ii).channels   = CH;
 
+
+    if size(CH,1) == 1
+        OPTIONS.automatic.Modality(ii).channels   = CH';
+    else
+        OPTIONS.automatic.Modality(ii).channels   = CH;
+    end
+    
     %% ============================== DATA ============================= %%
     if isfield(OPTIONS.mandatory, 'Data') && ~isempty(OPTIONS.mandatory.Data)
         OPTIONS.automatic.Modality(ii).data = OPTIONS.mandatory.Data( CH,: );
