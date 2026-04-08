@@ -130,7 +130,6 @@ function Def_OPTIONS=   BEst_defaults()
     Def_OPTIONS.optional.ChannelFlag                = [];
     Def_OPTIONS.optional.FileType                   = '';
     Def_OPTIONS.optional.ChannelNames               = '';
-    Def_OPTIONS.optional.ChannelFlags               = '';
     Def_OPTIONS.optional.waitbar                    = 0;
     Def_OPTIONS.optional.DataFile                   = '';
     Def_OPTIONS.optional.ResultFile                 = '';
