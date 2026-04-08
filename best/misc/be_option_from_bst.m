@@ -17,7 +17,6 @@ function MEMoptions = be_option_from_bst(OPTIONS)
     MEMoptions.optional.Comment                         =   OPTIONS.Comment;
     
     % automatic
-    MEMoptions.automatic.GoodChannel                    =   OPTIONS.GoodChannel;
     MEMoptions.automatic.iProtocol                      =   bst_get('ProtocolInfo');
     MEMoptions.automatic.Comment                        =   OPTIONS.Comment;
     MEMoptions.automatic.iStudy                         =   be_get_id( MEMoptions );

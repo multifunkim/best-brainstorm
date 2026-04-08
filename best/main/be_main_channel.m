@@ -62,6 +62,8 @@ for ii = 1 : nMod
     % OPTIONS.DataTypes
     
     CH = find(strcmpi(OPTIONS.mandatory.ChannelTypes, OPTIONS.mandatory.DataTypes{ii}));
+    CH = intersect(CH, OPTIONS.automatic.GoodChannel);
+
     if isempty(CH)
         error(['MEM > Unable to find appropriate data. No '  OPTIONS.mandatory.DataTypes{ii} ' channels found.']);
     end

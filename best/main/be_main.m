@@ -62,25 +62,24 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
     OPTIONS = be_initialize_options(OPTIONS);
     
     % ==== Check Data and Options
-    [HeadModel, OPTIONS, FLAG] = be_checkio( HeadModel, OPTIONS);    
+    [HeadModel, OPTIONS, FLAG] = be_checkio(HeadModel, OPTIONS);    
     assert(~FLAG, 'MEM: unable to compute MEM.')
     
     % Initialize obj 
     obj = struct();
+    obj.VertConn = be_vertex_connectivity(HeadModel);
     [obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
-    [~, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 
     % Channels: we retrieve the channels name and the data
     OPTIONS             = be_main_channel(HeadModel, OPTIONS);
 
     % Sources: we verify that all sources in the model have good leadfields
-    [OPTIONS, obj]  = be_main_sources(obj, OPTIONS);
+    [OPTIONS, obj]      = be_main_sources(obj, OPTIONS);
 
     % ====  Initialize parallel computing
-    close_pool = false;
     if OPTIONS.solver.parallel_matlab && isempty(gcp('nocreate'))
         gcp;
-        close_pool = true;
+        cleanupObj  = onCleanup(@()delete(gcp('nocreate')));
     end
     
     % ==== LAUNCH PIPELINE ==== %
@@ -96,12 +95,7 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
         otherwise
             error('Unknown pipeline %s', lower(OPTIONS.mandatory.pipeline))
     end
-    
-    % ====  Close parallel computing
-    if close_pool
-        delete(gcp('nocreate'))
-    end
-    
+
 end
 
 

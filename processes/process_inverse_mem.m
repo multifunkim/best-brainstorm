@@ -197,9 +197,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         % ===== Apply current SSP projectors =====
         [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat);
 
-        % ===== Select only good channels =====
-        [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat);
-
         % ===== Finalize Options struct =====
         OPTIONS.NoiseCovMat = NoiseCovMat;
         OPTIONS.ChannelTypes  = {ChannelMat.Channel.Type};
@@ -444,25 +441,6 @@ function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
         NoiseCovMat.NoiseCov = Proj * NoiseCovMat.NoiseCov * Proj';
     end
 end
-
-function [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat)
-    
-    ChannelMat.Channel = ChannelMat.Channel(GoodChannel);
-    HeadModel.Gain = HeadModel.Gain(GoodChannel, :);
-
-
-    NoiseCovMat.NoiseCov = NoiseCovMat.NoiseCov(GoodChannel, GoodChannel);
-    if isfield(NoiseCovMat, 'FourthMoment') && ~isempty(NoiseCovMat.FourthMoment)
-        NoiseCovMat.FourthMoment = NoiseCovMat.FourthMoment(GoodChannel, GoodChannel);
-    end
-    if isfield(NoiseCovMat, 'nSamples') && ~isempty(NoiseCovMat.nSamples)
-        NoiseCovMat.nSamples = NoiseCovMat.nSamples(GoodChannel, GoodChannel);
-    end
-
-    DataMat.F  = DataMat.F(GoodChannel,:);
-    DataMat.ChannelFlag = DataMat.ChannelFlag(GoodChannel);
-end
-
 
 function cleanupRoutine()
     % Hide progress bar 

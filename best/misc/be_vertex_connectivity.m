@@ -1,4 +1,4 @@
-function [OPTIONS, VertConn] = be_vertex_connectivity(HeadModel, OPTIONS)
+function VertConn = be_vertex_connectivity(HeadModel)
 % be_vertex_connectivity. 
 % Extract the vertex connectivity matrix from HeadModel
 % | Either HeadModel.VertConn or HeadModel.vertex_connectivity

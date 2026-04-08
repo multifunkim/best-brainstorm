@@ -65,13 +65,14 @@ elseif ~any(isRF)
             if sum(iD); CH(ii) = find(iD); end
         end
     end
-    
-    if numel(CH) ~= numel(OPTIONS.automatic.GoodChannel)
-        error('MEM : Channels of baseline file do not match channels in data file');
-    end    
+
     OPTIONS.optional.Baseline = OPTIONS.optional.Baseline(CH,STb:NDb);
     OPTIONS.optional.BaselineTime = OPTIONS.optional.BaselineTime(STb : NDb);
     
+end
+
+if isfield(OPTIONS.optional, 'ChannelFlag') && length(OPTIONS.optional.ChannelFlag) == size(OPTIONS.mandatory.Data, 1)      
+    OPTIONS.automatic.GoodChannel = find(OPTIONS.optional.ChannelFlag);
 end
 
 % Data length check
