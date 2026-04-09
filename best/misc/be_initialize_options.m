@@ -15,6 +15,4 @@ function MEMoptions = be_initialize_options(OPTIONS)
     MEMoptions.automatic.stand_alone    = stand_alone;
     MEMoptions.automatic.process        = process;
 
-    MEMoptions  = be_check_data_pipeline( MEMoptions );   
-
 end
