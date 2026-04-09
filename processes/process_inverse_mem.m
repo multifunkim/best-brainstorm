@@ -182,11 +182,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         bst_progress('text', 'Loading head model...');
         bst_progress('inc', 1);
         HeadModelFile   = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
-        HeadModel       = in_bst_headmodel(HeadModelFile, 1, 'Gain',  'SurfaceFile',  'HeadModelType');
-
-        % Load vertex connectivity
-        sCortex = in_tess_bst(HeadModel.SurfaceFile);
-        HeadModel.vertex_connectivity = sCortex.VertConn;
+        HeadModel       = LoadHeadModel(HeadModelFile);
 
         % ===== Load NoiseCov file =====
         [NoiseCovMat, errMessage] = LoadNoiseCov(sStudyChannel.NoiseCov(1).FileName, GoodChannel);
@@ -402,6 +398,16 @@ function [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies)
     end
 end
 
+function HeadModel = LoadHeadModel(HeadModelFile)
+
+    HeadModel       = in_bst_headmodel(HeadModelFile, 1, 'Gain',  'SurfaceFile',  'HeadModelType');
+
+    % Load vertex connectivity
+    sCortex = in_tess_bst(HeadModel.SurfaceFile);
+    HeadModel.vertex_connectivity = sCortex.VertConn;
+end
+
+
 function [NoiseCovMat, errMessage] = LoadNoiseCov(FileName, GoodChannel)
     errMessage = '';
 
@@ -420,7 +426,7 @@ function [NoiseCovMat, errMessage] = LoadNoiseCov(FileName, GoodChannel)
     end
 end
 
-function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
+  function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
 % Apply SSP from ChannelMat to HeadModel and NoiseCovMat
 
     if isempty(ChannelMat.Projector)
