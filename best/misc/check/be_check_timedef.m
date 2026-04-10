@@ -1,79 +1,6 @@
 function [OPTIONS, FLAG] = be_check_timedef(OPTIONS, isRF)
 
-% Get baseline data segment
 FLAG    =   0;
-OPTIONS.automatic.sampling_rate     =   round( 1 / diff( OPTIONS.mandatory.DataTime([1 2]) ) );
-
-% Fills MSP_data field
-if isempty(OPTIONS.optional.TimeSegment)
-    OPTIONS.optional.TimeSegment    =   OPTIONS.mandatory.DataTime([1 end]);
-end
-OPTIONS.optional.TimeSegment        =   be_closest( OPTIONS.optional.TimeSegment([1 end]), OPTIONS.mandatory.DataTime );
-OPTIONS.optional.TimeSegment        =   OPTIONS.mandatory.DataTime(OPTIONS.optional.TimeSegment(1):OPTIONS.optional.TimeSegment(end));
-
-% Patch work [to be revisited]... Baseline no longer preloaded...
-if ~isempty(OPTIONS.optional.Baseline) && ischar(OPTIONS.optional.Baseline)
-    OPTIONS.optional.BaselineTime    = getfield(load(OPTIONS.optional.Baseline, 'Time'), 'Time');
-    OPTIONS.optional.Baseline        = getfield(load(OPTIONS.optional.Baseline, 'F'), 'F');
-end
-if ~isempty(OPTIONS.optional.BaselineChannels) && ischar(OPTIONS.optional.BaselineChannels)
-    OPTIONS.optional.BaselineChannels = load(OPTIONS.optional.BaselineChannels);
-end
-
-% No baseline
-if isempty(OPTIONS.optional.Baseline) && ~any(isRF)
-    % Baseline segment definition
-    OPTIONS.optional.BaselineTime   =   OPTIONS.mandatory.DataTime;
-    OPTIONS.optional.Baseline       =   OPTIONS.mandatory.Data;
-    if isempty(OPTIONS.optional.BaselineSegment)
-        OPTIONS.optional.BaselineSegment = OPTIONS.mandatory.DataTime(1):1/OPTIONS.automatic.sampling_rate:OPTIONS.mandatory.DataTime(end);
-    else
-        STb     = be_closest( OPTIONS.optional.BaselineSegment(1), OPTIONS.optional.BaselineTime );
-        NDb     = be_closest( OPTIONS.optional.BaselineSegment(end), OPTIONS.optional.BaselineTime );
-        OPTIONS.optional.Baseline       =   OPTIONS.optional.Baseline(:, STb:NDb);
-        OPTIONS.optional.BaselineTime   =   OPTIONS.optional.BaselineTime(STb:NDb);
-    end
-    
-elseif ~any(isRF)
-    % Baseline time definition
-    OPTIONS.automatic.BaselineType  =   'independent';
-    if isempty(OPTIONS.optional.BaselineTime)
-        OPTIONS.optional.BaselineTime       = 1 : size(OPTIONS.optional.Baseline,2);
-    end
-    
-    % Baseline segment definition
-    if isempty(OPTIONS.optional.BaselineSegment)
-        OPTIONS.optional.BaselineSegment    = OPTIONS.optional.BaselineTime;
-        STb     = 1;
-        NDb     = size(OPTIONS.optional.Baseline,2);
-    else
-        STb     = be_closest( OPTIONS.optional.BaselineSegment(1), OPTIONS.optional.BaselineTime );
-        NDb     = be_closest( OPTIONS.optional.BaselineSegment(end), OPTIONS.optional.BaselineTime );
-    end
-    
-    % Check
-    if STb > NDb || NDb > size(OPTIONS.optional.Baseline,2)
-        error('In be_main : bad time definition for the baseline')
-    end
-    
-    % Baseline Channels
-    CH = 1 : size(OPTIONS.mandatory.Data,1);
-    if isfield(OPTIONS.optional, 'BaselineChannels') && ~isempty(OPTIONS.optional.BaselineChannels)
-        CH = [];
-        for ii = 1 : size( OPTIONS.mandatory.Data, 1 )
-            iD  = strcmp( {OPTIONS.optional.BaselineChannels.Channel.Name}, OPTIONS.optional.Channel(ii).Name );
-            if sum(iD); CH(ii) = find(iD); end
-        end
-    end
-
-    OPTIONS.optional.Baseline = OPTIONS.optional.Baseline(CH,STb:NDb);
-    OPTIONS.optional.BaselineTime = OPTIONS.optional.BaselineTime(STb : NDb);
-    
-end
-
-if isfield(OPTIONS.optional, 'ChannelFlag') && length(OPTIONS.optional.ChannelFlag) == size(OPTIONS.mandatory.Data, 1)      
-    OPTIONS.automatic.GoodChannel = find(OPTIONS.optional.ChannelFlag);
-end
 
 % Data length check
 if strcmp(OPTIONS.mandatory.pipeline, 'cMEM') && strcmp(OPTIONS.clustering.clusters_type, 'static')
@@ -108,44 +35,5 @@ if strcmp(OPTIONS.mandatory.pipeline, 'cMEM') && strcmp(OPTIONS.clustering.clust
     
 end
 
-% Check emptyroom data
-if ~isempty( OPTIONS.optional.EmptyRoom_data )
-    ERch    =   OPTIONS.optional.EmptyRoom_channels;
-    MNch    =   {OPTIONS.optional.Channel.Name};
-    if isempty(ERch) && numel(MNch)==size(OPTIONS.optional.EmptyRoom_data,1)
-        % same channels as data, assume same order
-        OPTIONS.automatic.Emptyroom_data	= OPTIONS.optional.EmptyRoom_data; 
-        
-    elseif ~isempty(ERch)
-        nERD    =   zeros( size(OPTIONS.mandatory.Data,1), size(OPTIONS.optional.EmptyRoom_data,2) );
-        nFound  =   [];
-        
-        % assume only MEG has empty room data
-        iMod    =   find(strcmp(OPTIONS.mandatory.ChannelTypes, 'MEG'));
-        
-        for ii  =   1 : numel(ERch)
-            idE     =   find(strcmp(MNch, ERch{ii}));
-            if ~isempty(idE)
-                nFound  =   [nFound ii]; 
-                nERD( idE,: )  =   OPTIONS.optional.EmptyRoom_data(ii,:);
-            end
-        end
-        
-        if nFound~=numel(iMod)
-            FLAG = 1;
-            fprintf('\nBEst error:\tInconsistent channels for emptyroom and data');         
-        end
-        OPTIONS.automatic.Emptyroom_data    =   nERD;            
-               
-    else
-        FLAG = 1;
-        fprintf('\nBEst error:\tNo channels for emptyroom data');
-        
-    end
-end
-    
-if isfield(OPTIONS.automatic, 'Emptyroom_data')
-    OPTIONS.automatic.Emptyroom_time    =   (0:size(OPTIONS.automatic.Emptyroom_data,2)-1)/OPTIONS.automatic.sampling_rate;
-end 
 
 end

@@ -59,8 +59,9 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
     end
     
     % Initialize options
-    OPTIONS = be_initialize_options(OPTIONS);
-    
+    [OPTIONS, FLAG] = be_initialize_options(OPTIONS);
+    assert(~FLAG, 'MEM: unable to initialize MEM options.')
+
     % ==== Check Data and Options
     [HeadModel, OPTIONS, FLAG] = be_checkio(HeadModel, OPTIONS);    
     assert(~FLAG, 'MEM: unable to compute MEM.')

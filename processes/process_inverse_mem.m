@@ -192,6 +192,10 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
 
         % ===== Apply current SSP projectors =====
         [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat);
+        
+        % ===== LOAD BASELINE =====
+        OPTIONS = LoadBaseline(OPTIONS);
+
 
         % ===== Finalize Options struct =====
         OPTIONS.NoiseCovMat = NoiseCovMat;
@@ -426,7 +430,7 @@ function [NoiseCovMat, errMessage] = LoadNoiseCov(FileName, GoodChannel)
     end
 end
 
-  function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
+function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
 % Apply SSP from ChannelMat to HeadModel and NoiseCovMat
 
     if isempty(ChannelMat.Projector)
@@ -444,6 +448,34 @@ end
         % Apply SSPs on both sides of the noise covariance matrix
         NoiseCovMat.NoiseCov = Proj * NoiseCovMat.NoiseCov * Proj';
     end
+end
+
+function [OPTIONS, errMessage] = LoadBaseline(OPTIONS)
+    
+    if isempty(OPTIONS.MEMpaneloptions.optional.Baseline)
+        return
+    end
+
+    BaselineFile = OPTIONS.MEMpaneloptions.optional.Baseline;
+    BaselineChannelFile = OPTIONS.MEMpaneloptions.optional.BaselineChannels;
+
+    if xor(ischar(BaselineFile), ischar(BaselineChannelFile))
+        errMessage = 'Both Baseline and  BaselineChannels should be filename';
+        return
+    end
+
+    if ~isempty(BaselineFile) && ischar(BaselineFile)
+
+        sData = in_bst_data(BaselineFile, {'Time', 'F'});
+
+        OPTIONS.MEMpaneloptions.optional.BaselineTime    = sData.Time;
+        OPTIONS.MEMpaneloptions.optional.Baseline        = sData.F;
+
+        sChannels = in_bst_channel(BaselineChannelFile);
+        OPTIONS.MEMpaneloptions.optional.BaselineChannels = {sChannels.Channel.Name};
+    end
+
+
 end
 
 function cleanupRoutine()

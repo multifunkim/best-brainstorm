@@ -12,7 +12,6 @@ function MEMoptions = be_option_from_bst(OPTIONS)
     MEMoptions.optional.Channel                         =   OPTIONS.Channel;
     MEMoptions.optional.ChannelFlag                     =   OPTIONS.ChannelFlag;
     MEMoptions.optional.DataFile                        =   OPTIONS.DataFile;
-    MEMoptions.optional.ResultFile                      =   OPTIONS.ResultFile;
     MEMoptions.optional.HeadModelFile                   =   OPTIONS.HeadModelFile;
     MEMoptions.optional.Comment                         =   OPTIONS.Comment;
     
