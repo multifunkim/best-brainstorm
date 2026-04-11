@@ -5,13 +5,14 @@ function [OPTIONS, FLAG] = be_initialize_options(OPTIONS)
 
     % ==== Copy default options to OPTIONS structure (do not replace defined values)
     [stand_alone, process] = be_check_caller();
-    if ~stand_alone && isfield(OPTIONS, 'MEMpaneloptions' )
+    if isfield(OPTIONS, 'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
         OPTIONS = be_option_from_bst(OPTIONS);
     end
     
-    DefaultOptions  = be_pipelineoptions([], OPTIONS.mandatory.pipeline, OPTIONS.mandatory.DataTypes);
-    OPTIONS         = be_struct_copy_fields(OPTIONS,  DefaultOptions, [] , 0);
+    DefaultOptions  = be_main(OPTIONS.mandatory.pipeline, OPTIONS.mandatory.DataTypes);
+    OPTIONS         = be_struct_copy_fields(OPTIONS, DefaultOptions , [] , 0);
 
+    % Complete automatic options
     OPTIONS.automatic.stand_alone    = stand_alone;
     OPTIONS.automatic.process        = process;
     OPTIONS.automatic.sampling_rate  = round( 1 / diff( OPTIONS.mandatory.DataTime([1 2]) ) );
