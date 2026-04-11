@@ -8,11 +8,13 @@ function [OPTIONS, FLAG] = be_initialize_options(OPTIONS)
     if ~stand_alone && isfield(OPTIONS, 'MEMpaneloptions' )
         OPTIONS = be_option_from_bst(OPTIONS);
     end
-    OPTIONS = be_struct_copy_fields(OPTIONS,  be_main(OPTIONS.mandatory.pipeline), [] );
+    
+    DefaultOptions  = be_pipelineoptions([], OPTIONS.mandatory.pipeline, OPTIONS.mandatory.DataTypes);
+    OPTIONS         = be_struct_copy_fields(OPTIONS,  DefaultOptions, [] , 0);
 
     OPTIONS.automatic.stand_alone    = stand_alone;
     OPTIONS.automatic.process        = process;
-    OPTIONS.automatic.sampling_rate     =   round( 1 / diff( OPTIONS.mandatory.DataTime([1 2]) ) );
+    OPTIONS.automatic.sampling_rate  = round( 1 / diff( OPTIONS.mandatory.DataTime([1 2]) ) );
 
     % Initialize time vector
     if isempty(OPTIONS.optional.TimeSegment)
