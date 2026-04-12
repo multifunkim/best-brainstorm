@@ -56,6 +56,7 @@ function [OPTIONS, FLAG] = be_initialize_options(OPTIONS)
         OPTIONS.optional.Channel = {OPTIONS.optional.Channel.Name};
     end
 
+
     if isfield(OPTIONS.optional, 'BaselineChannels') && isstruct(OPTIONS.optional.BaselineChannels) && ~isempty(OPTIONS.optional.BaselineChannels) && isfield(OPTIONS.optional.BaselineChannels(1), 'Name')
         OPTIONS.optional.BaselineChannels = {OPTIONS.optional.BaselineChannels.Name}; 
     end
@@ -126,6 +127,7 @@ function [OPTIONS, FLAG] = be_initialize_options(OPTIONS)
     if isfield(OPTIONS.automatic, 'Emptyroom_data')
         OPTIONS.automatic.Emptyroom_time    =   (0:size(OPTIONS.automatic.Emptyroom_data,2)-1)/OPTIONS.automatic.sampling_rate;
     end 
+
 
 
 end
