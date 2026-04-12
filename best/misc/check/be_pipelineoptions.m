@@ -1,4 +1,4 @@
-function OPT = be_pipelineoptions(OPT, pipeline, DataTypes)
+function OPT = be_pipelineoptions(OPT, pipeline, DataTypes, override)
 
 if nargin < 2
     pipeline = OPT.mandatory.pipeline;
@@ -6,6 +6,10 @@ end
 
 if nargin < 3
     DataTypes = OPT.mandatory.DataTypes;
+end
+
+if nargin < 4
+    override = 0;
 end
 
 switch pipeline
@@ -27,7 +31,7 @@ switch pipeline
         
 end
 
-OPT = be_struct_copy_fields(OPT, DEF, [], 0);
+OPT = be_struct_copy_fields(OPT, DEF, [], override);
 OPT.mandatory.pipeline = pipeline;
 
 end

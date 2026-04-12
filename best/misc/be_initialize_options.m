@@ -11,6 +11,8 @@ function MEMoptions = be_initialize_options(OPTIONS)
         MEMoptions = be_struct_copy_fields( OPTIONS, Def_OPTIONS, [] );
     end
 
+    DefaultOptions  = be_pipelineoptions([], MEMoptions.mandatory.pipeline, MEMoptions.mandatory.DataTypes);
+    MEMoptions      = be_struct_copy_fields(MEMoptions,  DefaultOptions, [] , 0);
 
     MEMoptions.automatic.stand_alone    = stand_alone;
     MEMoptions.automatic.process        = process;

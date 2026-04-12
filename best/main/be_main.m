@@ -2,6 +2,13 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
 % BE_MAIN launches the MEM inverse solution pipeline that fits the
 % OPTIONS.
 % 
+%  Calls :
+%       - OPTIONS = be_main()
+%       - OPTIONS = be_main(pipeline)
+%       - OPTIONS = be_main(pipeline, [])
+%       - OPTIONS = be_main(pipeline, modality)
+%       - [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
+%
 % Inputs:
 % -------
 %
@@ -46,7 +53,7 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
             return
         case 1
             if ischar(HeadModel) && any(strcmpi({'cMEM', 'wMEM', 'rMEM','rwMEM', 'cMNE'}, HeadModel))   
-                Results = be_pipelineoptions(BEst_defaults(), HeadModel);   
+                Results = be_pipelineoptions(BEst_defaults(), HeadModel, 1);   
                 return
             else
                 error('MEM error : wrong pipeline input\n')
@@ -55,6 +62,11 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
             if isempty(HeadModel)
                 Results = be_pipelineoptions(OPTIONS); 
                 return
+            elseif ischar(HeadModel) && iscell(OPTIONS)
+                Results = be_pipelineoptions(BEst_defaults(), HeadModel, OPTIONS , 1);   
+                return
+            else
+                % Continue main pipeline
             end
     end
     
