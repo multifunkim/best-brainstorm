@@ -145,16 +145,20 @@ function [noise_var] = estimate_noise_var(OPTIONS)
 
         % Construct wavelet
         O.wavelet.type                = 'rdw';
-        O.wavelet.vanish_moments      = 4;
-        O.wavelet.selected_scales     = [];
+        %O.wavelet.selected_scales     = [1:3];
         O.wavelet.single_box          = 0;
         O.automatic.scales            = [];
-
         O.optional.verbose            = 0;
-
+        
         % Make transform
-        obj.t0              =   OPTIONS.mandatory.DataTime(1);
-        wavelet_obj         =   be_discrete_wavelet_preprocessing(obj, O);
+        wavelet_obj = struct();
+        wavelet_obj.t0              =   OPTIONS.mandatory.DataTime(1);
+        [wavelet_obj, O]            =   be_discrete_wavelet_preprocessing(wavelet_obj, O);
+        
+        % If we want to display the data
+        %[wavelet_obj.hfig, wavelet_obj.hfigtab] = be_create_figure(O);
+        % be_display_time_scale_boxes(wavelet_obj, O);
+
 
         % If the empty room is available the cov mat is scale dependent
         if ~isempty( OPTIONS.automatic.Modality(ii).emptyroom )
