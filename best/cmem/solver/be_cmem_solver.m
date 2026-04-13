@@ -81,16 +81,6 @@ function [Results, OPTIONS] = be_cmem_solver(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-if OPTIONS.optional.verbose
-    fprintf('\n\n===== pipeline cMEM\n');
-end 
-
-%% ===== Comment ===== %%
-OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
-if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1:3), 'MEM')
-    OPTIONS.automatic.Comment   =   ['c' OPTIONS.optional.Comment];
-end
-
 %% ===== DC offset ===== %% 
 % Remove the DC offset the data (using baseline)
 [OPTIONS]       = be_remove_dc(OPTIONS);
@@ -103,7 +93,6 @@ end
 % it uses empty-room data if available
 % if PlOS one : nothing is done here
 % [OPTIONS] = be_prewhite(OPTIONS);
-
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
@@ -119,9 +108,7 @@ end
 [OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
 %% ===== Clusterize cortical surface ===== %%
-[OPTIONS]       = be_switch_precision(OPTIONS, 'single' );
 [OPTIONS, obj]  = be_main_clustering(obj, OPTIONS);
-[OPTIONS]       = be_switch_precision( OPTIONS, 'double' );
 
 %% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
 % matrix W'W from the Henson paper
@@ -154,8 +141,6 @@ Results.nComponents     = round( length(obj.iModS) / obj.nb_sources );
 
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
 
-
-disp('Bye.')
 end
 
 

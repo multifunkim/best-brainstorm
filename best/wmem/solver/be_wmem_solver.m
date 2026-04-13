@@ -85,18 +85,6 @@ function [Results, OPTIONS] = be_wmem_solver(obj, OPTIONS)
 % -------------------------------------------------------------------------   
 %%
 
-if OPTIONS.optional.verbose
-    fprintf('\n\n===== pipeline wMEM\n');
-end        
-time_it_starts = tic();
-        
-
-%% ===== Comment ===== %%
-OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
-if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1:3), 'MEM')
-    OPTIONS.automatic.Comment   =   ['w' OPTIONS.optional.Comment];
-end
-
 %% ===== AVG reference ===== %% 
 % Convert to average reference (only for EEG / iEEG)
 [OPTIONS]       = be_avg_reference(OPTIONS);
@@ -131,15 +119,9 @@ end
 % we compute MNE (using l-curve for nirs or depth-weighted version)
 [obj, OPTIONS] = be_main_mne(obj, OPTIONS);
 
-%% ===== Double to single precision  ===== %%
-[OPTIONS] = be_switch_precision(OPTIONS, 'single');
-
 %% ===== Clusterize cortical surface ===== %%
 % from the msp scores, clustering of the cortical mesh:
 [OPTIONS, obj] = be_main_clustering(obj, OPTIONS);
-
-%% ===== Single to double precision  ===== %%
-[OPTIONS] = be_switch_precision(OPTIONS, 'double');
 
 %% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
 % matrix W'W from the Henson paper
@@ -179,10 +161,6 @@ Results.Time            = OPTIONS.mandatory.DataTime;
 Results.nComponents     = round( length(obj.iModS) / obj.nb_sources );
 
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
-
-time_it_ends = toc(time_it_starts);
-fprintf('Bye. (Elapsed CPU time is %5.2f seconds.) \n', time_it_ends)
-
 
 end
 

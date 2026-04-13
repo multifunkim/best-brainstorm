@@ -78,6 +78,11 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
     [HeadModel, OPTIONS, FLAG] = be_checkio(HeadModel, OPTIONS);    
     assert(~FLAG, 'MEM: unable to compute MEM.')
     
+    if OPTIONS.optional.verbose
+        fprintf('\n\n===== pipeline %s\n', OPTIONS.mandatory.pipeline);
+    end        
+    time_it_starts = tic();
+        
     % Initialize obj 
     obj = struct();
     obj.VertConn = be_vertex_connectivity(HeadModel);
@@ -107,6 +112,11 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
             [Results, OPTIONS]   = be_cmne_solver(obj, OPTIONS);
         otherwise
             error('Unknown pipeline %s', lower(OPTIONS.mandatory.pipeline))
+    end
+
+    if OPTIONS.optional.verbose
+        time_it_ends = toc(time_it_starts);
+        fprintf('Elapsed CPU time is %5.2f seconds. \nBye. \n', time_it_ends)
     end
 
 end

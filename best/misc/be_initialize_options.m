@@ -17,6 +17,20 @@ function [OPTIONS, FLAG] = be_initialize_options(OPTIONS)
     OPTIONS.automatic.process        = process;
     OPTIONS.automatic.sampling_rate  = round( 1 / diff( OPTIONS.mandatory.DataTime([1 2]) ) );
 
+    % Initialize comment
+    if isfield(OPTIONS.optional , 'Comment') && ~isempty(OPTIONS.optional.Comment)
+        OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
+    else
+        OPTIONS.automatic.Comment = 'MEM';
+    end
+
+    if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1:3), 'MEM')
+        OPTIONS.automatic.Comment   =   sprintf('%s%s%s', lower(OPTIONS.mandatory.pipeline(1)), ...
+                                                           upper(OPTIONS.mandatory.pipeline(2:end)),...
+                                                           OPTIONS.optional.Comment(4:end));
+    end
+
+
     % Initialize time vector
     if isempty(OPTIONS.optional.TimeSegment)
         OPTIONS.optional.TimeSegment    =   OPTIONS.mandatory.DataTime([1 end]);

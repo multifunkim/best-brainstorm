@@ -41,6 +41,10 @@ if ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
     % Sources prescoring - MSP (ref. Mattout et al. 2006) and clustering
     % following different strategies depending of the case cmem, wmem or
     % rmem
+
+    %% ===== Double to single precision  ===== %%
+    [OPTIONS] = be_switch_precision(OPTIONS, 'single');
+
     switch OPTIONS.mandatory.pipeline
         case 'cMEM'
             [CLS, SCR, OPTIONS] = be_cmem_clusterize_multim(obj, OPTIONS); 
@@ -58,7 +62,11 @@ if ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
             [CLS, SCR, OPTIONS] = be_rmem_clusterize_multim(obj, OPTIONS);
             [ALPHA, CLS, OPTIONS]   = be_scores2alpha(SCR, CLS, OPTIONS);
 
-    end    
+    end   
+
+    %% ===== Single to double precision  ===== %%
+    [OPTIONS] = be_switch_precision(OPTIONS, 'double');
+
     
 elseif strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
     ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1,size(OPTIONS.automatic.Modality(1).selected_jk, 2));
