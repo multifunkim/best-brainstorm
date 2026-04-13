@@ -108,12 +108,15 @@ OPTIONS.automatic.selected_values  = selected_values;
 % Fusion of modalities in the selection: here we define OPTIONS.automatic.selected_samples
 OPTIONS = be_fusion_of_samples(OPTIONS);
 
-% we flag the boxes in the temporal interval of interest: 
-t1 = OPTIONS.optional.TimeSegment(1  );
-t2 = OPTIONS.optional.TimeSegment(end);
+% We flag the boxes in the temporal interval of interest:
+% Also remove edge effect.
+
+t1 = max(OPTIONS.mandatory.DataTime(5), OPTIONS.optional.TimeSegment(1));
+t2 = min(OPTIONS.mandatory.DataTime(end-5), OPTIONS.optional.TimeSegment(end));
+
 tmi = OPTIONS.automatic.selected_samples(6,:)-2.^(OPTIONS.automatic.selected_samples(2,:)-1)/fs/2;
 tma = OPTIONS.automatic.selected_samples(6,:)+2.^(OPTIONS.automatic.selected_samples(2,:)-1)/fs/2;
-sl = ~((tma<t1)|(tmi>t2));
+sl = ~((tma<=t1)|(tmi>=t2));
 OPTIONS.automatic.selected_samples = [OPTIONS.automatic.selected_samples ; sl];
 for ii = 1 : length(OPTIONS.mandatory.DataTypes)
     tmi = OPTIONS.automatic.Modality(ii).selected_jk(6,:)-2.^(OPTIONS.automatic.Modality(ii).selected_jk(2,:)-1)/fs/2;
@@ -127,18 +130,18 @@ if ~isempty(OPTIONS.wavelet.selected_scales) && logical(prod(OPTIONS.wavelet.sel
     sl = ismember(OPTIONS.automatic.selected_samples(2,:),OPTIONS.wavelet.selected_scales);
 else
     if OPTIONS.optional.verbose
-         fprintf('%s, No specific scales selected\n', OPTIONS.mandatory.pipeline);
+        fprintf('%s, No specific scales selected\n', OPTIONS.mandatory.pipeline);
     end
     sl = ones(1,size(OPTIONS.automatic.selected_samples,2));
 end
-    OPTIONS.automatic.selected_samples = [OPTIONS.automatic.selected_samples ; sl];
+OPTIONS.automatic.selected_samples = [OPTIONS.automatic.selected_samples ; sl];
 
 % what do we keep finally ? coeff in the selected time window and selected
 % scales:
 
-sel = OPTIONS.automatic.selected_samples(8,:).*OPTIONS.automatic.selected_samples(9,:);
-OPTIONS.automatic.selected_samples = OPTIONS.automatic.selected_samples(:,sel==1);
-OPTIONS.automatic.selected_samples(8:9,:) = []; % (we can forget about the preselection, it is done)
+sel = OPTIONS.automatic.selected_samples(8,:) .* OPTIONS.automatic.selected_samples(9,:);
+OPTIONS.automatic.selected_samples = OPTIONS.automatic.selected_samples(:, sel == 1);
+OPTIONS.automatic.selected_samples(8:end,:) = []; % (we can forget about the preselection, it is done)
 
 % Keep only strongest t-f box
 if OPTIONS.wavelet.single_box
@@ -146,6 +149,7 @@ if OPTIONS.wavelet.single_box
 end
 
 if OPTIONS.optional.verbose
-    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d.\n', OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.selected_samples,2), nbb); 
+    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d.\n', OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.selected_samples,2), nbb);
 end
-return
+
+end

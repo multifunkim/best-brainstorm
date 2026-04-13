@@ -178,23 +178,29 @@ function [noise_var] = estimate_noise_var(OPTIONS)
             end
         % If not a unique cov matrix is computed from the baseline
         else
-            variance = var( wavelet_obj.data{1}(:,end/2+1:end)' );
             switch OPTIONS.solver.NoiseCov_method
                 % Diagonale
                 case 4
+                    variance = var( wavelet_obj.data{1}(:,end/2+1:end)' );
                     noise_var(iD, iD) = diag(variance);
                 % Diagonale averaged    
                 case 5
+                    variance = var( wavelet_obj.data{1}(:,end/2+1:end)' );
                     noise_var(iD, iD) = diag(ones(1,length(variance))*mean(variance));
 
                 case 6
+                    % Scale one which the noise covariance is calculated
                     if strcmp(OPTIONS.automatic.Modality(ii).name, 'NIRS')
                         isc = 3;
                     else
-                        isc = 2; % Scale one which the noise covariance is calculated
+                        isc = 2; 
                     end
 
-                    w1 = wavelet_obj.data{1}(:,end/2^(isc)+6:end/2^(isc-1)-5)';
+                    %w1 = wavelet_obj.data{1}(:,end/2^(isc)+6:end/2^(isc-1)-5)';
+
+                    idx = O.automatic.selected_samples(1, O.automatic.selected_samples(2,:) == isc);
+                    w1 = wavelet_obj.data{1}(:,idx)';
+
                     a = max(1,round(wavelet_obj.info_extension.start / 2^(isc)));
                     b = min(size(w1,1),round(wavelet_obj.info_extension.end / 2^(isc)));
                     MADest = Wmad(w1(a:b,:)) / 0.6745;
@@ -202,6 +208,7 @@ function [noise_var] = estimate_noise_var(OPTIONS)
                 
                % If the NoiseCov_method is not 4 neither 5 we force 5
                 otherwise
+                    variance = var( wavelet_obj.data{1}(:,end/2+1:end)' );
                     noise_var(iD, iD) = diag(ones(1,length(variance))*mean(variance)); 
             end
         end
