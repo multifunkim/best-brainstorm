@@ -145,7 +145,7 @@ function [noise_var] = estimate_noise_var(OPTIONS)
 
         % Construct wavelet
         O.wavelet.type                = 'rdw';
-        %O.wavelet.selected_scales     = [1:3];
+        O.wavelet.selected_scales     = [];
         O.wavelet.single_box          = 0;
         O.automatic.scales            = [];
         O.optional.verbose            = 0;

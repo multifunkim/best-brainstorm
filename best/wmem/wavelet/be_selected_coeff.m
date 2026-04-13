@@ -82,24 +82,23 @@ for jj = 1 : length(OPTIONS.mandatory.DataTypes)
     end
     
     % === selection (based on the power)
-        [Wgfp_sorted, I] = sort(Wgfp,'descend');
-        Ic = find(cumsum(Wgfp_sorted)/sum(Wgfp_sorted) <= pc_power,1,'last');
-        i_kept = i_kept(I(1:Ic));
-        j_kept = j_kept(I(1:Ic));
-        k_kept = k_kept(I(1:Ic));
-        t_kept = t_kept(I(1:Ic));
-        e_kept = 100*Wgfp(I(1:Ic))/sum(Wgfp(I(1:Ic)));
-        % what we finally keep:
-        selected_jk{jj} = [i_kept ; j_kept ; k_kept ];
-        
-        % MSP windows (in the true data samples -not extended-)
-        win_l = max((selected_jk{jj}(3,:)-1).*(2.^selected_jk{jj}(2,:))+1,obj.info_extension.start) - obj.info_extension.start +1;
-        win_r = min( selected_jk{jj}(3,:).*(2.^selected_jk{jj}(2,:)),obj.info_extension.end)        - obj.info_extension.start +1;
+    [Wgfp_sorted, I] = sort(Wgfp,'descend');
+    Ic = find(cumsum(Wgfp_sorted)/sum(Wgfp_sorted) <= pc_power,1,'last');
+    i_kept = i_kept(I(1:Ic));
+    j_kept = j_kept(I(1:Ic));
+    k_kept = k_kept(I(1:Ic));
+    t_kept = t_kept(I(1:Ic));
+    e_kept = 100*Wgfp(I(1:Ic))/sum(Wgfp(I(1:Ic)));
+    % what we finally keep:
+    selected_jk{jj} = [i_kept ; j_kept ; k_kept ];
     
+    % MSP windows (in the true data samples -not extended-)
+    win_l = max((selected_jk{jj}(3,:)-1).*(2.^selected_jk{jj}(2,:))+1,obj.info_extension.start) - obj.info_extension.start +1;
+    win_r = min( selected_jk{jj}(3,:).*(2.^selected_jk{jj}(2,:)),obj.info_extension.end)        - obj.info_extension.start +1;
+
     % === what we keep, finally:
-    
-        OPTIONS.automatic.Modality(jj).selected_jk = [selected_jk{jj} ; win_l ; win_r ; t_kept];
-        selected_values{jj} = [Wgfp_sorted(1:Ic) ; e_kept];
+    OPTIONS.automatic.Modality(jj).selected_jk = [selected_jk{jj} ; win_l ; win_r ; t_kept];
+    selected_values{jj} = [Wgfp_sorted(1:Ic) ; e_kept];
 end
 
 % we keep the selection in the OPTIONS
@@ -132,6 +131,7 @@ else
     if OPTIONS.optional.verbose
         fprintf('%s, No specific scales selected\n', OPTIONS.mandatory.pipeline);
     end
+    OPTIONS.wavelet.selected_scales = sort(unique(OPTIONS.automatic.selected_samples(2,:)));
     sl = ones(1,size(OPTIONS.automatic.selected_samples,2));
 end
 OPTIONS.automatic.selected_samples = [OPTIONS.automatic.selected_samples ; sl];
