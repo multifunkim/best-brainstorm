@@ -1,4 +1,4 @@
-function [OPTIONS, FLAG] = be_initialize_options(OPTIONS)
+function [OPTIONS, FLAG, verbose] = be_initialize_options(OPTIONS)
 % be_initialize_options Copy default options to OPTIONS structure (do not replace defined values)
 
     FLAG            = 0;
@@ -12,7 +12,8 @@ function [OPTIONS, FLAG] = be_initialize_options(OPTIONS)
     DefaultOptions  = be_main(OPTIONS.mandatory.pipeline, OPTIONS.mandatory.DataTypes);
     OPTIONS         = be_struct_copy_fields(OPTIONS, DefaultOptions , [] , 0);
 
-    if OPTIONS.optional.verbose
+    verbose = OPTIONS.optional.verbose;
+    if verbose
         fprintf('\n\n===== pipeline %s\n', OPTIONS.mandatory.pipeline);
     end      
 

@@ -74,7 +74,7 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
     time_it_starts = tic();
 
     % Initialize options
-    [OPTIONS, FLAG] = be_initialize_options(OPTIONS);
+    [OPTIONS, FLAG, verbose] = be_initialize_options(OPTIONS);
     assert(~FLAG, 'MEM: unable to initialize MEM options.')
 
     % ==== Check Data and Options
@@ -112,11 +112,11 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
             error('Unknown pipeline %s', lower(OPTIONS.mandatory.pipeline))
     end
 
-    if OPTIONS.optional.verbose
+    if verbose
         time_it_ends = duration(0, 0, toc(time_it_starts));
         if hours(time_it_ends) > 1
             fprintf('\nDone. MEM was computed in %s. \nBye. \n', strrep(char(time_it_ends,'h'), 'hr', 'hours'))
-        elseif minutes(time_it_starts) > 1
+        elseif minutes(time_it_ends) > 1
             fprintf('\nDone. MEM was computed in %sutes. \nBye. \n', char(time_it_ends,'m'))
         else
             fprintf('\nDone. MEM was computed in %sondes. \nBye. \n', char(time_it_ends,'s'))

@@ -67,10 +67,6 @@ function [CLS, SCR, OPTIONS] = be_wmem_clusterize_multim(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-% ==== clustering technique
-SCR = [];
-CLS = [];
-
 if strcmp(OPTIONS.clustering.clusters_type,'static')
     [CLS, SCR, OPTIONS]  = be_wstable_clustering_multim(obj, OPTIONS);
 elseif strcmp(OPTIONS.clustering.clusters_type,'wfdr')
