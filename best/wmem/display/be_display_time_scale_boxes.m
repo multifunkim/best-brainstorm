@@ -70,9 +70,12 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
                    'Ylim', [0, J], ...
                    'Box','on');
 
-        sBox = create_rectangles(obj, OPTIONS, ii);
-        patch(ax, sBox);
+        %sBox = create_rectangles(obj, OPTIONS, ii);
+        %patch(ax, sBox);
+        setup_lod_rendering(ax, obj, OPTIONS, ii);
         xlabel(ax, 'time (s)'); ylabel(ax,  'scale j');
+        
+        continue;
 
         for scl = 1:length(OPTIONS.wavelet.selected_scales)
 
@@ -152,5 +155,146 @@ function sBox = create_rectangles(obj, OPTIONS, iMod)
 
             sBox.FaceVertexCData(end+1, :) = color_scale(b, :);
         end
+    end
+end
+
+
+function setup_lod_rendering(ax, obj, OPTIONS, iMod)
+    % Initial draw
+    render_lod(ax, obj, OPTIONS, iMod);
+    
+    % Re-render on zoom/pan
+    addlistener(ax, 'XLim', 'PostSet', @(~,~) render_lod(ax, obj, OPTIONS, iMod));
+end
+
+function render_lod(ax, obj, OPTIONS, iMod)
+    delete(findobj(ax, 'Tag', 'lod_boxes'));
+    
+    xlim_range  = ax.XLim;
+    view_width  = xlim_range(2) - xlim_range(1);
+    fig = ancestor(ax, 'figure');
+    fig_units_orig = fig.Units;
+    fig.Units = 'pixels';
+    fig_pos = fig.Position;
+    fig.Units = fig_units_orig;  % restore original units
+    
+    ax_units_orig = ax.Units;
+    ax.Units = 'normalized';
+    ax_norm_width = ax.Position(3);
+    ax.Units = ax_units_orig;  % restore
+
+ax_width_px = ax_norm_width * fig_pos(3);    
+    Tmin = obj.t0 - (obj.info_extension.start - 1) / OPTIONS.automatic.sampling_rate;
+    Tmax = Tmin + (size(obj.data{iMod}, 2) - 1) / OPTIONS.automatic.sampling_rate;
+    N    = size(obj.data{iMod}, 2);
+    T    = Tmax - Tmin;
+    e    = 0.05;
+    
+    MMM       = colormap(jet(size(OPTIONS.automatic.selected_values{iMod}, 2)));
+    MMM       = MMM(end:-1:1, :);
+    selection = OPTIONS.automatic.Modality(iMod).selected_jk;
+    
+    sBox = struct('Vertices', [], 'Faces', [], 'FaceVertexCData', [], ...
+                  'FaceColor', 'flat', 'EdgeColor', 'none');
+    iBox = 1;
+    
+    % Minimum pixel width below which we merge adjacent boxes
+    merge_threshold_px = 5;
+    
+    displayed_scaled = ylim(ax);
+    displayed_time = xlim(ax);
+
+    for sj = 1:max(OPTIONS.automatic.Modality(iMod).selected_jk(2,:))
+        
+        if (sj + 0.5) < min(displayed_scaled) || ( sj - 0.5 ) > max(displayed_scaled)
+            fprintf('skipping %d. Ylim : [%f %f] \n', sj, displayed_scaled(1), displayed_scaled(2))
+            continue
+        end
+
+        bj = find(OPTIONS.automatic.Modality(iMod).selected_jk(2,:) == sj);
+        tt = OPTIONS.automatic.Modality(iMod).selected_jk(6, bj);
+        if isempty(tt), continue; end
+        
+        box_length = T / N * 2^sj;
+        box_width  = 1 - 2*e;
+        
+        [val, I] = sort(selection(3, bj));
+        color_scale = MMM(bj, :);
+        color_scale = color_scale(I, :);
+        
+        % Pixel width of a single box in current view
+        box_px = box_length / view_width * ax_width_px;
+        
+        fprintf('sj: %d; box_px %f \n',sj,  box_px)
+        if box_px >= merge_threshold_px
+            % === FULL DETAIL: individual boxes ===
+            for b = 1:length(I)
+                x0 = Tmin + (val(b) - 1) * box_length;
+                x1 = x0 + box_length;
+                y0 = sj - box_width;
+
+                % Skip if box is entirely outside current x view
+                if x1 < displayed_time(1) || x0 > displayed_time(2)
+                    continue
+                end
+
+                sBox.Vertices(end+1, :) = [x0,              y0            ];
+                sBox.Vertices(end+1, :) = [x0 + box_length, y0            ];
+                sBox.Vertices(end+1, :) = [x0 + box_length, y0 + box_width];
+                sBox.Vertices(end+1, :) = [x0,              y0 + box_width];
+                sBox.Faces(end+1, :)    = [iBox, iBox+1, iBox+2, iBox+3, iBox];
+                sBox.FaceVertexCData(end+1, :) = color_scale(b, :);
+                iBox = iBox + 4;
+            end
+            
+        else
+            % === MERGED MODE: merge consecutive boxes, but cap merge size ===
+            % Target: each merged group should be ~target_px pixels wide
+            target_px     = 5;  % merged block minimum visual width in pixels
+            boxes_per_group = max(1, round(target_px / box_px));
+            
+            b = 1;
+            while b <= length(I)
+                % Find consecutive run starting at b
+                run_start_idx = b;
+                run_end_idx   = b;
+                
+                % Extend run: only merge if boxes are consecutive in time index
+                while run_end_idx < length(I) && ...
+                      val(run_end_idx + 1) == val(run_end_idx) + 1 && ...
+                      (run_end_idx - run_start_idx + 1) < boxes_per_group
+                    run_end_idx = run_end_idx + 1;
+                end
+                
+                % Average color over the run
+                run_len   = run_end_idx - run_start_idx + 1;
+                avg_color = mean(color_scale(run_start_idx:run_end_idx, :), 1);
+                
+                x0         = Tmin + (val(run_start_idx) - 1) * box_length;
+                merged_len = run_len * box_length;
+                y0         = sj - box_width;
+                
+                sBox.Vertices(end+1, :) = [x0,              y0            ];
+                sBox.Vertices(end+1, :) = [x0 + merged_len, y0            ];
+                sBox.Vertices(end+1, :) = [x0 + merged_len, y0 + box_width];
+                sBox.Vertices(end+1, :) = [x0,              y0 + box_width];
+                sBox.Faces(end+1, :)    = [iBox, iBox+1, iBox+2, iBox+3, iBox];
+                sBox.FaceVertexCData(end+1, :) = avg_color;
+                iBox = iBox + 4;
+                
+                b = run_end_idx + 1;
+            end
+        end
+    end
+    
+    if ~isempty(sBox.Vertices)
+
+        fprintf('Plotting %d boxes \n', size(sBox.Vertices, 1))
+        patch(ax, 'Vertices',        sBox.Vertices, ...
+                  'Faces',           sBox.Faces, ...
+                  'FaceVertexCData', sBox.FaceVertexCData, ...
+                  'FaceColor',       'flat', ...
+                  'EdgeColor',       'none', ...
+                  'Tag',             'lod_boxes');
     end
 end
