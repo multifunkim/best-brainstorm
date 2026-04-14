@@ -41,7 +41,11 @@ function [OPTIONS, FLAG] = be_initialize_options(OPTIONS)
     end
     OPTIONS.optional.TimeSegment        =   be_closest( OPTIONS.optional.TimeSegment([1 end]), OPTIONS.mandatory.DataTime );
     OPTIONS.optional.TimeSegment        =   OPTIONS.mandatory.DataTime(OPTIONS.optional.TimeSegment(1):OPTIONS.optional.TimeSegment(end));
-
+    
+    % Noise covariance
+    if OPTIONS.solver.NoiseCov_recompute
+        OPTIONS.solver.NoiseCov = []; 
+    end
 
     % Initlailize baseline
     OPTIONS.automatic.BaselineType  =   'independant';
