@@ -8,9 +8,13 @@ function [OPTIONS, FLAG] = be_initialize_options(OPTIONS)
     if isfield(OPTIONS, 'MEMpaneloptions') && ~isempty(OPTIONS.MEMpaneloptions)
         OPTIONS = be_option_from_bst(OPTIONS);
     end
-    
+
     DefaultOptions  = be_main(OPTIONS.mandatory.pipeline, OPTIONS.mandatory.DataTypes);
     OPTIONS         = be_struct_copy_fields(OPTIONS, DefaultOptions , [] , 0);
+
+    if OPTIONS.optional.verbose
+        fprintf('\n\n===== pipeline %s\n', OPTIONS.mandatory.pipeline);
+    end      
 
     % Complete automatic options
     OPTIONS.automatic.stand_alone    = stand_alone;

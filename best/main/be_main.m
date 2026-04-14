@@ -62,14 +62,17 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
             if isempty(HeadModel)
                 Results = be_pipelineoptions(OPTIONS); 
                 return
-            elseif ischar(HeadModel) && iscell(OPTIONS)
+            elseif ischar(HeadModel) && (iscell(OPTIONS) || ischar(OPTIONS))
                 Results = be_pipelineoptions(BEst_defaults(), HeadModel, OPTIONS , 1);   
                 return
             else
                 % Continue main pipeline
             end
     end
-    
+
+    % Start timer
+    time_it_starts = tic();
+
     % Initialize options
     [OPTIONS, FLAG] = be_initialize_options(OPTIONS);
     assert(~FLAG, 'MEM: unable to initialize MEM options.')
@@ -77,11 +80,6 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
     % ==== Check Data and Options
     [HeadModel, OPTIONS, FLAG] = be_checkio(HeadModel, OPTIONS);    
     assert(~FLAG, 'MEM: unable to compute MEM.')
-    
-    if OPTIONS.optional.verbose
-        fprintf('\n\n===== pipeline %s\n', OPTIONS.mandatory.pipeline);
-    end        
-    time_it_starts = tic();
         
     % Initialize obj 
     obj = struct();
@@ -115,8 +113,14 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
     end
 
     if OPTIONS.optional.verbose
-        time_it_ends = toc(time_it_starts);
-        fprintf('Elapsed CPU time is %5.2f seconds. \nBye. \n', time_it_ends)
+        time_it_ends = duration(0, 0, toc(time_it_starts));
+        if hours(time_it_ends) > 1
+            fprintf('\nDone. MEM was computed in %s. \nBye. \n', strrep(char(time_it_ends,'h'), 'hr', 'hours'))
+        elseif minutes(time_it_starts) > 1
+            fprintf('\nDone. MEM was computed in %sutes. \nBye. \n', char(time_it_ends,'m'))
+        else
+            fprintf('\nDone. MEM was computed in %sondes. \nBye. \n', char(time_it_ends,'s'))
+        end
     end
 
 end
