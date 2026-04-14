@@ -139,8 +139,6 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         if isempty(MethodOptions)
             return
         end
-
-        MethodOptions.SourceOrient{1} = 'fixed';
         initOPTIONS = struct_copy_fields(initOPTIONS, MethodOptions, 1);
     end
 
@@ -210,8 +208,8 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         OPTIONS.optional.Comment                         =   Comment;
         % Baseline
         if ~isempty(Baseline)
-            OPTIONS.optional.BaselineTime    = Baseline.BaselineTime;
-            OPTIONS.optional.Baseline        = Baseline.Baseline;
+            OPTIONS.optional.BaselineTime     = Baseline.BaselineTime;
+            OPTIONS.optional.Baseline         = Baseline.Baseline;
             OPTIONS.optional.BaselineChannels = Baseline.BaselineChannels;
         end
         % Noise covariance
