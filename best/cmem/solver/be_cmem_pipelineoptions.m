@@ -14,7 +14,7 @@ function DEF = be_cmem_pipelineoptions(DataTypes)
         DEF.model.active_mean_method      	= 2;
         DEF.model.alpha_method              = 3;
 
-        if any(ismember( 'NIRS', DataTypes))
+        if any(ismember( 'nirs', lower(DataTypes)))
             DEF.model.depth_weigth_MNE          = 0.3;
             DEF.model.depth_weigth_MEM          = 0.3;
         else

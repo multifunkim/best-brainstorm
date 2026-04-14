@@ -139,21 +139,21 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         if isempty(MethodOptions)
             return
         end
-
-        MethodOptions.SourceOrient{1} = 'fixed';
         initOPTIONS = struct_copy_fields(initOPTIONS, MethodOptions, 1);
     end
 
     % Set file comment 
-    [initOPTIONS, strMethod] = GetModalityComment(initOPTIONS);
+    [Comment, strMethod] = GetModalityComment(initOPTIONS);
+    DataTypes = initOPTIONS.DataTypes;
+
+    % ===== LOAD BASELINE =====
+    Baseline = LoadBaseline(initOPTIONS);
 
     % ===== LOOP ON INPUT FILES =====
     bst_progress('start', 'Compute sources', 'Initialize...', 0, 3*length(iStudies) + 1);
     bst_progress('setimage', 'plugins/brainentropy_logo.png');
-
+    
     for iEntry = 1:length(iStudies)
-        OPTIONS = initOPTIONS;
-
         % Get study structure
         iStudy = iStudies(iEntry);
         sStudy = bst_get('Study', iStudy);
@@ -169,7 +169,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
 
         % ===== CHANNEL FLAG =====
         % Get the list of good channels
-        GoodChannel = good_channel(ChannelMat.Channel, DataMat.ChannelFlag, OPTIONS.DataTypes);
+        GoodChannel = good_channel(ChannelMat.Channel, DataMat.ChannelFlag, DataTypes);
         if isempty(GoodChannel)
             errMessage = [ 'No good channels available.' 10];
             break;
@@ -182,11 +182,7 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         bst_progress('text', 'Loading head model...');
         bst_progress('inc', 1);
         HeadModelFile   = sStudyChannel.HeadModel(sStudyChannel.iHeadModel).FileName;
-        HeadModel       = in_bst_headmodel(HeadModelFile, 1, 'Gain',  'SurfaceFile',  'HeadModelType');
-
-        % Load vertex connectivity
-        sCortex = in_tess_bst(HeadModel.SurfaceFile);
-        HeadModel.vertex_connectivity = sCortex.VertConn;
+        HeadModel       = LoadHeadModel(HeadModelFile);
 
         % ===== Load NoiseCov file =====
         [NoiseCovMat, errMessage] = LoadNoiseCov(sStudyChannel.NoiseCov(1).FileName, GoodChannel);
@@ -196,26 +192,31 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
 
         % ===== Apply current SSP projectors =====
         [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat);
-
-        % ===== Select only good channels =====
-        [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat);
-
-        % ===== Apply average reference: separately SEEG, ECOG, EEG =====
-        [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat);
-
-        % ===== Finalize Options struct =====
-        OPTIONS.NoiseCovMat = NoiseCovMat;
-        OPTIONS.ChannelTypes  = {ChannelMat.Channel.Type};
-        OPTIONS.DataFile      = DataFile;
-        OPTIONS.DataTime      = DataMat.Time;
-        OPTIONS.Channel       = ChannelMat.Channel;
-        OPTIONS.Data          = DataMat.F;
-        OPTIONS.ChannelFlag   = DataMat.ChannelFlag;
-        OPTIONS.ResultFile    = [];
-        OPTIONS.HeadModelFile = HeadModelFile;
-        OPTIONS.GoodChannel   = GoodChannel;
-        OPTIONS.FunctionName  = 'mem';
         
+        % ===== Finalize Options struct =====
+        OPTIONS = initOPTIONS.MEMpaneloptions;
+        % mandatory
+        OPTIONS.mandatory.DataTime                       =   DataMat.Time;
+        OPTIONS.mandatory.Data                           =   DataMat.F;
+        OPTIONS.mandatory.DataTypes                      =   DataTypes;
+        OPTIONS.mandatory.ChannelTypes                   =   {ChannelMat.Channel.Type};
+        % optional
+        OPTIONS.optional.Channel                         =   {ChannelMat.Channel.Name};
+        OPTIONS.optional.ChannelFlag                     =   DataMat.ChannelFlag;
+        OPTIONS.optional.DataFile                        =   DataFile;
+        OPTIONS.optional.HeadModelFile                   =   HeadModelFile;
+        OPTIONS.optional.Comment                         =   Comment;
+        % Baseline
+        if ~isempty(Baseline)
+            OPTIONS.optional.BaselineTime     = Baseline.BaselineTime;
+            OPTIONS.optional.Baseline         = Baseline.Baseline;
+            OPTIONS.optional.BaselineChannels = Baseline.BaselineChannels;
+        end
+        % Noise covariance
+        if ~isempty(NoiseCovMat)
+            OPTIONS.solver.NoiseCov =  NoiseCovMat.NoiseCov;
+        end
+
         % ===== COMPUTE INVERSE SOLUTION =====
         bst_progress('text', 'Estimating sources...');
         bst_progress('inc', 1);
@@ -232,16 +233,16 @@ function [OutputFiles, errMessage] = Compute(iStudies, iDatas, initOPTIONS)
         bst_progress('inc', 1);
 
         % Output file
-        OutputDir  = bst_fileparts(file_fullpath(OPTIONS.DataFile));
+        OutputDir  = bst_fileparts(file_fullpath(DataFile));
         ResultFile = bst_process('GetNewFilename', OutputDir, ['results_', strMethod]);
 
         % ===== CREATE FILE STRUCTURE =====
         ResultsMat = db_template('resultsmat');
         ResultsMat = struct_copy_fields(ResultsMat, Results, 1);
-        ResultsMat.Comment       = [OPTIONS.Comment ' 2018'];
+        ResultsMat.Comment       = OPTIONS.Comment;
         ResultsMat.Function      = OPTIONS.FunctionName;
         ResultsMat.Time          = OPTIONS.DataTime;
-        ResultsMat.DataFile      = OPTIONS.DataFile;
+        ResultsMat.DataFile      = DataFile;
         ResultsMat.HeadModelFile = HeadModelFile;
         ResultsMat.HeadModelType = HeadModel.HeadModelType;
         ResultsMat.SurfaceFile   = file_short(HeadModel.SurfaceFile);        
@@ -361,7 +362,7 @@ function errMessage = CheckInputs(iStudies, iDatas, OPTIONS)
 end
 
 %% ===== GET MODALITY COMMENT =====
-function [OPTIONS, strMethod] = GetModalityComment(OPTIONS)
+function [Comment, strMethod] = GetModalityComment(OPTIONS)
     
     Modalities = OPTIONS.DataTypes;
 
@@ -372,7 +373,9 @@ function [OPTIONS, strMethod] = GetModalityComment(OPTIONS)
     end 
     
     if isempty(OPTIONS.Comment)
-        OPTIONS.Comment     = ['MEM : ' strjoin(Modalities, '+'), ' (Full)'];
+        Comment     = ['MEM : ' strjoin(Modalities, '+'), ' (Full)'];
+    else
+        Comment = OPTIONS.Comment;
     end
 
     strMethod   = file_standardize(['MEM_', strjoin(Modalities, '_')]);
@@ -409,6 +412,16 @@ function [AllMod, isOnlyNirs] = GetStudyModality(sChanStudies)
         AllMod = intersect(AllMod, {'MEG', 'EEG', 'ECOG', 'SEEG'});
     end
 end
+
+function HeadModel = LoadHeadModel(HeadModelFile)
+
+    HeadModel       = in_bst_headmodel(HeadModelFile, 1, 'Gain',  'SurfaceFile',  'HeadModelType');
+
+    % Load vertex connectivity
+    sCortex = in_tess_bst(HeadModel.SurfaceFile);
+    HeadModel.vertex_connectivity = sCortex.VertConn;
+end
+
 
 function [NoiseCovMat, errMessage] = LoadNoiseCov(FileName, GoodChannel)
     errMessage = '';
@@ -448,39 +461,32 @@ function [HeadModel, NoiseCovMat] = ApplySSP(ChannelMat, HeadModel, NoiseCovMat)
     end
 end
 
-function [ChannelMat, HeadModel, NoiseCovMat, DataMat] = SelectGoodChannel(GoodChannel, ChannelMat, HeadModel, NoiseCovMat, DataMat)
-    
-    ChannelMat.Channel = ChannelMat.Channel(GoodChannel);
-    HeadModel.Gain = HeadModel.Gain(GoodChannel, :);
+function [Baseline] = LoadBaseline(OPTIONS)
 
-
-    NoiseCovMat.NoiseCov = NoiseCovMat.NoiseCov(GoodChannel, GoodChannel);
-    if isfield(NoiseCovMat, 'FourthMoment') && ~isempty(NoiseCovMat.FourthMoment)
-        NoiseCovMat.FourthMoment = NoiseCovMat.FourthMoment(GoodChannel, GoodChannel);
-    end
-    if isfield(NoiseCovMat, 'nSamples') && ~isempty(NoiseCovMat.nSamples)
-        NoiseCovMat.nSamples = NoiseCovMat.nSamples(GoodChannel, GoodChannel);
+    Baseline = [];
+    if isempty(OPTIONS.MEMpaneloptions.optional.Baseline)
+        return
     end
 
-    DataMat.F  = DataMat.F(GoodChannel,:);
-    DataMat.ChannelFlag = DataMat.ChannelFlag(GoodChannel);
-end
+    BaselineFile = OPTIONS.MEMpaneloptions.optional.Baseline;
+    BaselineChannelFile = OPTIONS.MEMpaneloptions.optional.BaselineChannels;
 
-function [HeadModel, NoiseCovMat] = AppplyAvgRef(ChannelMat, HeadModel, NoiseCovMat)
-% Apply average reference: separately SEEG, ECOG, EEG
-    if ~any(ismember(unique({ChannelMat.Channel.Type}), {'EEG','ECOG','SEEG'}))
-        % Nothing to do
-        return;
+    if xor(ischar(BaselineFile), ischar(BaselineChannelFile))
+        errMessage = 'Both Baseline and BaselineChannels should be filename';
+        return
     end
 
-    % Create average reference montage
-    ChannelFlag     = ones(length(ChannelMat.Channel),1);
-    sMontage        = panel_montage('GetMontageAvgRef', [], ChannelMat.Channel, ChannelFlag , 0);
-    %  Apply average reference operator on the gain matrix
-    HeadModel.Gain  = sMontage.Matrix * HeadModel.Gain;
-    % Apply average reference operator on both sides of the noise covariance matrix
-    NoiseCovMat.NoiseCov = sMontage.Matrix * NoiseCovMat.NoiseCov * sMontage.Matrix';
+    if ~isempty(BaselineFile) && ischar(BaselineFile)
 
+        sData = in_bst_data(BaselineFile, {'Time', 'F'});
+        sChannels = in_bst_channel(BaselineChannelFile);
+
+        Baseline = struct();
+        Baseline.BaselineTime = sData.Time;
+        Baseline.Baseline = sData.F;
+        Baseline.BaselineChannels = {sChannels.Channel.Name};
+
+    end
 end
 
 function cleanupRoutine()

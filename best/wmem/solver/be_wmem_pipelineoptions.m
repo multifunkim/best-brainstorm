@@ -6,7 +6,7 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
 
         % clustering
         DEF.clustering.clusters_type        = 'static';
-        if any(ismember( 'NIRS', DataTypes))
+        if any(ismember( 'nirs', lower(DataTypes)))
             DEF.clustering.neighborhood_order       = 6;                       
         else
             DEF.clustering.neighborhood_order       = 4;                       
@@ -19,14 +19,14 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         DEF.model.alpha_threshold       = 0;
         DEF.model.active_mean_method    = 2;
 
-        if any(ismember( 'NIRS', DataTypes))
+        if any(ismember( 'nirs', lower(DataTypes)))
             DEF.model.alpha_method      = 7;
         else
             DEF.model.alpha_method      = 6;
         end
 
 
-        if any(ismember( 'NIRS', DataTypes))
+        if any(ismember( 'nirs', lower(DataTypes)))
             DEF.model.depth_weigth_MNE          = 0.3;
             DEF.model.depth_weigth_MEM          = 0.3;
         else
@@ -58,7 +58,7 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         DEF.solver.mne_use_noiseCov     = 0;
 
         % optional
-        if any(ismember( 'NIRS', DataTypes))
+        if any(ismember( 'nirs', lower(DataTypes)))
             DEF.optional.normalization      = 'adaptive'; 
         else
             DEF.optional.normalization      = 'fixed'; 
@@ -67,4 +67,4 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         DEF.optional.baseline_shuffle   = 0;
         DEF.optional.baseline_shuffle_windows = 1; % in seconds
 
-return
+end

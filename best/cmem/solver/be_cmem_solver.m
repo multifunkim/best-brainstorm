@@ -81,33 +81,18 @@ function [Results, OPTIONS] = be_cmem_solver(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-if OPTIONS.optional.verbose
-    fprintf('\n\n===== pipeline cMEM\n');
-end 
+%% ===== DC offset ===== %% 
+% Remove the DC offset the data (using baseline)
+[OPTIONS]       = be_remove_dc(OPTIONS);
 
-%% ===== Comment ===== %%
-OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
-if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1:3), 'MEM')
-    OPTIONS.automatic.Comment   =   ['c' OPTIONS.optional.Comment];
-end
+%% ===== AVG reference ===== %% 
+% Convert to average reference (only for EEG / iEEG)
+[OPTIONS]       = be_avg_reference(OPTIONS);
 
-% EEG-MEG specific preprocessing
-if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-
-    %% ===== DC offset ===== %% 
-    % we remove the DC offset the data
-    [OPTIONS]       = be_remove_dc(OPTIONS);
-
-    %% ===== AVG reference ===== %% 
-    % we average reference the data
-    [OPTIONS]       = be_avg_reference(OPTIONS);
-
-    %% ===== Pre-whitening of the data ==== %%
-    % it uses empty-room data if available
-    % if PlOS one : nothing is done here
-    % [OPTIONS] = be_prewhite(OPTIONS);
-
-end
+%% ===== Pre-whitening of the data ==== %%
+% it uses empty-room data if available
+% if PlOS one : nothing is done here
+% [OPTIONS] = be_prewhite(OPTIONS);
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
@@ -115,17 +100,15 @@ end
 
 %% ===== Apply temporal data window  ===== %%
 % check for a time segment to be localized
-[OPTIONS] = be_apply_window(OPTIONS, [] );
+[OPTIONS] = be_apply_window(OPTIONS, []);
 
 %% ===== Normalization ==== %% 
-% we absorb units (pT, nA) in the data, leadfields; we normalize the data
-% and the leadfields
+% we absorb units (pT, nA) in the data, leadfields; 
+% we normalize the data and the leadfields
 [OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
 %% ===== Clusterize cortical surface ===== %%
-[OPTIONS]       = be_switch_precision(OPTIONS, 'single' );
 [OPTIONS, obj]  = be_main_clustering(obj, OPTIONS);
-[OPTIONS]       = be_switch_precision( OPTIONS, 'double' );
 
 %% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
 % matrix W'W from the Henson paper
@@ -138,7 +121,6 @@ end
 obj = be_fusion_of_modalities(obj, OPTIONS);
          	
 %% ===== Solve the MEM ===== %%
-
 [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
 if OPTIONS.optional.display
     be_display_entropy_drops(obj,OPTIONS);
@@ -147,10 +129,8 @@ end
 %% ===== Un-Normalization  ===== %%
 [obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
 
-
 %% ===== Inverse temporal data window  ===== %%
 [OPTIONS, obj] = be_apply_window( OPTIONS, obj );
-
 
 %% ===== Prepare output  ===== %%
 Results = be_template('resultsmat');
@@ -161,8 +141,6 @@ Results.nComponents     = round( length(obj.iModS) / obj.nb_sources );
 
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
 
-
-disp('Bye.')
 end
 
 

@@ -86,7 +86,7 @@ function [CLS, SCR, OPTIONS] = be_wstable_clustering_multim(obj, OPTIONS)
 
     % Stable clustering approach:
     if OPTIONS.optional.verbose
-        fprintf('Done. \n');
+        fprintf('done. \n');
     end
 end
  

@@ -93,7 +93,7 @@ end
 alpha(alpha > 0.8) = 1;
 
 
-return
+end
 
 
 

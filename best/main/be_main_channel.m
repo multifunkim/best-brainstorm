@@ -62,6 +62,8 @@ for ii = 1 : nMod
     % OPTIONS.DataTypes
     
     CH = find(strcmpi(OPTIONS.mandatory.ChannelTypes, OPTIONS.mandatory.DataTypes{ii}));
+    CH = intersect(CH, OPTIONS.automatic.GoodChannel);
+
     if isempty(CH)
         error(['MEM > Unable to find appropriate data. No '  OPTIONS.mandatory.DataTypes{ii} ' channels found.']);
     end
@@ -125,6 +127,12 @@ for ii = 1 : nMod
         OPTIONS.automatic.Modality(ii).mspDATA.F    = OPTIONS.automatic.Modality(ii).mspDATA.F( CH, : );
     end    
     
+end
+
+if isfield(HeadModel, 'GoodVertex') && ~isempty(HeadModel.GoodVertex)
+    OPTIONS.automatic.GoodVertex = HeadModel.GoodVertex;
+else
+    OPTIONS.automatic.GoodVertex = 1:size(HeadModel.Gain, 2);
 end
 
 % Remove used fields

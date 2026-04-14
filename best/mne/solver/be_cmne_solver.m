@@ -47,14 +47,6 @@ function [Results, OPTIONS] = be_cmne_solver(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-
-if OPTIONS.optional.verbose
-    fprintf('\n\n===== pipeline cMNE\n');
-end 
-
-%% ===== Comment ===== %%
-OPTIONS.automatic.Comment       =   'cMNE';
-
 %% ===== DC offset ===== %% 
 % we remove the DC offset the data
 if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
@@ -92,7 +84,6 @@ Results.ImageGridAmp    = obj.ImageGridAmp;
 Results.ImagingKernel   = [];
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
 
-disp('Bye.')
 end
 
 

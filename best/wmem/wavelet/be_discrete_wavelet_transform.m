@@ -86,4 +86,4 @@ switch (OPTIONS.wavelet.type)
         end
        
 end       
-return
+end

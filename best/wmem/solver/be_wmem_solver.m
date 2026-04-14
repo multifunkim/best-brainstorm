@@ -85,53 +85,27 @@ function [Results, OPTIONS] = be_wmem_solver(obj, OPTIONS)
 % -------------------------------------------------------------------------   
 %%
 
-if OPTIONS.optional.verbose
-    fprintf('\n\n===== pipeline wMEM\n');
-end        
-time_it_starts = tic();
-        
-
-%% ===== Comment ===== %%
-OPTIONS.automatic.Comment       =   OPTIONS.optional.Comment;
-if length(OPTIONS.automatic.Comment) >= 3 && strcmpi(OPTIONS.automatic.Comment(1:3), 'MEM')
-    OPTIONS.automatic.Comment   =   ['w' OPTIONS.optional.Comment];
-end
-
-
-% EEG-MEG specific preprocessing
-if ~any(ismember( 'NIRS', OPTIONS.mandatory.DataTypes))
-
-    %% ===== DC offset ===== %% 
-    % we remove the DC offset the data
-    %[OPTIONS]       = be_remove_dc(OPTIONS);
-
-    %% ===== AVG reference ===== %% 
-    % we average reference the data
-    %[OPTIONS]       = be_avg_reference(OPTIONS);
-
-    %% ===== Pre-whitening of the data ==== %%
-    % it uses empty-room data if available
-    % if PlOS one : nothing is done here
-    % [OPTIONS] = be_prewhite(OPTIONS);
-end
+%% ===== AVG reference ===== %% 
+% Convert to average reference (only for EEG / iEEG)
+[OPTIONS]       = be_avg_reference(OPTIONS);
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
 
-
+%% ===== Baseline shuffle ==== %% 
+% If resting-state, generate artificial baseline based on phase reshufling 
 if OPTIONS.optional.baseline_shuffle
     OPTIONS = be_shufle_baseline(OPTIONS);
 end
 
 %% ===== Normalization ==== %% 
-% we absorb units (pT, nA) in the data, leadfields; we normalize the data
-% and the leadfields
+% we absorb units (pT, nA) in the data, leadfields; 
+% we normalize the data and the leadfields
 [OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
 %% ===== Null hypothesis (for the threshold for the msp scores)
 % from the baseline, compute the distribution of the msp scores. 
-% More details in Appendix B in ref[1]
 OPTIONS = be_model_of_null_hypothesis(OPTIONS);
 
 %% ===== Data Processing (and noise) ===== %%
@@ -145,15 +119,9 @@ end
 % we compute MNE (using l-curve for nirs or depth-weighted version)
 [obj, OPTIONS] = be_main_mne(obj, OPTIONS);
 
-%% ===== Double to single precision  ===== %%
-[OPTIONS] = be_switch_precision(OPTIONS, 'single');
-
 %% ===== Clusterize cortical surface ===== %%
 % from the msp scores, clustering of the cortical mesh:
 [OPTIONS, obj] = be_main_clustering(obj, OPTIONS);
-
-%% ===== Single to double precision  ===== %%
-[OPTIONS] = be_switch_precision(OPTIONS, 'double');
 
 %% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
 % matrix W'W from the Henson paper
@@ -193,10 +161,6 @@ Results.Time            = OPTIONS.mandatory.DataTime;
 Results.nComponents     = round( length(obj.iModS) / obj.nb_sources );
 
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
-
-time_it_ends = toc(time_it_starts);
-fprintf('Bye. (Elapsed CPU time is %5.2f seconds.) \n', time_it_ends)
-
 
 end
 

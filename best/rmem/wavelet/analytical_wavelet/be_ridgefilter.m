@@ -198,7 +198,6 @@ function [FileName]         =   keepCWT(WData, Scalo, OPTIONS)
     FileMat.Freqs       = OPTIONS.wavelet.freqs_analyzed;
     FileMat.RowNames    = OPTIONS.optional.ChannelNames;
     FileMat.Measure     = 'Power';
-    FileMat.ChannelFlag = OPTIONS.optional.ChannelFlags;
     FileMat.nAvg        = 1;
     FileMat.ridgeMAP    = Scalo;
     

@@ -62,37 +62,40 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
             if isempty(HeadModel)
                 Results = be_pipelineoptions(OPTIONS); 
                 return
-            elseif ischar(HeadModel) && iscell(OPTIONS)
+            elseif ischar(HeadModel) && (iscell(OPTIONS) || ischar(OPTIONS))
                 Results = be_pipelineoptions(BEst_defaults(), HeadModel, OPTIONS , 1);   
                 return
             else
                 % Continue main pipeline
             end
     end
-    
+
+    % Start timer
+    time_it_starts = tic();
+
     % Initialize options
-    OPTIONS = be_initialize_options(OPTIONS);
-    
+    [OPTIONS, FLAG, verbose] = be_initialize_options(OPTIONS);
+    assert(~FLAG, 'MEM: unable to initialize MEM options.')
+
     % ==== Check Data and Options
-    [HeadModel, OPTIONS, FLAG] = be_checkio( HeadModel, OPTIONS);    
+    [HeadModel, OPTIONS, FLAG] = be_checkio(HeadModel, OPTIONS);    
     assert(~FLAG, 'MEM: unable to compute MEM.')
-    
+        
     % Initialize obj 
     obj = struct();
+    obj.VertConn = be_vertex_connectivity(HeadModel);
     [obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
-    [~, obj.VertConn] = be_vertex_connectivity(HeadModel, OPTIONS);
 
     % Channels: we retrieve the channels name and the data
     OPTIONS             = be_main_channel(HeadModel, OPTIONS);
 
     % Sources: we verify that all sources in the model have good leadfields
-    [OPTIONS, obj]  = be_main_sources(obj, OPTIONS);
+    [OPTIONS, obj]      = be_main_sources(obj, OPTIONS);
 
     % ====  Initialize parallel computing
-    close_pool = false;
     if OPTIONS.solver.parallel_matlab && isempty(gcp('nocreate'))
         gcp;
-        close_pool = true;
+        cleanupObj  = onCleanup(@()delete(gcp('nocreate')));
     end
     
     % ==== LAUNCH PIPELINE ==== %
@@ -108,12 +111,18 @@ function [Results, OPTIONS] = be_main(HeadModel, OPTIONS)
         otherwise
             error('Unknown pipeline %s', lower(OPTIONS.mandatory.pipeline))
     end
-    
-    % ====  Close parallel computing
-    if close_pool
-        delete(gcp('nocreate'))
+
+    if verbose
+        time_it_ends = duration(0, 0, toc(time_it_starts));
+        if hours(time_it_ends) > 1
+            fprintf('\nDone. MEM was computed in %s. \nBye. \n', strrep(char(time_it_ends,'h'), 'hr', 'hours'))
+        elseif minutes(time_it_ends) > 1
+            fprintf('\nDone. MEM was computed in %sutes. \nBye. \n', char(time_it_ends,'m'))
+        else
+            fprintf('\nDone. MEM was computed in %sondes. \nBye. \n', char(time_it_ends,'s'))
+        end
     end
-    
+
 end
 
 
@@ -148,7 +157,6 @@ function Def_OPTIONS=   BEst_defaults()
     Def_OPTIONS.optional.ChannelFlag                = [];
     Def_OPTIONS.optional.FileType                   = '';
     Def_OPTIONS.optional.ChannelNames               = '';
-    Def_OPTIONS.optional.ChannelFlags               = '';
     Def_OPTIONS.optional.waitbar                    = 0;
     Def_OPTIONS.optional.DataFile                   = '';
     Def_OPTIONS.optional.ResultFile                 = '';

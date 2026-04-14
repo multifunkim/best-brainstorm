@@ -8,7 +8,7 @@ function [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS)
 %
 %   OUTPUTS:
 %       -   OPTIONS
-%       - obj
+%       -   obj
 %
 %% ==============================================   
 % Copyright (C) 2011 - LATIS Team
@@ -32,48 +32,48 @@ function [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-obj.t0      = OPTIONS.mandatory.DataTime(1);
-
-if OPTIONS.optional.verbose
-    if ~strcmp(OPTIONS.mandatory.pipeline,'wMEM')
-        fprintf('%s, wavelet processing not correctly called\n',OPTIONS.mandatory.pipeline);
-    else
-        fprintf('%s, wavelet pre-processing (new)\n',OPTIONS.mandatory.pipeline);
+    obj.t0      = OPTIONS.mandatory.DataTime(1);
+    
+    if OPTIONS.optional.verbose
+        if ~strcmp(OPTIONS.mandatory.pipeline,'wMEM')
+            fprintf('%s, wavelet processing not correctly called\n',OPTIONS.mandatory.pipeline);
+        else
+            fprintf('%s, wavelet pre-processing (new)\n',OPTIONS.mandatory.pipeline);
+        end
     end
-end
 
-% ====  this is the wavelet-MEM (Lina and co.)
-        % we first re-organize the data with respect to the modalities
-        % concerned (the order being given by the OPTIONS.DataTypes)
-        % normalization/wavelet/denoise
-        [obj, OPTIONS] = be_discrete_wavelet_preprocessing(obj, OPTIONS);
+    % ====  this is the wavelet-MEM (Lina and co.)
+    % we first re-organize the data with respect to the modalities
+    % concerned (the order being given by the OPTIONS.DataTypes)
+    % normalization/wavelet/denoise
+    [obj, OPTIONS] = be_discrete_wavelet_preprocessing(obj, OPTIONS);
 
-        if isempty(OPTIONS.solver.NoiseCov)
-            if ~isempty( OPTIONS.automatic.Modality(1).emptyroom )
-                fprintf('%s, New noise covariance is computed using empty room data\n',OPTIONS.mandatory.pipeline);
-            elseif ~isempty( OPTIONS.automatic.Modality(1).baseline)
-               fprintf('%s, %d New noise covariance is computed using baseline\n',OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.Modality(1).baseline,3));
-            else
-        	    fprintf('%s, No baseline nor covariance matrix provided. Covariance set to identity\n',OPTIONS.mandatory.pipeline);
-            end
+    if isempty(OPTIONS.solver.NoiseCov)
+        if ~isempty( OPTIONS.automatic.Modality(1).emptyroom )
+            fprintf('%s, New noise covariance is computed using empty room data\n',OPTIONS.mandatory.pipeline);
+        elseif ~isempty( OPTIONS.automatic.Modality(1).baseline)
+           fprintf('%s, %d New noise covariance is computed using baseline\n',OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.Modality(1).baseline,3));
+        else
+    	    fprintf('%s, No baseline nor covariance matrix provided. Covariance set to identity\n',OPTIONS.mandatory.pipeline);
         end
+    end
 
-        for iii=1:size(OPTIONS.automatic.Modality(1).baseline,3)
-            noise_var(:,:,iii) = covariance_processing(OPTIONS,iii);
+    for iii=1:size(OPTIONS.automatic.Modality(1).baseline,3)
+        noise_var(:,:,iii) = covariance_processing(OPTIONS,iii);
+    end
+
+    % The number of j decomposition in the noise_var
+    % noise_var:[NbSensors x NbSensors x Nbj]
+    noise_var_jn = size(noise_var,3);
+
+    % we nomalize the cov of each modalities (we regularize the cov matrices)
+    for ii = 1 : numel( OPTIONS.automatic.Modality )
+        for isc=1:noise_var_jn
+            OPTIONS.automatic.Modality(ii).covariance(:,:,isc) = ...
+                noise_var(OPTIONS.automatic.Modality(ii).channels,...
+                OPTIONS.automatic.Modality(ii).channels, isc );
         end
-
-        % The number of j decomposition in the noise_var
-        % noise_var:[NbSensors x NbSensors x Nbj]
-        noise_var_jn = size(noise_var,3);
-
-        % we nomalize the cov of each modalities (we regularize the cov matrices)
-        for ii = 1 : numel( OPTIONS.automatic.Modality )
-            for isc=1:noise_var_jn
-                OPTIONS.automatic.Modality(ii).covariance(:,:,isc) = ...
-                    noise_var(OPTIONS.automatic.Modality(ii).channels,...
-                    OPTIONS.automatic.Modality(ii).channels, isc );
-            end
-        end
+    end
 end
 
 % =========================================================================
@@ -125,36 +125,35 @@ end
     
 end
 
-% ====
-
 function [noise_var] = estimate_noise_var(OPTIONS)
 
     noise_var = [];
 
     for ii =  1: numel( OPTIONS.automatic.Modality )
     
-        iD =   OPTIONS.automatic.Modality(ii).channels;
-    
-        % Compute covariance matrix
+        iD = OPTIONS.automatic.Modality(ii).channels;
 
         % Wavelet-based noise estimation
         O = OPTIONS;
-
         O.automatic.Modality        = O.automatic.Modality(ii);            
         O.mandatory.DataTypes       = O.mandatory.DataTypes(ii);
 
         % Construct wavelet
         O.wavelet.type                = 'rdw';
-        O.wavelet.vanish_moments      = 4;
         O.wavelet.selected_scales     = [];
         O.wavelet.single_box          = 0;
         O.automatic.scales            = [];
-
         O.optional.verbose            = 0;
-
+        
         % Make transform
-        obj.t0              =   OPTIONS.mandatory.DataTime(1);
-        wavelet_obj         =   be_discrete_wavelet_preprocessing(obj, O);
+        wavelet_obj = struct();
+        wavelet_obj.t0              =   OPTIONS.mandatory.DataTime(1);
+        [wavelet_obj, O]            =   be_discrete_wavelet_preprocessing(wavelet_obj, O);
+        
+        % If we want to display the data
+        % [wavelet_obj.hfig, wavelet_obj.hfigtab] = be_create_figure(O);
+        % be_display_time_scale_boxes(wavelet_obj, O);
+
 
         % If the empty room is available the cov mat is scale dependent
         if ~isempty( OPTIONS.automatic.Modality(ii).emptyroom )
@@ -174,23 +173,36 @@ function [noise_var] = estimate_noise_var(OPTIONS)
             end
         % If not a unique cov matrix is computed from the baseline
         else
-            variance = var( wavelet_obj.data{1}(:,end/2+1:end)' );
             switch OPTIONS.solver.NoiseCov_method
                 % Diagonale
                 case 4
+                    variance = var( wavelet_obj.data{1}(:,end/2+1:end)' );
                     noise_var(iD, iD) = diag(variance);
                 % Diagonale averaged    
                 case 5
+                    variance = var( wavelet_obj.data{1}(:,end/2+1:end)' );
                     noise_var(iD, iD) = diag(ones(1,length(variance))*mean(variance));
 
                 case 6
+                    % Scale one which the noise covariance is calculated
                     if strcmp(OPTIONS.automatic.Modality(ii).name, 'NIRS')
                         isc = 3;
                     else
-                        isc = 2; % Scale one which the noise covariance is calculated
+                        isc = 2; 
                     end
+                    
+                    % Select the wavelet coefficient for scale isc
+                    % (exclude the 5 first and last boxes) 
 
                     w1 = wavelet_obj.data{1}(:,end/2^(isc)+6:end/2^(isc-1)-5)';
+
+                    % The following code might be more robust but needs to
+                    % be validated (because of the energy selection,
+                    % O.automatic.selected_samples == isc might be empty)
+                    % 
+                    % idx = O.automatic.selected_samples(1, O.automatic.selected_samples(2,:) == isc);
+                    % w1 = wavelet_obj.data{1}(:,idx)';
+
                     a = max(1,round(wavelet_obj.info_extension.start / 2^(isc)));
                     b = min(size(w1,1),round(wavelet_obj.info_extension.end / 2^(isc)));
                     MADest = Wmad(w1(a:b,:)) / 0.6745;
@@ -198,6 +210,7 @@ function [noise_var] = estimate_noise_var(OPTIONS)
                 
                % If the NoiseCov_method is not 4 neither 5 we force 5
                 otherwise
+                    variance = var( wavelet_obj.data{1}(:,end/2+1:end)' );
                     noise_var(iD, iD) = diag(ones(1,length(variance))*mean(variance)); 
             end
         end

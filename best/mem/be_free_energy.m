@@ -14,7 +14,7 @@ function [D, dD] = be_free_energy(lambda, M, noise_var, G_active_var_Gt, cluster
 %   The formulas are :
 %       D(lambda) = lambda' * M - 
 %                   (1/2)* noise_var * lambda' * lambda - 
-%                   sum(F* * (G' * lambda))
+%                   sum(F*(G' * lambda))
 %
 %       F*(xi) = ln[(1- alpha) * exp(F0) + alpha * exp(F1)]
 %           where F0 is the inactive state and

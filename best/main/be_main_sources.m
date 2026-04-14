@@ -42,8 +42,8 @@ if OPTIONS.optional.verbose
     fprintf('%s, be_main_source ...', OPTIONS.mandatory.pipeline); 
 end 
 
-obj.nb_dipoles = size(OPTIONS.automatic.Modality(1).gain,2);
-obj.iModS = 1:obj.nb_dipoles;
+obj.nb_dipoles  = size(OPTIONS.automatic.Modality(1).gain, 2);
+obj.iModS       = OPTIONS.automatic.GoodVertex;
 
 % remove sources with bad leadfields
 for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
@@ -52,14 +52,15 @@ for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
 end
 
 % what we keep:
-obj.nb_sources = numel(obj.iModS);
+obj.nb_sources               = numel(obj.iModS);
+OPTIONS.automatic.GoodVertex = obj.iModS;
 
 assert(obj.nb_sources > 0, 'The source space is empty' );
 
 
 for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
     OPTIONS.automatic.Modality(ii).gain = OPTIONS.automatic.Modality(ii).gain(:, obj.iModS);
-    obj.VertConn = obj.VertConn(obj.iModS,obj.iModS);
+    obj.VertConn = obj.VertConn(obj.iModS, obj.iModS);
 end
 
 

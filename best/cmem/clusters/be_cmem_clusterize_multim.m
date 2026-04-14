@@ -67,9 +67,6 @@ function [CLS, SCR, OPTIONS] = be_cmem_clusterize_multim(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-% ==== clustering technique
-SCR = [];
-CLS = [];
 
 if strcmp(OPTIONS.clustering.clusters_type,'static')
     
@@ -93,6 +90,6 @@ else
 end
 
 
-return
+end
 
 
