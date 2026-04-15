@@ -160,36 +160,75 @@ end
 
 
 function setup_lod_rendering(ax, obj, OPTIONS, iMod)
-    % Initial draw
-    render_lod(ax, obj, OPTIONS, iMod);
-    
-    % Re-render on zoom/pan
-    addlistener(ax, 'XLim', 'PostSet', @(~,~) render_lod(ax, obj, OPTIONS, iMod));
+
+    color_lookup = build_color_lookup(obj, OPTIONS, iMod);
+
+    render_lod(ax, color_lookup);  % initial draw
+
+    addlistener(ax, 'XLim', 'PostSet', @(~,~) render_lod(ax, color_lookup));
 end
 
 
-function render_lod(ax, obj, OPTIONS, iMod)
-    delete(findobj(ax, 'Tag', 'lod_boxes'));
-
-    % --- View metrics ---
-    displayed_time  = xlim(ax);
-    displayed_scale = ylim(ax);
-    view_width      = displayed_time(2) - displayed_time(1);
-    ax_width_px     = getpixelposition(ax);
-    ax_width_px     = ax_width_px(3);
-
-    % --- Signal metrics ---
+function color_lookup = build_color_lookup(obj, OPTIONS, iMod)
     Tmin = obj.t0 - (obj.info_extension.start - 1) / OPTIONS.automatic.sampling_rate;
     Tmax = Tmin + (size(obj.data{iMod}, 2) - 1) / OPTIONS.automatic.sampling_rate;
     N    = size(obj.data{iMod}, 2);
     T    = Tmax - Tmin;
-    e    = 0.05;
 
     MMM       = colormap(jet(size(OPTIONS.automatic.selected_values{iMod}, 2)));
     MMM       = MMM(end:-1:1, :);
     selection = OPTIONS.automatic.Modality(iMod).selected_jk;
     max_scale = max(selection(2,:));
 
+    color_lookup = struct();
+    color_lookup.max_scale = max_scale;
+    color_lookup.T         = T;
+    color_lookup.N         = N;
+    color_lookup.Tmin      = Tmin;
+    color_lookup.Tmax      = Tmax;
+
+    % One array per scale
+    for sj = 1:max_scale
+        bj_fine  = find(selection(2,:) == sj);
+        if isempty(bj_fine)
+            color_lookup.scales(sj).fine_color_array = [];
+            color_lookup.scales(sj).fine_box_len     = T / N * 2^sj;
+            continue
+        end
+
+        fine_val     = selection(3, bj_fine);
+        fine_box_len = T / N * 2^sj;
+        max_fine_idx = ceil(T / fine_box_len);
+
+        [sorted_val, I] = sort(fine_val);
+        color_scale     = MMM(bj_fine, :);
+        color_scale     = color_scale(I, :);
+
+        fine_color_array = nan(max_fine_idx, 3);
+        for k = 1:length(sorted_val)
+            fine_color_array(sorted_val(k), :) = color_scale(k, :);
+        end
+
+        color_lookup.scales(sj).fine_color_array = fine_color_array;
+        color_lookup.scales(sj).fine_box_len     = fine_box_len;
+    end
+end
+
+
+function render_lod(ax, color_lookup)
+    delete(findobj(ax, 'Tag', 'lod_boxes'));
+
+    displayed_time  = xlim(ax);
+    displayed_scale = ylim(ax);
+    view_width      = displayed_time(2) - displayed_time(1);
+    ax_width_px     = getpixelposition(ax);
+    ax_width_px     = ax_width_px(3);
+
+    T         = color_lookup.T;
+    N         = color_lookup.N;
+    Tmin      = color_lookup.Tmin;
+    max_scale = color_lookup.max_scale;
+    e         = 0.05;
     merge_threshold_px = 2.0;
 
     sBox = struct('Vertices', [], 'Faces', [], 'FaceVertexCData', [], ...
@@ -197,13 +236,14 @@ function render_lod(ax, obj, OPTIONS, iMod)
     iBox = 1;
 
     for sj = 1:max_scale
-
-        % --- Y culling ---
         if (sj + 0.5) < displayed_scale(1) || (sj - 0.5) > displayed_scale(2)
             continue
         end
 
-        % --- Find coarsest scale whose boxes are >= threshold px ---
+        fine_color_array = color_lookup.scales(sj).fine_color_array;
+        if isempty(fine_color_array), continue; end
+
+        % Find coarsest render scale
         render_sj = sj;
         while render_sj < max_scale
             box_px = (T / N * 2^render_sj) / view_width * ax_width_px;
@@ -213,56 +253,26 @@ function render_lod(ax, obj, OPTIONS, iMod)
             render_sj = render_sj + 1;
         end
 
-        % --- Geometry at render scale ---
-        box_length   = T / N * 2^render_sj;
-        box_width    = 1 - 2*e;
+        box_length     = T / N * 2^render_sj;
+        box_width      = 1 - 2*e;
         n_render_boxes = ceil(T / box_length);
+        ratio          = 2^(render_sj - sj);
 
-        % --- Fine scale data for this row ---
-        bj_fine      = find(selection(2,:) == sj);
-        if isempty(bj_fine), continue; end
-        fine_val     = selection(3, bj_fine);   % time indices at fine scale
-        fine_box_len = T / N * 2^sj;            % length of one fine box
-
-        % Build a lookup: fine time index -> color
-        % (reuse the same MMM/color logic as original)
-        [sorted_val, I] = sort(fine_val);
-        color_scale = MMM(bj_fine, :);
-        color_scale = color_scale(I, :);
-
-        fine_color_map = containers.Map('KeyType','int32','ValueType','any');
-        for k = 1:length(sorted_val)
-            fine_color_map(int32(sorted_val(k))) = color_scale(k, :);
-        end
-
-        % --- Render each coarse box ---
         for rb = 1:n_render_boxes
             x0 = Tmin + (rb - 1) * box_length;
             x1 = x0 + box_length;
 
-            % X culling
             if x1 < displayed_time(1) || x0 > displayed_time(2)
                 continue
             end
 
-            % Find how many fine boxes fit in one coarse box
-            ratio = 2^(render_sj - sj);   % always an integer power of 2
-
-            % Fine box indices covered by this coarse box
             fine_start = (rb - 1) * ratio + 1;
-            fine_end   = rb * ratio;
+            fine_end   = min(rb * ratio, size(fine_color_array, 1));
 
-            % Collect colors of fine boxes present in this coarse box
-            colors_in_box = [];
-            for fi = fine_start:fine_end
-                if fine_color_map.isKey(int32(fi))
-                    colors_in_box(end+1, :) = fine_color_map(int32(fi));
-                end
-            end
+            chunk = fine_color_array(fine_start:fine_end, :);
+            colors_in_box = chunk(~isnan(chunk(:,1)), :);
 
-            if isempty(colors_in_box)
-                continue  % no data in this coarse box
-            end
+            if isempty(colors_in_box), continue; end
 
             avg_color = mean(colors_in_box, 1);
             y0 = sj - box_width;
@@ -278,12 +288,11 @@ function render_lod(ax, obj, OPTIONS, iMod)
     end
 
     if ~isempty(sBox.Vertices)
-        fprintf('Displaying %d boxes \n', size(sBox.Faces, 1));
-        patch(ax, 'Vertices',         sBox.Vertices, ...
-                  'Faces',            sBox.Faces, ...
-                  'FaceVertexCData',  sBox.FaceVertexCData, ...
-                  'FaceColor',        'flat', ...
-                  'EdgeColor',        'none', ...
-                  'Tag',              'lod_boxes');
+        patch(ax, 'Vertices',        sBox.Vertices, ...
+                  'Faces',           sBox.Faces, ...
+                  'FaceVertexCData', sBox.FaceVertexCData, ...
+                  'FaceColor',       'flat', ...
+                  'EdgeColor',       'none', ...
+                  'Tag',             'lod_boxes');
     end
 end
