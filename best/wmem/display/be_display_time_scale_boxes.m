@@ -69,14 +69,10 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
                    'Xlim', [Tmin, Tmax], ...
                    'Ylim', [0, J], ...
                    'Box','on');
-
-        %sBox = create_rectangles(obj, OPTIONS, ii);
-        %patch(ax, sBox);
+        
         setup_lod_rendering(ax, obj, OPTIONS, ii);
         xlabel(ax, 'time (s)'); ylabel(ax,  'scale j');
-        
-        continue;
-
+       
         for scl = 1:length(OPTIONS.wavelet.selected_scales)
 
             sj = OPTIONS.wavelet.selected_scales(scl);
@@ -104,60 +100,8 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
             stem(ax, tt(tv==1), vv(tv==1), 'o', 'filled', 'markersize', 8, 'MarkerFaceColor', 'red', 'Color','red'); 
             hold(ax,'off')
         end
-
-        drawnow
-    end
-
-end
-
-
-function sBox = create_rectangles(obj, OPTIONS, iMod)
-
-    Tmin = obj.t0 - (obj.info_extension.start-1)/OPTIONS.automatic.sampling_rate;
-    Tmax = Tmin + (size(obj.data{iMod},2)-1)/OPTIONS.automatic.sampling_rate;
-    N    = size(obj.data{iMod},2);
-    T    = Tmax - Tmin;
-    e    = 0.05;
-    MMM         = colormap(jet(size(OPTIONS.automatic.selected_values{iMod},2)));
-    MMM         = MMM(end:-1:1, :);
-    selection   = OPTIONS.automatic.Modality(iMod).selected_jk;
-
-    sBox = struct('Vertices', [],'Faces',[],  'FaceVertexCData', [],'FaceColor','flat', 'EdgeColor', 'none');
-    iBox = 1;
-
-    for sj = 1:max(OPTIONS.automatic.Modality(iMod).selected_jk(2,:))
-
-        bj = find(OPTIONS.automatic.Modality(iMod).selected_jk(2,:)==sj);
-        tt = OPTIONS.automatic.Modality(iMod).selected_jk(6,bj);
-
-        if isempty(tt)
-            % if there is no selected box for that scale, we skip. 
-            continue;
-        end
-        
-        box_length = T/N*2^sj;
-        box_width  = 1-2*e;
-
-        [val, I]  = sort(selection(3,bj));
-
-        color_scale = MMM(bj, :);
-        color_scale = color_scale(I, :);
-    
-        for b=1:length(I)
-
-            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ 0, 0];
-            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ box_length, 0];
-            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ box_length, box_width];
-            sBox.Vertices(end+1, :) = [Tmin + ((val(b)-1) * box_length), sj - box_width] + [ 0, box_width];
-
-            sBox.Faces(end+1, :)  = [iBox, iBox + 1, iBox + 2 , iBox + 3, iBox];
-            iBox = iBox + 4;
-
-            sBox.FaceVertexCData(end+1, :) = color_scale(b, :);
-        end
     end
 end
-
 
 function setup_lod_rendering(ax, obj, OPTIONS, iMod)
 

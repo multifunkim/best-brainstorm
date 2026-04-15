@@ -95,7 +95,7 @@ function [Results, OPTIONS] = be_wmem_solver(obj, OPTIONS)
 
 %% ===== Baseline shuffle ==== %% 
 % If resting-state, generate artificial baseline based on phase reshufling 
-if 0 && OPTIONS.optional.baseline_shuffle
+if OPTIONS.optional.baseline_shuffle
     OPTIONS = be_shufle_baseline(OPTIONS);
 end
 
