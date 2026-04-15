@@ -167,134 +167,123 @@ function setup_lod_rendering(ax, obj, OPTIONS, iMod)
     addlistener(ax, 'XLim', 'PostSet', @(~,~) render_lod(ax, obj, OPTIONS, iMod));
 end
 
+
 function render_lod(ax, obj, OPTIONS, iMod)
     delete(findobj(ax, 'Tag', 'lod_boxes'));
-    
-    xlim_range  = ax.XLim;
-    view_width  = xlim_range(2) - xlim_range(1);
-    fig = ancestor(ax, 'figure');
-    fig_units_orig = fig.Units;
-    fig.Units = 'pixels';
-    fig_pos = fig.Position;
-    fig.Units = fig_units_orig;  % restore original units
-    
-    ax_units_orig = ax.Units;
-    ax.Units = 'normalized';
-    ax_norm_width = ax.Position(3);
-    ax.Units = ax_units_orig;  % restore
 
-ax_width_px = ax_norm_width * fig_pos(3);    
+    % --- View metrics ---
+    displayed_time  = xlim(ax);
+    displayed_scale = ylim(ax);
+    view_width      = displayed_time(2) - displayed_time(1);
+    ax_width_px     = getpixelposition(ax);
+    ax_width_px     = ax_width_px(3);
+
+    % --- Signal metrics ---
     Tmin = obj.t0 - (obj.info_extension.start - 1) / OPTIONS.automatic.sampling_rate;
     Tmax = Tmin + (size(obj.data{iMod}, 2) - 1) / OPTIONS.automatic.sampling_rate;
     N    = size(obj.data{iMod}, 2);
     T    = Tmax - Tmin;
     e    = 0.05;
-    
+
     MMM       = colormap(jet(size(OPTIONS.automatic.selected_values{iMod}, 2)));
     MMM       = MMM(end:-1:1, :);
     selection = OPTIONS.automatic.Modality(iMod).selected_jk;
-    
+    max_scale = max(selection(2,:));
+
+    merge_threshold_px = 2.0;
+
     sBox = struct('Vertices', [], 'Faces', [], 'FaceVertexCData', [], ...
                   'FaceColor', 'flat', 'EdgeColor', 'none');
     iBox = 1;
-    
-    % Minimum pixel width below which we merge adjacent boxes
-    merge_threshold_px = 5;
-    
-    displayed_scaled = ylim(ax);
-    displayed_time = xlim(ax);
 
-    for sj = 1:max(OPTIONS.automatic.Modality(iMod).selected_jk(2,:))
-        
-        if (sj + 0.5) < min(displayed_scaled) || ( sj - 0.5 ) > max(displayed_scaled)
-            fprintf('skipping %d. Ylim : [%f %f] \n', sj, displayed_scaled(1), displayed_scaled(2))
+    for sj = 1:max_scale
+
+        % --- Y culling ---
+        if (sj + 0.5) < displayed_scale(1) || (sj - 0.5) > displayed_scale(2)
             continue
         end
 
-        bj = find(OPTIONS.automatic.Modality(iMod).selected_jk(2,:) == sj);
-        tt = OPTIONS.automatic.Modality(iMod).selected_jk(6, bj);
-        if isempty(tt), continue; end
-        
-        box_length = T / N * 2^sj;
-        box_width  = 1 - 2*e;
-        
-        [val, I] = sort(selection(3, bj));
-        color_scale = MMM(bj, :);
+        % --- Find coarsest scale whose boxes are >= threshold px ---
+        render_sj = sj;
+        while render_sj < max_scale
+            box_px = (T / N * 2^render_sj) / view_width * ax_width_px;
+            if box_px >= merge_threshold_px
+                break
+            end
+            render_sj = render_sj + 1;
+        end
+
+        % --- Geometry at render scale ---
+        box_length   = T / N * 2^render_sj;
+        box_width    = 1 - 2*e;
+        n_render_boxes = ceil(T / box_length);
+
+        % --- Fine scale data for this row ---
+        bj_fine      = find(selection(2,:) == sj);
+        if isempty(bj_fine), continue; end
+        fine_val     = selection(3, bj_fine);   % time indices at fine scale
+        fine_box_len = T / N * 2^sj;            % length of one fine box
+
+        % Build a lookup: fine time index -> color
+        % (reuse the same MMM/color logic as original)
+        [sorted_val, I] = sort(fine_val);
+        color_scale = MMM(bj_fine, :);
         color_scale = color_scale(I, :);
-        
-        % Pixel width of a single box in current view
-        box_px = box_length / view_width * ax_width_px;
-        
-        fprintf('sj: %d; box_px %f \n',sj,  box_px)
-        if box_px >= merge_threshold_px
-            % === FULL DETAIL: individual boxes ===
-            for b = 1:length(I)
-                x0 = Tmin + (val(b) - 1) * box_length;
-                x1 = x0 + box_length;
-                y0 = sj - box_width;
 
-                % Skip if box is entirely outside current x view
-                if x1 < displayed_time(1) || x0 > displayed_time(2)
-                    continue
-                end
+        fine_color_map = containers.Map('KeyType','int32','ValueType','any');
+        for k = 1:length(sorted_val)
+            fine_color_map(int32(sorted_val(k))) = color_scale(k, :);
+        end
 
-                sBox.Vertices(end+1, :) = [x0,              y0            ];
-                sBox.Vertices(end+1, :) = [x0 + box_length, y0            ];
-                sBox.Vertices(end+1, :) = [x0 + box_length, y0 + box_width];
-                sBox.Vertices(end+1, :) = [x0,              y0 + box_width];
-                sBox.Faces(end+1, :)    = [iBox, iBox+1, iBox+2, iBox+3, iBox];
-                sBox.FaceVertexCData(end+1, :) = color_scale(b, :);
-                iBox = iBox + 4;
+        % --- Render each coarse box ---
+        for rb = 1:n_render_boxes
+            x0 = Tmin + (rb - 1) * box_length;
+            x1 = x0 + box_length;
+
+            % X culling
+            if x1 < displayed_time(1) || x0 > displayed_time(2)
+                continue
             end
-            
-        else
-            % === MERGED MODE: merge consecutive boxes, but cap merge size ===
-            % Target: each merged group should be ~target_px pixels wide
-            target_px     = 5;  % merged block minimum visual width in pixels
-            boxes_per_group = max(1, round(target_px / box_px));
-            
-            b = 1;
-            while b <= length(I)
-                % Find consecutive run starting at b
-                run_start_idx = b;
-                run_end_idx   = b;
-                
-                % Extend run: only merge if boxes are consecutive in time index
-                while run_end_idx < length(I) && ...
-                      val(run_end_idx + 1) == val(run_end_idx) + 1 && ...
-                      (run_end_idx - run_start_idx + 1) < boxes_per_group
-                    run_end_idx = run_end_idx + 1;
+
+            % Find how many fine boxes fit in one coarse box
+            ratio = 2^(render_sj - sj);   % always an integer power of 2
+
+            % Fine box indices covered by this coarse box
+            fine_start = (rb - 1) * ratio + 1;
+            fine_end   = rb * ratio;
+
+            % Collect colors of fine boxes present in this coarse box
+            colors_in_box = [];
+            for fi = fine_start:fine_end
+                if fine_color_map.isKey(int32(fi))
+                    colors_in_box(end+1, :) = fine_color_map(int32(fi));
                 end
-                
-                % Average color over the run
-                run_len   = run_end_idx - run_start_idx + 1;
-                avg_color = mean(color_scale(run_start_idx:run_end_idx, :), 1);
-                
-                x0         = Tmin + (val(run_start_idx) - 1) * box_length;
-                merged_len = run_len * box_length;
-                y0         = sj - box_width;
-                
-                sBox.Vertices(end+1, :) = [x0,              y0            ];
-                sBox.Vertices(end+1, :) = [x0 + merged_len, y0            ];
-                sBox.Vertices(end+1, :) = [x0 + merged_len, y0 + box_width];
-                sBox.Vertices(end+1, :) = [x0,              y0 + box_width];
-                sBox.Faces(end+1, :)    = [iBox, iBox+1, iBox+2, iBox+3, iBox];
-                sBox.FaceVertexCData(end+1, :) = avg_color;
-                iBox = iBox + 4;
-                
-                b = run_end_idx + 1;
             end
+
+            if isempty(colors_in_box)
+                continue  % no data in this coarse box
+            end
+
+            avg_color = mean(colors_in_box, 1);
+            y0 = sj - box_width;
+
+            sBox.Vertices(end+1, :) = [x0, y0            ];
+            sBox.Vertices(end+1, :) = [x1, y0            ];
+            sBox.Vertices(end+1, :) = [x1, y0 + box_width];
+            sBox.Vertices(end+1, :) = [x0, y0 + box_width];
+            sBox.Faces(end+1, :)    = [iBox, iBox+1, iBox+2, iBox+3, iBox];
+            sBox.FaceVertexCData(end+1, :) = avg_color;
+            iBox = iBox + 4;
         end
     end
-    
-    if ~isempty(sBox.Vertices)
 
-        fprintf('Plotting %d boxes \n', size(sBox.Vertices, 1))
-        patch(ax, 'Vertices',        sBox.Vertices, ...
-                  'Faces',           sBox.Faces, ...
-                  'FaceVertexCData', sBox.FaceVertexCData, ...
-                  'FaceColor',       'flat', ...
-                  'EdgeColor',       'none', ...
-                  'Tag',             'lod_boxes');
+    if ~isempty(sBox.Vertices)
+        fprintf('Displaying %d boxes \n', size(sBox.Faces, 1));
+        patch(ax, 'Vertices',         sBox.Vertices, ...
+                  'Faces',            sBox.Faces, ...
+                  'FaceVertexCData',  sBox.FaceVertexCData, ...
+                  'FaceColor',        'flat', ...
+                  'EdgeColor',        'none', ...
+                  'Tag',              'lod_boxes');
     end
 end
