@@ -1,4 +1,4 @@
-function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS) 
+function obj = be_display_time_scale_boxes(obj, OPTIONS) 
 %be_display_time_scale_boxes displays the discrete wavelet
 %representation
 %
@@ -38,78 +38,61 @@ function [hp, hptab] = be_display_time_scale_boxes(obj, OPTIONS)
 % J : levels
 % N : nomber of samples
 % TFboxes is a structure .k ans .j are (j,k) coordinates
-
-    hp      = obj.hfig;
-    hptab   = obj.hfigtab; 
     
     if ~strcmp(obj.data_type,'discrete_wavelet')
-        disp('NO WAVELET DISPLAY');
+        warning('NO WAVELET DISPLAY');
         return
     end
     
-    for ii = 1:length(OPTIONS.mandatory.DataTypes)
-    
-        hhh  = uitab(hptab,'title', OPTIONS.mandatory.DataTypes{ii});
-        hpc  = uipanel('Parent', hhh, ...
-                       'Units', 'Normalized', ...
-                       'Position', [0.01 0.01 0.98 0.98], ...
-                       'FontWeight','demi');
-        set(hpc,'Title', 'Time-frequency boxes', 'FontSize', 8);
-    
-        Tmin = obj.t0 - (obj.info_extension.start-1)/OPTIONS.automatic.sampling_rate;
-        Tmax = Tmin + (size(obj.data{ii},2)-1)/OPTIONS.automatic.sampling_rate;
-
-        scales = unique(OPTIONS.automatic.Modality(ii).selected_jk(2,:));
-        J    = max(scales);
-
-        ax = axes( 'parent', hpc, ...
-                   'outerPosition', [0.01 0.01 0.98 0.98], ...
-                   'YTick', 0.5:J-0.5, ...
-                   'YTickLabel', num2cell(1:J), ...
-                   'Xlim', [Tmin, Tmax], ...
-                   'Ylim', [0, J], ...
-                   'Box','on');
+    % Ensure that the figure is open
+    if ~isvalid(obj.hfigtab)
+        [obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
         
-        setup_lod_rendering(ax, obj, OPTIONS, ii);
-        xlabel(ax, 'time (s)'); ylabel(ax,  'scale j');
-       
-        for scl = 1:length(OPTIONS.wavelet.selected_scales)
-
-            sj = OPTIONS.wavelet.selected_scales(scl);
-            bj = find(OPTIONS.automatic.Modality(ii).selected_jk(2,:)==sj);
-            tt = OPTIONS.automatic.Modality(ii).selected_jk(6,bj);
-            vv = OPTIONS.automatic.selected_values{ii}(2,bj);
-            tv = OPTIONS.automatic.selected_values{ii}(3,bj);
-
-            if isempty(tt)
-                % if there is no selected box for that scale, we skip. 
-                continue;
-            end
-
-            hhh = uitab(hptab,'title', [' scale ' num2str(OPTIONS.wavelet.selected_scales(scl)) ' ']);
-            hpc = uipanel(  'Parent', hhh, ...
-                            'Units', 'Normalized', ...
-                            'Position', [0.01 0.01 0.98 0.98], ...
-                            'FontWeight', 'demi');
-
-            set(hpc,'Title', ' Wavelet coefficients (% of power) ', 'FontSize', 8);
-            ax = axes('parent',hpc, 'outerPosition',[0.01 0.01 0.98 0.98]);
-
-            hold(ax,'on')
-            stem(ax, tt(tv==0), vv(tv==0), 'x', 'filled', 'markersize', 8, 'MarkerFaceColor', 'black', 'Color','black'); 
-            stem(ax, tt(tv==1), vv(tv==1), 'o', 'filled', 'markersize', 8, 'MarkerFaceColor', 'red', 'Color','red'); 
-            hold(ax,'off')
+        if ~isvalid(obj.hfigtab)
+            warning('Unable to create figure');
+            return;
         end
     end
+    
+    all_axes = [];
+    for iMod = 1:length(OPTIONS.mandatory.DataTypes)
+    
+        % 1. Render TF Boxes
+        [ax, color_lookup] = setup_TF_box_rendering(obj, OPTIONS, iMod);
+        addlistener(ax, 'XLim', 'PostSet', @(~,~) render_lod(ax, color_lookup));
+        all_axes(end+1) = ax;
+
+        % 2. Display each scale individually 
+        tmp = plot_scales_timecourse(obj, OPTIONS, iMod);
+        all_axes = [all_axes, tmp];
+    end
+
+    % Link the axis. This call render_lod
+    linkaxes(all_axes, 'x');
 end
 
-function setup_lod_rendering(ax, obj, OPTIONS, iMod)
+function [ax, color_lookup] = setup_TF_box_rendering(obj, OPTIONS, iMod)
 
+    hhh  = uitab(obj.hfigtab, 'title', OPTIONS.mandatory.DataTypes{iMod});
+    hpc  = uipanel('Parent', hhh, ...
+                   'Units', 'Normalized', ...
+                   'Position', [0.01 0.01 0.98 0.98], ...
+                   'FontWeight','demi');
+    set(hpc,'Title', 'Time-frequency boxes', 'FontSize', 8);
+
+    scales  = unique(OPTIONS.automatic.Modality(iMod).selected_jk(2,:));
+    J       = max(scales);
+
+    ax = axes( 'parent', hpc, ...
+               'outerPosition', [0.01 0.01 0.98 0.98], ...
+               'YTick', 0.5:J-0.5, ...
+               'YTickLabel', num2cell(1:J), ...
+               'Xlim',  OPTIONS.mandatory.DataTime([1,end]), ...
+               'Ylim', [0, J], ...
+               'Box','on');
+
+    xlabel(ax, 'time (s)'); ylabel(ax,  'scale j');
     color_lookup = build_color_lookup(obj, OPTIONS, iMod);
-
-    render_lod(ax, color_lookup);  % initial draw
-
-    addlistener(ax, 'XLim', 'PostSet', @(~,~) render_lod(ax, color_lookup));
 end
 
 
@@ -232,11 +215,51 @@ function render_lod(ax, color_lookup)
     end
 
     if ~isempty(sBox.Vertices)
+        fprintf('Displaying %d boxes \n', size(sBox.Faces, 1))
         patch(ax, 'Vertices',        sBox.Vertices, ...
                   'Faces',           sBox.Faces, ...
                   'FaceVertexCData', sBox.FaceVertexCData, ...
                   'FaceColor',       'flat', ...
                   'EdgeColor',       'none', ...
                   'Tag',             'lod_boxes');
+    end
+end
+
+
+function all_axes = plot_scales_timecourse(obj, OPTIONS, iMod)
+    
+    all_axes = [];
+
+    for scl = 1:length(OPTIONS.wavelet.selected_scales)
+    
+        sj = OPTIONS.wavelet.selected_scales(scl);
+        bj = find(OPTIONS.automatic.Modality(iMod).selected_jk(2,:)==sj);
+        tt = OPTIONS.automatic.Modality(iMod).selected_jk(6,bj);
+        vv = OPTIONS.automatic.selected_values{iMod}(2,bj);
+        tv = OPTIONS.automatic.selected_values{iMod}(3,bj);
+        
+        if isempty(tt)
+            % if there is no selected box for that scale, we skip. 
+            continue;
+        end
+    
+        hhh = uitab(obj.hfigtab,'title', [' scale ' num2str(OPTIONS.wavelet.selected_scales(scl)) ' ']);
+        hpc = uipanel(  'Parent', hhh, ...
+                        'Units', 'Normalized', ...
+                        'Position', [0.01 0.01 0.98 0.98], ...
+                        'FontWeight', 'demi');
+    
+        set(hpc, 'Title', ' Wavelet coefficients (% of power) ', 'FontSize', 8);
+        ax = axes('parent',hpc, 'outerPosition',[0.01 0.01 0.98 0.98],...
+                  'XLim',  OPTIONS.mandatory.DataTime([1,end]), ...
+                  'YLim', [0, max(vv)]);
+    
+        all_axes(end+1) = ax;
+        
+        hold(ax,'on')
+        stem(ax, tt(tv==0), vv(tv==0), 'x', 'filled', 'BaseValue', 0, 'markersize', 8, 'MarkerFaceColor', 'black', 'Color','black'); 
+        stem(ax, tt(tv==1), vv(tv==1), 'o', 'filled', 'BaseValue', 0, 'markersize', 8, 'MarkerFaceColor', 'red', 'Color','red'); 
+        xlabel(ax, 'time (s)'); ylabel(ax,  sprintf('scale %d', scl));
+        hold(ax,'off')
     end
 end

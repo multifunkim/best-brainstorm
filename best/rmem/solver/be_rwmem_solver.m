@@ -123,7 +123,7 @@ OPTIONS.optional.Baseline   =   BSL;
 OPTIONS.optional.display    =   0;
 [RealR]                     =   be_wmem_solver(HeadModel, OPTIONS, Results);
 if DISP
-    [Hr.hfig, Hr.hfigtab]    =   be_display_time_scale_boxes(RealR.MEMdata,RealR.MEMoptions);
+    Hr  =   be_display_time_scale_boxes(RealR.MEMdata,RealR.MEMoptions);
     set(Hr.hfig, 'Name', 'Real analytic signal');
     be_display_entropy_drops(Hr,RealR.MEMoptions);    
 end
@@ -138,7 +138,7 @@ OPTIONS.mandatory.Data      =   OPTIONS.automatic.DataInfo.Fi( :, TMbin(1):TMbin
 fprintf('rwMEM on analytic signal...\timaginary part...\t')
 [ImagR]                     =   be_wmem_solver(HeadModel, OPTIONS, Results);
 if DISP    
-    [Hi.hfig, Hi.hfigtab]    =   be_display_time_scale_boxes(ImagR.MEMdata,ImagR.MEMoptions);
+    Hi  =   be_display_time_scale_boxes(ImagR.MEMdata,ImagR.MEMoptions);
     set(Hi.hfig, 'Name', 'Imaginary analytic signal');
     be_display_entropy_drops(Hi,ImagR.MEMoptions);
 end

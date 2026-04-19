@@ -112,7 +112,7 @@ OPTIONS = be_model_of_null_hypothesis(OPTIONS);
 % for the data: normalization/wavelet/denoise
 [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS);
 if OPTIONS.optional.display
-    [obj.hfig, obj.hfigtab] = be_display_time_scale_boxes(obj, OPTIONS);
+    obj = be_display_time_scale_boxes(obj, OPTIONS);
 end
 
 %% ===== Compute Minimum Norm Solution ==== %% 
