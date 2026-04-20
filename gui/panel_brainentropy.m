@@ -33,7 +33,7 @@ end
 
 
 %% ===== CREATE PANEL =====
-function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU> 
+function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)   
 
     % Java initializations
     import java.awt.*;
@@ -48,15 +48,18 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     panelName       =   'InverseOptionsMEM';
     bstPanelNew     =   [];
     selectedSensor  =   {};
-
+    
+    if nargin < 1
+        OPTIONS = [];
+    end
 
     % Check caller and Load data
-    if isfield(OPTIONS, 'Comment') && strcmp(OPTIONS.Comment,'Compute sources: BEst')
+    if ~isempty(OPTIONS) && isfield(OPTIONS, 'Comment') && strcmp(OPTIONS.Comment,'Compute sources: BEst')
         % Call from the process
         inputData   =   varargin{1};
         DTS         =   {inputData.FileName};
         SUBJ        =   cellfun( @(a) strrep( bst_fileparts( bst_fileparts( a ) ), filesep, '' ), DTS, 'uni', 0 );
-        [dum,STD]   =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), DTS, 'uni', 0 );
+        [~, STD]    =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), DTS, 'uni', 0 );
         STD         =   cell2mat( STD );
         
         ChannelTypes = inputData(1).ChannelTypes;  
@@ -110,7 +113,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     jTXTver =   JTextField(OPTIONS.automatic.version);
     jTXTupd =   JTextField(OPTIONS.automatic.last_update);
 
-    nsub = numel( unique(SUBJ) );
     MEMglobal.DataToProcess = DTS;
     MEMglobal.SubjToProcess = SUBJ;
     MEMglobal.StudToProcess = STD;
@@ -445,10 +447,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             '<BR>Extracts baseline from a recording within your brainstorm database </HTML>']);
         jPanel.add('br', JLabel(''));
 
-        jRadioExternal = gui_component('radio', jPanel, [], 'External', jButtonGroupBslType, [], @(h,ev)SwitchBaseline(), []);
-        jRadioExternal.setToolTipText(['<HTML><B>External</B>:', ...
-            '<BR>Extracts baseline from a recording external to your brainstorm database </HTML>']);
-
         jRadioReshuffle= gui_component('radio', jPanel, [], 'All data (resting-state)', jButtonGroupBslType, [], @(h,ev)SwitchBaseline(), []);
         jRadioReshuffle.setToolTipText(['<HTML><B>All data</B>:', ...
             '<BR>Use Phase-reshuffling to generate surogate data as baseline (recommended for resting state analysis)</HTML>']);
@@ -473,29 +471,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         jPanel.add('hfill',jBaselineWithinBst);
         jBaselineWithinBst.hide();
 
-        % -- Separator
-                
+        % -- Separator 
         jPanel.add('br', JLabel(''));
-       
-        % -- Import External Baseline
-
-        jBaselineExternal = gui_river( '');
-        % -- Text field
-        jTextPathBsl = JTextField('');
-        jTextPathBsl.setEditable(0);
-        jBaselineExternal.add('hfill', jTextPathBsl);
-        jButtonImport = gui_component('button', jBaselineExternal, 'br center', 'Select file', [], ['<HTML><B>Baseline file</B>:', ...
-                                                                                                        '<BR>Import baseline from a file.</HTML>'], @(h, ev) import_baseline(), []);
-
-        jBaselineExternal.add(jButtonImport);
-        jPanel.add('hfill',jBaselineExternal);
-        jBaselineExternal.hide();
-
-        % -- Separator
-        jPanel.add('br', JLabel(''));
-                
-                
-    
+     
         % - Baseline time window
         jBaselineTimeSelect = gui_river( '');
         jBaselineTimeSelect.add(JLabel('Time window: '));
@@ -538,16 +516,12 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             'jTextTimeStop',    jTextTimeStop,...
             'jRadioWithinData',jRadioWithinData, ...
             'jRadioWithinBrainstorm', jRadioWithinBrainstorm, ...
-            'jRadioExternal', jRadioExternal, ...
             'jRadioReshuffle',jRadioReshuffle, ...
             'jTextLoadAutoBsl', jTextLoadAutoBsl, ...
-            'jradimp',          jRadioExternal, ...
             'jBaselineWithinBst', jBaselineWithinBst, ...
-            'jBaselineExternal',jBaselineExternal, ...
             'jBaselineTimeSelect', jBaselineTimeSelect, ...
             'jTextBSLStart',    jTextBSLStart, ...
             'jTextBSLStop',     jTextBSLStop, ...
-            'jTextBSL',         jTextPathBsl, ...
             'jBaselineShuffleWindowsSelect',jBaselineShuffleWindowsSelect ,...
             'jTextBSLSize', jTextBSLSize, ...
             'JPanelData'  ,     jPanel);
@@ -1059,8 +1033,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         ctrl.jTextTimeStop.setText(num2str(OPTIONS.optional.TimeSegment(2)))
         check_time('time', '', '');
 
-        choices = {'within-data', 'within-brainstorm', 'external','all-data'};
-        baseline_control = [ctrl.jRadioWithinData ctrl.jRadioWithinBrainstorm ctrl.jRadioExternal, ctrl.jRadioReshuffle];
+        choices = {'within-data', 'within-brainstorm', 'all-data'};
+        baseline_control = [ctrl.jRadioWithinData, ctrl.jRadioWithinBrainstorm, ctrl.jRadioReshuffle];
     
         if any(strcmp(OPTIONS.optional.BaselineType, choices ))
             baseline_control(strcmp(OPTIONS.optional.BaselineType, choices )).setSelected(1);
@@ -1075,10 +1049,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 ctrl.jTextLoadAutoBsl.setText(OPTIONS.optional.BaselineHistory{2});
                 ctrl.jBaselineWithinBst.setVisible(1);
                 load_auto_bsl();
-            elseif strcmp(OPTIONS.optional.BaselineType, 'external' )
-                disp(OPTIONS.optional.BaselineHistory{3})
-                import_baseline( OPTIONS.optional.Baseline,OPTIONS.optional.BaselineHistory{2} );
-                ctrl.jBaselineExternal.setVisible(1);
             end
 
             check_time('bsl', '', '', 'checkOK');
@@ -1252,7 +1222,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     %% ===== SWITCH PIPELINE =====
     function SwitchPipeline(varargin)
         
-
         choices = {'cMEM', 'wMEM', 'rMEM'};
         selected = [ctrl.jMEMdef.isSelected() ctrl.jMEMw.isSelected() ctrl.jMEMr.isSelected()];
         if any(selected)
@@ -1287,8 +1256,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
     end
 
     function SwitchBaseline(varargin)
-        choices = {'within-data', 'within-brainstorm', 'external','all-data'};
-        selected = [ctrl.jRadioWithinData.isSelected() ctrl.jRadioWithinBrainstorm.isSelected() ctrl.jRadioExternal.isSelected(), ctrl.jRadioReshuffle.isSelected()];
+        choices = {'within-data', 'within-brainstorm', 'all-data'};
+        selected = [ctrl.jRadioWithinData.isSelected(), ctrl.jRadioWithinBrainstorm.isSelected(), ctrl.jRadioReshuffle.isSelected()];
         
         if ~any(selected)
             return;
@@ -1299,26 +1268,16 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if strcmp( choices(selected), 'within-data') 
            ctrl.jBaselineTimeSelect.setVisible(1);
            ctrl.jBaselineWithinBst.setVisible(0);
-           ctrl.jBaselineExternal.setVisible(0);
            ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
 
           check_time('bsl', '', '', 'checkOK');
         elseif strcmp( choices(selected), 'within-brainstorm') 
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(1);
-            ctrl.jBaselineExternal.setVisible(0);
             ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
-
-        elseif strcmp( choices(selected), 'external') 
-            ctrl.jBaselineTimeSelect.setVisible(0);
-            ctrl.jBaselineWithinBst.setVisible(0);
-            ctrl.jBaselineExternal.setVisible(1);
-            ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
-
         elseif strcmp( choices(selected), 'all-data')  
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(0);
-            ctrl.jBaselineExternal.setVisible(0);
             ctrl.jBaselineShuffleWindowsSelect.setVisible(1);
             check_time('bsl', '', '', 'checkOK');
         end
@@ -1425,7 +1384,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         if numel(time) > 127 && ~ (isfield(MEMglobal, 'selected_scale_index') && MEMglobal.selected_scale_index > 0)
     
             if ~isfield(MEMglobal, 'available_scales')
-                Nj      = fix( log2(numel(time)) );
+                Nj = ceil(log2(length(time)));
+
+                %Nj      = fix( log2(numel(time)) );
                 sf      = 1/diff(time([1 2]));
                 Noff    = min(Nj-1, 3);
     
@@ -1439,9 +1400,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             ctrl.jWavScales.removeAllItems();
             ctrl.jWavScales.insertItemAt( '', 0)
             ctrl.jWavScales.insertItemAt( 'all', 1)
-            for ii = 1 : size(MEMglobal.available_scales,2)
-                IT = [num2str(ii) ' (' num2str(MEMglobal.available_scales(2,ii)) ':' num2str(MEMglobal.available_scales(1,ii)) ' Hz)'];
-                ctrl.jWavScales.insertItemAt(IT, ii+1);
+            for iScale = 1 : size(MEMglobal.available_scales,2)
+                IT = [num2str(iScale) ' (' num2str(MEMglobal.available_scales(2,iScale)) ':' num2str(MEMglobal.available_scales(1,iScale)) ' Hz)'];
+                ctrl.jWavScales.insertItemAt(IT, iScale+1);
             end
             ctrl.jWavScales.setSelectedIndex(1); 
             
@@ -1453,9 +1414,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             
         else
             ctrl.jWavScales.setSelectedIndex(MEMglobal.selected_scale_index);
-            
-        end
-                 
+        end    
     end
 
 
@@ -1469,7 +1428,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                 O.wavelet.verbose       =   0;  
                 O.mandatory.DataTime    =   time;
     
-                [dum, O] = be_cwavelet( time, O, 1);
+                [~, O] = be_cwavelet( time, O, 1);
                 FRQ = O.wavelet.freqs_analyzed;
     
                 freqs = {'','all'};
@@ -1496,8 +1455,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             
             % Fill fields
             ctrl.jRDGrangeS.removeAllItems();
-            for ii = 1 : numel(MEMglobal.freqs_available)
-                ctrl.jRDGrangeS.insertItemAt(MEMglobal.freqs_available{ii}, ii-1);
+            for iFreq = 1 : numel(MEMglobal.freqs_available)
+                ctrl.jRDGrangeS.insertItemAt(MEMglobal.freqs_available{iFreq}, iFreq-1);
             end        
             ctrl.jRDGrangeS.setSelectedIndex(1);   
         
@@ -1509,7 +1468,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             
         else
             ctrl.jRDGrangeS.setSelectedIndex(MEMglobal.selected_freqs_index);
-         
         end
         
     end
@@ -1520,10 +1478,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         iS  = MEMglobal.DataToProcess;
         
         % Checks input 
-        Tm = {};
-        for ii = 1 : numel(iS)
-            data = in_bst_data(fullfile(iP.STUDIES, iS{ii}), 'Time'); % load( fullfile(iP.STUDIES, iS{ii}), 'Time' );
-            Tm{ii} = data.Time;
+        Tm = cell(1, numel(iS));
+        for iStudy = 1 : numel(iS)
+            data = in_bst_data(fullfile(iP.STUDIES, iS{iStudy}), 'Time'); % load( fullfile(iP.STUDIES, iS{ii}), 'Time' );
+            Tm{iStudy} = data.Time;
         end
         sf = cellfun(@(a) round(1/diff(a([1 2]))), Tm, 'uni', false);
         St = cellfun(@(a,b) round(a(1)*b), Tm, sf, 'uni', false); St = max( [St{:}] );
@@ -1538,7 +1496,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
         
             % process input arguments
             switch varargin{1}
-                case 'time',
+                case 'time'
                     hndlst = ctrl.jTextTimeStart;
                     hndlnd = ctrl.jTextTimeStop;
         
@@ -1600,87 +1558,14 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                     end           
                 end
             end
-        end
-        
-        
-    end
-
-
-    function import_baseline( Lst,Frmt  )
-        
-        DefaultFormats = bst_get('DefaultFormats');
-        iP  = bst_get('ProtocolInfo');  
-
-        if nargin < 2 || isempty(Lst)
-            [Lst, Frmt]   = java_getfile( 'open', ...
-                    'Import EEG/MEG recordings...', ...       % Window title
-                    iP.STUDIES, ...                           % default directory
-                    'single', 'files_and_dirs', ...           % Selection mode
-                    {{'.*'},                 'MEG/EEG: 4D-Neuroimaging/BTi (*.*)',   '4D'; ...
-                     {'_data'},              'MEG/EEG: Brainstorm (*data*.mat)',     'BST-MAT'; ...
-                     {'.meg4','.res4'},      'MEG/EEG: CTF (*.ds;*.meg4;*.res4)',    'CTF'; ...
-                     {'.fif'},               'MEG/EEG: Elekta-Neuromag (*.fif)',     'FIF'; ...
-                     {'*'},                  'EEG: ASCII text (*.*)',                'EEG-ASCII'; ...
-                     {'.avr','.mux','.mul'}, 'EEG: BESA exports (*.avr;*.mul;*.mux)','EEG-BESA'; ...
-                     {'.eeg','.dat'},        'EEG: BrainAmp (*.eeg;*.dat)',          'EEG-BRAINAMP'; ...
-                     {'.txt'},               'EEG: BrainVision Analyzer (*.txt)',    'EEG-BRAINVISION'; ...
-                     {'.sef','.ep','.eph'},  'EEG: Cartool (*.sef;*.ep;*.eph)',      'EEG-CARTOOL'; ...
-                     {'.edf','.rec'},        'EEG: EDF / EDF+ (*.rec;*.edf)',        'EEG-EDF'; ...
-                     {'.set'},               'EEG: EEGLAB (*.set)',                  'EEG-EEGLAB'; ...
-                     {'.raw'},               'EEG: EGI Netstation RAW (*.raw)',      'EEG-EGI-RAW'; ...
-                     {'.erp','.hdr'},        'EEG: ERPCenter (*.hdr;*.erp)',         'EEG-ERPCENTER'; ...
-                     {'.mat'},               'EEG: Matlab matrix (*.mat)',           'EEG-MAT'; ...
-                     {'.cnt','.avg','.eeg','.dat'}, 'EEG: Neuroscan (*.cnt;*.eeg;*.avg;*.dat)', 'EEG-NEUROSCAN'; ...
-                     {'.mat'},               'NIRS: MFIP (*.mat)',                   'NIRS-MFIP'; ...
-                    }, DefaultFormats.DataIn);
-                
-            if isempty(Lst) 
-                check_time('bsl', '', '');
-                return
-            end
-        end
-        ctrl.jTextBSL.setText(Lst);
-        MEMglobal.BSLinfo.file    = Lst;
-        MEMglobal.BSLinfo.format  = Frmt; 
-        
-        if strcmp(Frmt, 'BST-MAT')
-            BSL = Lst;
-            BSLc = fullfile(iP.STUDIES, bst_get('ChannelFileForStudy', Lst));
-        else
-            try
-                % This code block should not be correct as it is not consistent with the
-                % signature of in_data()...
-                [BSL, BSLc] = in_data( Lst, Frmt, [], []);
-                if numel(BSL)>1
-                    ctrl.jTextBSL.setText('loading only trial 1');
-                    pause(2)
-                    ctrl.jTextBSL.setText(Lst);
-                end    
-                BSL = BSL(1).FileName;
-            catch
-                java_dialog('warning', 'File cannot be used. Select new file')
-                ctrl.jTextBSL.setText('');    
-                return;
-            end
-        end
-        
-        MEMglobal.Baseline              = BSL;
-        MEMglobal.BaselineChannels      = BSLc;
-        MEMglobal.BaselineHistory{1}    = 'import';
-        MEMglobal.BaselineHistory{2}    = Frmt;
-        MEMglobal.BaselineHistory{3}    = Lst;
-        
-        check_time('bsl', 'import', 'true', 'checkOK');
-        ctrl.jBaselineTimeSelect.setVisible(1);
+        end        
     end
 
     function clean_bsl_info()
-
         if isfield(MEMglobal,'BSLinfo')
             MEMglobal = rmfield(MEMglobal, 'BSLinfo');
         end
         ctrl.jButOk.setEnabled(0);
-
     end
 
     function success = load_auto_bsl()
@@ -1756,11 +1641,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             try
                 ChanSelected = java_dialog('radio', 'Select baseline to use:', 'Baseline selection', [], names);
             catch 
-                disp(['BEst> No baseline selected'])
+                warning('BEst> No baseline selected')
                 return
             end
             if isempty(ChanSelected)
-                disp(['BEst> No baseline selected'])
+                warning('BEst> No baseline selected')
                 return
             end
             K = K(ChanSelected);
@@ -1844,8 +1729,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
             else                
                 id1 = find(SCL=='(');
                 id2 = find(SCL==')');
-                for ii = 1: numel(id1)
-                    SCL(id1(ii):id2(ii)) = '';
+                for iScale = 1: numel(id1)
+                    SCL(id1(iScale):id2(iScale)) = '';
                 end
                  OPTIONS_wav.wavelet.selected_scales  = eval(['[' SCL ']']);
             end
@@ -1887,9 +1772,6 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS,varargin)  %#ok<DEFNU>
                         [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
                         be_display_time_scale_boxes(obj, OPTIONS_wav);
                     end
-
-
-
                 else
                     OPTIONS_wav.automatic.Modality = struct('idx_data', iChannel, 'data', sInput.F(iChannel, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iChannel)));
                     n0 = n0 + length(iChannel);
@@ -1912,11 +1794,11 @@ end
 %  =================================================================================  
 
 % ===== GET PANEL CONTENTS =====
-function s = GetPanelContents(varargin) %#ok<DEFNU>
+function s = GetPanelContents(varargin)
+    global MEMglobal
 
     % Get panel controls
     ctrl = bst_get('PanelControls', 'InverseOptionsMEM');
-    global MEMglobal
 
     MEMpaneloptions.InverseMethod           = 'MEM';
     if isfield(MEMglobal, 'isExpert')
@@ -1939,15 +1821,15 @@ function s = GetPanelContents(varargin) %#ok<DEFNU>
     MEMpaneloptions.optional.TimeSegment(isnan(MEMpaneloptions.optional.TimeSegment) ) = [];
 
     % Get Baseline
-    choices = {'within-data', 'within-brainstorm', 'external','all-data'};
-    selected = [ctrl.jRadioWithinData.isSelected() ctrl.jRadioWithinBrainstorm.isSelected() ctrl.jRadioExternal.isSelected()  ctrl.jRadioReshuffle.isSelected()];
+    choices = {'within-data', 'within-brainstorm', 'all-data'};
+    selected = [ctrl.jRadioWithinData.isSelected(), ctrl.jRadioWithinBrainstorm.isSelected(), ctrl.jRadioReshuffle.isSelected()];
 
     
     MEMpaneloptions.optional.BaselineType = choices(selected);
     if strcmp(choices(selected), 'within-data') 
         MEMpaneloptions.optional.Baseline = [];
         MEMpaneloptions.optional.BaselineHistory{1} = 'within';
-    elseif strcmp(choices(selected), 'within-brainstorm')  || strcmp(choices(selected), 'external')
+    elseif strcmp(choices(selected), 'within-brainstorm')
         if isfield(MEMglobal, 'Baseline')
             MEMpaneloptions.optional.Baseline = MEMglobal.Baseline;
         else

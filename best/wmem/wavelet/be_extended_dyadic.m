@@ -33,9 +33,11 @@ function [s, info] = be_extended_dyadic( x )
 N = ceil(log2(size(x,2)));
 s = zeros(size(x,1),2^N);
 offset = floor((2^N-size(x,2))/2);
+
 s(:,1:1+offset)=repmat(x(:,1),1,1+offset);
 s(:,1+offset:offset+size(x,2))=x;
-s(:,offset+size(x,2)-1:end)=repmat(x(:,end),1,2^N-offset-size(x,2)+2);
+s(:,1+offset+size(x,2)-1:end)=repmat(x(:,end),1,2^N-offset-size(x,2)+1);
+
 info.start = 1+offset;
 info.end = offset+size(x,2);
 end
