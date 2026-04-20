@@ -519,11 +519,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
             'jRadioReshuffle',jRadioReshuffle, ...
             'jTextLoadAutoBsl', jTextLoadAutoBsl, ...
             'jBaselineWithinBst', jBaselineWithinBst, ...
-            'jBaselineExternal',jBaselineExternal, ...
             'jBaselineTimeSelect', jBaselineTimeSelect, ...
             'jTextBSLStart',    jTextBSLStart, ...
             'jTextBSLStop',     jTextBSLStop, ...
-            'jTextBSL',         jTextPathBsl, ...
             'jBaselineShuffleWindowsSelect',jBaselineShuffleWindowsSelect ,...
             'jTextBSLSize', jTextBSLSize, ...
             'JPanelData'  ,     jPanel);
@@ -1270,19 +1268,16 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         if strcmp( choices(selected), 'within-data') 
            ctrl.jBaselineTimeSelect.setVisible(1);
            ctrl.jBaselineWithinBst.setVisible(0);
-           ctrl.jBaselineExternal.setVisible(0);
            ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
 
           check_time('bsl', '', '', 'checkOK');
         elseif strcmp( choices(selected), 'within-brainstorm') 
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(1);
-            ctrl.jBaselineExternal.setVisible(0);
             ctrl.jBaselineShuffleWindowsSelect.setVisible(0);
         elseif strcmp( choices(selected), 'all-data')  
             ctrl.jBaselineTimeSelect.setVisible(0);
             ctrl.jBaselineWithinBst.setVisible(0);
-            ctrl.jBaselineExternal.setVisible(0);
             ctrl.jBaselineShuffleWindowsSelect.setVisible(1);
             check_time('bsl', '', '', 'checkOK');
         end
@@ -1389,7 +1384,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         if numel(time) > 127 && ~ (isfield(MEMglobal, 'selected_scale_index') && MEMglobal.selected_scale_index > 0)
     
             if ~isfield(MEMglobal, 'available_scales')
-                Nj      = fix( log2(numel(time)) );
+                Nj = ceil(log2(length(time)));
+
+                %Nj      = fix( log2(numel(time)) );
                 sf      = 1/diff(time([1 2]));
                 Noff    = min(Nj-1, 3);
     
