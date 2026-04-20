@@ -142,7 +142,7 @@ end
 %% Conversion to time-series
 if ~OPTIONS.wavelet.single_box
     inv_proj = be_wavelet_inverse_projection(obj,OPTIONS);
-
+    
     if OPTIONS.output.save_factor
         obj.ImageGridAmp = {obj.ImageGridAmp, inv_proj};
     else
@@ -150,8 +150,24 @@ if ~OPTIONS.wavelet.single_box
     end
 end
 
+
+%% ===== Solve the MEM on the scaling coeficient ===== %%
+[obj_scaling, OPTIONS_scaling] = be_main_wmem_scaling(obj, OPTIONS);
+if OPTIONS_scaling.optional.display
+    be_display_entropy_drops(obj_scaling,OPTIONS_scaling);
+end
+
+if OPTIONS.output.save_factor
+    obj.ImageGridAmp{1} = [obj.ImageGridAmp{1}, obj_scaling.ImageGridAmp];
+    obj.ImageGridAmp{2} = [obj.ImageGridAmp{2}; obj_scaling.inv_proj];
+
+else
+    obj.ImageGridAmp = obj.ImageGridAmp + (obj_scaling.ImageGridAmp * obj_scaling.inv_proj);
+end
+
+
 %% ===== Update Comment ===== %%
-OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ')'];
+OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ' + scaling)'];
 
 % Results
 Results = be_template('resultsmat');

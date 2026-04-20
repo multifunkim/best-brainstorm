@@ -1,4 +1,4 @@
-function [obj_scaling] = be_main_wmem_scaling(obj, OPTIONS)
+function [obj, OPTIONS] = be_main_wmem_scaling(obj, OPTIONS)
 % BE_MAIN_MEM sets the appropriate options for the MEM 
 % accroding to the chosen MEM pipeline
 %
@@ -32,28 +32,23 @@ function [obj_scaling] = be_main_wmem_scaling(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-
-for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
-    data = zeros(size(obj.data{ii}));
-    data(:,1:size(obj.scaling_data{ii},2)) = obj.scaling_data{ii};
-    obj.data{ii} = data;
-end
-
-Nj = fix(log2(size(data,2)));
-max_scale = OPTIONS.automatic.scales(1,end);
-iBoxes_max_scale = OPTIONS.automatic.selected_samples(2,:)==max_scale;
-selected_k = OPTIONS.automatic.selected_samples(3,iBoxes_max_scale);
-
-selected_samples = zeros(6,sum(iBoxes_max_scale)); % set to 6 because of line 49 in be_launch_mem; 3 is enough?
-selected_samples(1,:) = selected_k+1;
-selected_samples(2,:) = Nj;
-selected_samples(3,:) = selected_k;
-
-OPTIONS.automatic.selected_samples = selected_samples;
-[obj_scaling, ~] = be_launch_mem(obj, OPTIONS);
-% we do not keep this OPTIONS in the output
-% WE HAVE TO THINK ABOUT THE CLUSTERING ASSOCIATED TO THIS PART OF THE
-% ESTIMATOR
-
+    obj.data =  obj.scaling_data;
+    
+    Nj                  = fix(log2(size(obj.data,2)));
+    max_scale           = OPTIONS.automatic.scales(1,end);
+    iBoxes_max_scale    = OPTIONS.automatic.selected_samples(2,:)==max_scale;
+    selected_k = OPTIONS.automatic.selected_samples(3,iBoxes_max_scale);
+    
+    selected_samples = zeros(6,sum(iBoxes_max_scale));
+    selected_samples(1,:) = selected_k+1;
+    selected_samples(2,:) = Nj;
+    selected_samples(3,:) = selected_k;
+    
+    OPTIONS.automatic.selected_samples = selected_samples;
+    
+    [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
+    [obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
+    
+    obj.inv_proj = be_wavelet_inverse_projection(obj, OPTIONS);
 
 end

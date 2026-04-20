@@ -56,12 +56,13 @@ data = [];
 data_normalized = [];
 
 for ii=1:length(OPTIONS.mandatory.DataTypes)
+
     if isfield(obj, 'data') % wavelet
         data_mod = obj.data{ii};
     else % Time-series
         data_mod = OPTIONS.automatic.Modality(ii).data;
     end
-    
+
     data = vertcat(data, data_mod);
     data_normalized = vertcat(data_normalized, bsxfun(@rdivide, data_mod, sqrt(sum(data_mod.^2, 1))));
 end
@@ -70,6 +71,11 @@ data_normalized(isnan(data_normalized)) = 0;
 
 obj.data = data;
 obj.data_normalized = data_normalized;
+
+% Concatenate scaling data if present
+if isfield(obj,'scaling_data')
+    obj.scaling_data   = vertcat(obj.scaling_data{:});
+end
 
 % Concatenate idata(complex data) if present
 if isfield(OPTIONS.automatic.Modality(1),'idata')
