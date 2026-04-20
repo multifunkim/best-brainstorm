@@ -61,7 +61,7 @@ selected_jk = struct([]);
 if any(strcmp(OPTIONS.mandatory.DataTypes,'NIRS'))
     pc_power    = 1;
 else
-    pc_power    = 1;
+    pc_power    = 0.99;
 end
 
 for jj = 1 : length(OPTIONS.mandatory.DataTypes)
