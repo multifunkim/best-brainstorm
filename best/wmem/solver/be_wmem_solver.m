@@ -152,19 +152,22 @@ end
 
 
 %% ===== Solve the MEM on the scaling coeficient ===== %%
-[obj_scaling, OPTIONS_scaling] = be_main_wmem_scaling(obj, OPTIONS);
-if OPTIONS_scaling.optional.display
-    be_display_entropy_drops(obj_scaling,OPTIONS_scaling);
+
+if OPTIONS.wavelet.localize_scales
+    [obj_scaling, OPTIONS_scaling] = be_main_wmem_scaling(obj, OPTIONS);
+    if OPTIONS_scaling.optional.display
+        be_display_entropy_drops(obj_scaling,OPTIONS_scaling);
+    end
+    
+    % Merge the output with the regular scale
+    if OPTIONS.output.save_factor
+        obj.ImageGridAmp{1} = [obj.ImageGridAmp{1}, obj_scaling.ImageGridAmp];
+        obj.ImageGridAmp{2} = [obj.ImageGridAmp{2}; obj_scaling.inv_proj];
+    else
+        obj.ImageGridAmp = obj.ImageGridAmp + (obj_scaling.ImageGridAmp * obj_scaling.inv_proj);
+    end
+
 end
-
-if OPTIONS.output.save_factor
-    obj.ImageGridAmp{1} = [obj.ImageGridAmp{1}, obj_scaling.ImageGridAmp];
-    obj.ImageGridAmp{2} = [obj.ImageGridAmp{2}; obj_scaling.inv_proj];
-
-else
-    obj.ImageGridAmp = obj.ImageGridAmp + (obj_scaling.ImageGridAmp * obj_scaling.inv_proj);
-end
-
 
 %% ===== Update Comment ===== %%
 OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ' + scaling)'];
