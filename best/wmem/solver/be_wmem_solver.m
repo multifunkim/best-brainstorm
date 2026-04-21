@@ -150,6 +150,13 @@ if ~OPTIONS.wavelet.single_box
     end
 end
 
+%% ===== Update Comment ===== %%
+
+if OPTIONS.wavelet.localize_scales
+    OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ' + scaling)'];
+else
+    OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ')'];
+end
 
 %% ===== Solve the MEM on the scaling coeficient ===== %%
 
@@ -169,8 +176,6 @@ if OPTIONS.wavelet.localize_scales
 
 end
 
-%% ===== Update Comment ===== %%
-OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ' + scaling)'];
 
 % Results
 Results = be_template('resultsmat');
