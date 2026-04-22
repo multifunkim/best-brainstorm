@@ -1,4 +1,4 @@
-function [analF, analG, synF, synG, Jcase] = be_makeqfbreal(filtre)
+function [analF, analG, synF, synG, Jcase] = be_makeqfbreal(filter_name)
 % Real SDW Filter bank construction
 % Ref: JM Lina, Journ. Math. of Vision (1995)
 %
@@ -24,7 +24,7 @@ function [analF, analG, synF, synG, Jcase] = be_makeqfbreal(filtre)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
    
-    load(['be_' filtre]);
+    load(['be_' filter_name], 'filtre');
 
     Jcase   = filtre.J;
     
