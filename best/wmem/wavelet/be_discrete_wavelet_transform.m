@@ -1,4 +1,4 @@
-function [WData, SData, OPTIONS] = be_discrete_wavelet_transform(Data,OPTIONS,varargin)
+function [WData, SData, OPTIONS] = be_discrete_wavelet_transform(Data, OPTIONS, varargin)
 % BE_DISCRETE_WAVELET_TRANSFORM computes time-frequency decomposition
 %
 %   INPUTS:
@@ -69,6 +69,12 @@ switch (OPTIONS.wavelet.type)
         [~,No] = size(Data);
         Nj    = fix(log2(No));
         Njs   = max(Nj-3,1);
+
+        % Restrain the decomposition to the largest selected scale
+        if ~isempty(OPTIONS.wavelet.selected_scales)
+            Njs   = min(Njs, max(OPTIONS.wavelet.selected_scales));
+        end
+        
         SData = zeros(size(Data));
 
         [WData, Winfo ] = be_dwanalysis( Data, Njs, filter );

@@ -31,15 +31,12 @@ function [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS)
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
-
+    
+    assert(strcmp(OPTIONS.mandatory.pipeline,'wMEM'), 'wavelet processing not correctly called');
     obj.t0      = OPTIONS.mandatory.DataTime(1);
     
     if OPTIONS.optional.verbose
-        if ~strcmp(OPTIONS.mandatory.pipeline,'wMEM')
-            fprintf('%s, wavelet processing not correctly called\n',OPTIONS.mandatory.pipeline);
-        else
-            fprintf('%s, wavelet pre-processing (new)\n',OPTIONS.mandatory.pipeline);
-        end
+        fprintf('%s, wavelet pre-processing (new)\n',OPTIONS.mandatory.pipeline);
     end
 
     % ====  this is the wavelet-MEM (Lina and co.)
