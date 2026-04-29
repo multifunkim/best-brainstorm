@@ -69,9 +69,7 @@ function [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS)
     % we nomalize the cov of each modalities (we regularize the cov matrices)
     for ii = 1 : numel( OPTIONS.automatic.Modality )
         for isc=1:noise_var_jn
-            OPTIONS.automatic.Modality(ii).covariance(:,:,isc) = ...
-                noise_var(OPTIONS.automatic.Modality(ii).channels,...
-                OPTIONS.automatic.Modality(ii).channels, isc );
+            OPTIONS.automatic.Modality(ii).covariance(:, :, isc) = noise_var(OPTIONS.automatic.Modality(ii).channels, OPTIONS.automatic.Modality(ii).channels, isc );
         end
     end
 end
@@ -90,7 +88,6 @@ if ~isempty(OPTIONS.solver.NoiseCov)
         noise_var   = OPTIONS.solver.NoiseCov;
     end
 else
-    
     for ii = 1 : numel(OPTIONS.automatic.Modality)
         
         if ~isempty( OPTIONS.automatic.Modality(ii).emptyroom )
