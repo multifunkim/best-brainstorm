@@ -108,12 +108,16 @@ end
 % from the baseline, compute the distribution of the msp scores. 
 OPTIONS = be_model_of_null_hypothesis(OPTIONS);
 
-%% ===== Data Processing (and noise) ===== %%
-% for the data: normalization/wavelet/denoise
-[OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS);
+%% ===== Compute wavelet transform ===== %%
+% Compute the discrete wavelet transformation of the data
+[obj, OPTIONS] = be_discrete_wavelet_preprocessing(obj, OPTIONS);
 if OPTIONS.optional.display
     obj = be_display_time_scale_boxes(obj, OPTIONS);
 end
+
+%% ===== Data Processing (and noise) ===== %%
+% Compute noise covariance of the data
+[OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS);
 
 %% ===== Compute Minimum Norm Solution ==== %% 
 % we compute MNE (using l-curve for nirs or depth-weighted version)

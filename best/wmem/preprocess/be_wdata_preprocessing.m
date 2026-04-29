@@ -33,17 +33,6 @@ function [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS)
 % -------------------------------------------------------------------------   
     
     assert(strcmp(OPTIONS.mandatory.pipeline,'wMEM'), 'wavelet processing not correctly called');
-    obj.t0      = OPTIONS.mandatory.DataTime(1);
-    
-    if OPTIONS.optional.verbose
-        fprintf('%s, wavelet pre-processing (new)\n',OPTIONS.mandatory.pipeline);
-    end
-
-    % ====  this is the wavelet-MEM (Lina and co.)
-    % we first re-organize the data with respect to the modalities
-    % concerned (the order being given by the OPTIONS.DataTypes)
-    % normalization/wavelet/denoise
-    [obj, OPTIONS] = be_discrete_wavelet_preprocessing(obj, OPTIONS);
 
     if isempty(OPTIONS.solver.NoiseCov)
         if ~isempty( OPTIONS.automatic.Modality(1).emptyroom )
