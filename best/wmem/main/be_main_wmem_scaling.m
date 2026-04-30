@@ -39,7 +39,7 @@ function [obj, OPTIONS] = be_main_wmem_scaling(obj, OPTIONS)
 
     %% =====   Replace the selected sample ===== %%
     Nj                  = fix(log2(size(obj.data,2)));
-    max_scale           = max(OPTIONS.automatic.scales);
+    max_scale           = max(OPTIONS.automatic.scales(1,:));
     iBoxes_max_scale    = OPTIONS.automatic.selected_samples(2,:) == max_scale;
     selected_k = OPTIONS.automatic.selected_samples(3, iBoxes_max_scale);
     
@@ -48,8 +48,16 @@ function [obj, OPTIONS] = be_main_wmem_scaling(obj, OPTIONS)
     selected_samples(2,:) = Nj;
     selected_samples(3,:) = selected_k;
     
-    OPTIONS.automatic.selected_samples = selected_samples;
+    OPTIONS.wavelet.selected_scales     = Nj;
+
+    %% Computer global field power
     
+    Wgfp              = mean(abs(obj.data(:, selected_samples(1,:))).^2, 1);
+    [Wgfp, I]         = sort(Wgfp);
+
+    OPTIONS.automatic.selected_values{1}    = [Wgfp ;  100 * Wgfp  / sum(Wgfp); ones(1, length(Wgfp))];
+    OPTIONS.automatic.selected_samples      = selected_samples(:, I);
+
     %% =====  Update alpha initialization - keep the same clustering ===== %%
     % This code assume that the clustering was fixed accross boxes. If the
     % clustering is not constant, then we need to do a new clustering for
