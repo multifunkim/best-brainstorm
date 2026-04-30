@@ -1778,7 +1778,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
                         OPTIONS_wav.automatic.Modality = struct('idx_data', iData_group, 'data', sInput.F(iData_group, :), 'baseline', [], 'emptyroom', [], 'channels',  (1:length(iData_group)));                    
                     
                         obj = struct('ImageGridAmp', [], 'hfig', hfig , 'hfigtab', hfigtab);
-                        [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
+                        [obj, OPTIONS_wav] = be_discrete_wavelet_preprocessing(obj, OPTIONS_wav);
                         be_display_time_scale_boxes(obj, OPTIONS_wav);
                     end
                 else
@@ -1786,7 +1786,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
                     n0 = n0 + length(iChannel);
                 
                     obj = struct('ImageGridAmp', [], 'hfig', hfig , 'hfigtab', hfigtab);
-                    [OPTIONS_wav, obj] = be_wdata_preprocessing(obj, OPTIONS_wav);
+                    [obj, OPTIONS_wav] = be_discrete_wavelet_preprocessing(obj, OPTIONS_wav);
                     be_display_time_scale_boxes(obj, OPTIONS_wav);
                 end
             end

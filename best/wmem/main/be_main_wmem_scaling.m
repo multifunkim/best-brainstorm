@@ -63,7 +63,7 @@ function [obj, OPTIONS] = be_main_wmem_scaling(obj, OPTIONS)
     % clustering is not constant, then we need to do a new clustering for
     % the scaling coefficients. 
     
-    obj.CLS = repmat(obj.CLS(:, 1), 1, length(selected_samples));
+    obj.CLS = repmat(obj.CLS(:, 1), 1, size(selected_samples,2));
     [OPTIONS, obj] = be_main_alpha(obj, OPTIONS);
 
     %% ===== Solve the MEM ===== %%
