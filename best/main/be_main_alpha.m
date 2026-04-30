@@ -1,6 +1,5 @@
-function [OPTIONS, obj] = be_main_clustering(obj, OPTIONS)
-% BE_MAIN_CLUSTERING launches the appropriate cortex clustering functions 
-% according to the chosen MEM pipeline
+function [OPTIONS, obj] = be_main_alpha(obj, OPTIONS)
+% BE_MAIN_ALPHA initialize the alpha value for each cluster
 %
 % Inputs:
 % -------
@@ -38,36 +37,33 @@ function [OPTIONS, obj] = be_main_clustering(obj, OPTIONS)
 % -------------------------------------------------------------------------   
    
 if ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
-    % Sources prescoring - MSP (ref. Mattout et al. 2006) and clustering
-    
+
     %% ===== Double to single precision  ===== %%
     [OPTIONS] = be_switch_precision(OPTIONS, 'single');
 
-    switch OPTIONS.mandatory.pipeline
-        case 'cMEM'
-            [CLS, SCR, OPTIONS] = be_cmem_clusterize_multim(obj, OPTIONS); 
-        case 'wMEM'
-            [CLS, SCR, OPTIONS] = be_wmem_clusterize_multim(obj, OPTIONS);
-        case 'rMEM'
-            [CLS, SCR, OPTIONS] = be_rmem_clusterize_multim(obj, OPTIONS);
-    end   
+    if OPTIONS.model.alpha_method < 6
+        [ALPHA, CLS, OPTIONS] = be_scores2alpha(obj.SCR, obj.CLS, OPTIONS);
+    else % We compute the score using MNE
+        OBJ_FUS               = be_fusion_of_modalities(obj, OPTIONS, 0);
+        [ALPHA, CLS, OPTIONS] = be_mne2alpha(OBJ_FUS , obj.CLS, OPTIONS);
+    end
 
     %% ===== Single to double precision  ===== %%
     [OPTIONS] = be_switch_precision(OPTIONS, 'double');
 
     
-elseif strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
-    CLS   = OPTIONS.optional.clustering.clusters * ones(1,size(OPTIONS.automatic.Modality(1).selected_jk, 2));
-    SCR   = [];
-    
 else
-    CLS   = OPTIONS.optional.clustering.clusters * ones(1,size(OPTIONS.automatic.Modality(1).data, 2));
-    SCR   = [];
+    CLS = obj.CLS;
+    if strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
+        ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1,size(OPTIONS.automatic.Modality(1).selected_jk, 2));
+    else
+        ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1,size(OPTIONS.automatic.Modality(1).data, 2));
+    end
 end
 
-% the final scores (SCR), clusters (CLS) and alpha's (ALPHA)
-obj.SCR   = SCR;
+% the final clusters (CLS) and alpha's (ALPHA)
 obj.CLS   = CLS;
+obj.ALPHA = ALPHA;
 
 end
 

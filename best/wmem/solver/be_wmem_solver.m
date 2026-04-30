@@ -93,6 +93,9 @@ function [Results, OPTIONS] = be_wmem_solver(obj, OPTIONS)
 % we keep leadfields of interest; we compute svd of normalized leadfields
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
 
+%% ===== Pre-processing for spatial smoothing (Green mat. square) ===== %%
+[OPTIONS, obj.GreenM2] = be_spatial_priorw(OPTIONS, obj.VertConn);
+
 %% ===== Baseline shuffle ==== %% 
 % If resting-state, generate artificial baseline based on phase reshufling 
 if OPTIONS.optional.baseline_shuffle
@@ -124,12 +127,11 @@ end
 [obj, OPTIONS] = be_main_mne(obj, OPTIONS);
 
 %% ===== Clusterize cortical surface ===== %%
-% from the msp scores, clustering of the cortical mesh:
 [OPTIONS, obj] = be_main_clustering(obj, OPTIONS);
 
-%% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
-% matrix W'W from the Henson paper
-[OPTIONS, obj.GreenM2] = be_spatial_priorw(OPTIONS, obj.VertConn);
+%% ===== Set Alpha ===== %%
+% Set Alpha value for each cluster
+[OPTIONS, obj] = be_main_alpha(obj, OPTIONS);
 
 %% ===== Fuse modalities ===== %%   
 obj = be_fusion_of_modalities(obj, OPTIONS);

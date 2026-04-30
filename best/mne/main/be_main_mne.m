@@ -12,7 +12,7 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS, method)
 %       -   obj
 
     if nargin < 3 || isempty(method)
-        if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp( OPTIONS.mandatory.DataTypes,'NIRS')) 
+        if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp(OPTIONS.mandatory.DataTypes, 'NIRS')) 
             method = 'mne_lcurve';
         else
             method = 'mne';

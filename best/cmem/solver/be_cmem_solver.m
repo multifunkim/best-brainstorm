@@ -110,6 +110,10 @@ function [Results, OPTIONS] = be_cmem_solver(obj, OPTIONS)
 %% ===== Clusterize cortical surface ===== %%
 [OPTIONS, obj]  = be_main_clustering(obj, OPTIONS);
 
+%% ===== Set Alpha ===== %%
+% Set Alpha value for each cluster
+[OPTIONS, obj]  = be_main_alpha(obj, OPTIONS);
+
 %% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
 % matrix W'W from the Henson paper
 [OPTIONS, obj.GreenM2] = be_spatial_priorw( OPTIONS, obj.VertConn);
