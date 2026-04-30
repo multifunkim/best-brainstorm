@@ -8,12 +8,13 @@ function [obj, OPTIONS] = be_main_wmem_scaling(obj, OPTIONS)
 %
 %   OUTPUTS:
 %       -   OPTIONS
-%       - obj
+%       -   obj
 %
 %% ==============================================   
 % Copyright (C) 2011 - LATIS Team
 %
-%  Authors: LATIS team, 2011
+%  Authors: LATIS team, 2011, 
+%           Edouard Delaire, 2026
 %
 %% ==============================================
 % License 
@@ -32,8 +33,11 @@ function [obj, OPTIONS] = be_main_wmem_scaling(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
+    %% =====   Replace data in obj by the scaling data ===== %%
     obj.data =  obj.scaling_data;
-    
+    obj.data_normalized = obj.scaling_data_normalized;
+
+    %% =====   Replace the selected sample ===== %%
     Nj                  = fix(log2(size(obj.data,2)));
     max_scale           = OPTIONS.automatic.scales(1,end);
     iBoxes_max_scale    = OPTIONS.automatic.selected_samples(2,:)==max_scale;
@@ -46,9 +50,17 @@ function [obj, OPTIONS] = be_main_wmem_scaling(obj, OPTIONS)
     
     OPTIONS.automatic.selected_samples = selected_samples;
     
+    %% =====  Update alpha initialization - keep the same clustering ===== %%
+    % This code assume that the clustering was fixed accross boxes. If the
+    % clustering is not constant, then we need to do a new clustering for
+    % the scaling coefficients. 
+    [obj.ALPHA , obj.CLS, OPTIONS] = be_mne2alpha(obj , repmat(obj.CLS(:, 1), 1, length(selected_samples)), OPTIONS);
+
+    %% ===== Solve the MEM ===== %%
     [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
+
+    %% ===== Un-Normalization and convertion to time-series ===== %%
     [obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
-    
     obj.inv_proj = be_wavelet_inverse_projection(obj, OPTIONS);
 
 end

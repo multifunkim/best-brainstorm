@@ -55,6 +55,9 @@ end
 data = [];
 data_normalized = [];
 
+scaling_data = [];
+scaling_data_normalized = [];
+
 for ii=1:length(OPTIONS.mandatory.DataTypes)
 
     if isfield(obj, 'data') % wavelet
@@ -65,16 +68,25 @@ for ii=1:length(OPTIONS.mandatory.DataTypes)
 
     data = vertcat(data, data_mod);
     data_normalized = vertcat(data_normalized, bsxfun(@rdivide, data_mod, sqrt(sum(data_mod.^2, 1))));
+
+    % Concatenate scaling data if present
+    if isfield(obj,'scaling_data')
+        data_mod = obj.scaling_data{ii};
+
+        scaling_data   = vertcat(scaling_data,  data_mod);
+        scaling_data_normalized = vertcat(scaling_data_normalized, bsxfun(@rdivide, data_mod, sqrt(sum(data_mod.^2, 1))));
+    end
 end
 % remove nan from normalized data
 data_normalized(isnan(data_normalized)) = 0;
+scaling_data_normalized(isnan(scaling_data_normalized)) = 0;
 
 obj.data = data;
 obj.data_normalized = data_normalized;
 
-% Concatenate scaling data if present
 if isfield(obj,'scaling_data')
-    obj.scaling_data   = vertcat(obj.scaling_data{:});
+    obj.scaling_data = scaling_data;
+    obj.scaling_data_normalized = scaling_data_normalized;
 end
 
 % Concatenate idata(complex data) if present
