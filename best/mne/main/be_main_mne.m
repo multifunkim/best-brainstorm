@@ -19,14 +19,11 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS, method)
         end
     end
 
-    % apply the fusion of modalities
-    OBJ_FUS = be_fusion_of_modalities(obj, OPTIONS, 0);
-    
     switch(method)
         case 'mne_lcurve'
-            Kernel   =   be_jmne_lcurve(OBJ_FUS, OPTIONS, struct('hfig',obj.hfig, 'hfigtab',obj.hfigtab)); 
+            Kernel   =   be_jmne_lcurve(obj, OPTIONS, struct('hfig',obj.hfig, 'hfigtab',obj.hfigtab)); 
         case 'mne'
-            Kernel   =   be_jmne(OBJ_FUS, OPTIONS);
+            Kernel   =   be_jmne(obj, OPTIONS);
     end
 
     for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)

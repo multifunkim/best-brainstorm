@@ -122,19 +122,19 @@ end
 % Compute noise covariance of the data
 [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS);
 
+%% ===== Clusterize cortical surface ===== %%
+[OPTIONS, obj] = be_main_clustering(obj, OPTIONS);
+
+%% ===== Fuse modalities ===== %%   
+obj = be_fusion_of_modalities(obj, OPTIONS);
+
 %% ===== Compute Minimum Norm Solution ==== %% 
 % we compute MNE (using l-curve for nirs or depth-weighted version)
 [obj, OPTIONS] = be_main_mne(obj, OPTIONS);
 
-%% ===== Clusterize cortical surface ===== %%
-[OPTIONS, obj] = be_main_clustering(obj, OPTIONS);
-
 %% ===== Set Alpha ===== %%
 % Set Alpha value for each cluster
 [OPTIONS, obj] = be_main_alpha(obj, OPTIONS);
-
-%% ===== Fuse modalities ===== %%   
-obj = be_fusion_of_modalities(obj, OPTIONS);
 
 %% ===== Solve the MEM ===== %%
 [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);

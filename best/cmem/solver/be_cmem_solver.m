@@ -89,14 +89,13 @@ function [Results, OPTIONS] = be_cmem_solver(obj, OPTIONS)
 % Convert to average reference (only for EEG / iEEG)
 [OPTIONS]       = be_avg_reference(OPTIONS);
 
-%% ===== Pre-whitening of the data ==== %%
-% it uses empty-room data if available
-% if PlOS one : nothing is done here
-% [OPTIONS] = be_prewhite(OPTIONS);
-
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields
 [OPTIONS, obj] = be_main_leadfields(obj, OPTIONS);
+
+%% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
+% matrix W'W from the Henson paper
+[OPTIONS, obj.GreenM2] = be_spatial_priorw( OPTIONS, obj.VertConn);
 
 %% ===== Apply temporal data window  ===== %%
 % check for a time segment to be localized
@@ -107,23 +106,19 @@ function [Results, OPTIONS] = be_cmem_solver(obj, OPTIONS)
 % we normalize the data and the leadfields
 [OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
+%% ===== Noise estimation ===== %%   
+[OPTIONS, obj] = be_main_data_preprocessing(obj, OPTIONS);
+
 %% ===== Clusterize cortical surface ===== %%
 [OPTIONS, obj]  = be_main_clustering(obj, OPTIONS);
+
+%% ===== Fuse modalities ===== %%   
+obj = be_fusion_of_modalities(obj, OPTIONS);
 
 %% ===== Set Alpha ===== %%
 % Set Alpha value for each cluster
 [OPTIONS, obj]  = be_main_alpha(obj, OPTIONS);
 
-%% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
-% matrix W'W from the Henson paper
-[OPTIONS, obj.GreenM2] = be_spatial_priorw( OPTIONS, obj.VertConn);
-
-%% ===== Noise estimation ===== %%   
-[OPTIONS, obj] = be_main_data_preprocessing(obj, OPTIONS);
-
-%% ===== Fuse modalities ===== %%   
-obj = be_fusion_of_modalities(obj, OPTIONS);
-         	
 %% ===== Solve the MEM ===== %%
 [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
 if OPTIONS.optional.display
@@ -134,7 +129,7 @@ end
 [obj, OPTIONS] = be_unormalize_and_units(obj, OPTIONS);
 
 %% ===== Inverse temporal data window  ===== %%
-[OPTIONS, obj] = be_apply_window( OPTIONS, obj );
+[OPTIONS, obj] = be_apply_window(OPTIONS, obj);
 
 %% ===== Prepare output  ===== %%
 Results = be_template('resultsmat');

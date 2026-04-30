@@ -44,8 +44,7 @@ if ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
     if OPTIONS.model.alpha_method < 6
         [ALPHA, CLS, OPTIONS] = be_scores2alpha(obj.SCR, obj.CLS, OPTIONS);
     else % We compute the score using MNE
-        OBJ_FUS               = be_fusion_of_modalities(obj, OPTIONS, 0);
-        [ALPHA, CLS, OPTIONS] = be_mne2alpha(OBJ_FUS , obj.CLS, OPTIONS);
+        [ALPHA, CLS, OPTIONS] = be_mne2alpha(obj , obj.CLS, OPTIONS);
     end
 
     %% ===== Single to double precision  ===== %%

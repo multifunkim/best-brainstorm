@@ -129,6 +129,9 @@ for ii = 1 : nNEWdata
     %% ===== Clusterize cortical surface ===== %%
     [OPTIONS2, obj] = be_main_clustering(obj, OPTIONS2);
 
+    %% ===== Fuse modalities ===== %%   
+    obj = be_fusion_of_modalities(obj, OPTIONS);
+    
     %% ===== Set Alpha ===== %%
     % Set Alpha value for each cluster
     [OPTIONS, obj] = be_main_alpha(obj, OPTIONS);

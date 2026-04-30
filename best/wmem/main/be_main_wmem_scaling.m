@@ -62,7 +62,9 @@ function [obj, OPTIONS] = be_main_wmem_scaling(obj, OPTIONS)
     % This code assume that the clustering was fixed accross boxes. If the
     % clustering is not constant, then we need to do a new clustering for
     % the scaling coefficients. 
-    [obj.ALPHA , obj.CLS, OPTIONS] = be_mne2alpha(obj , repmat(obj.CLS(:, 1), 1, length(selected_samples)), OPTIONS);
+    
+    obj.CLS = repmat(obj.CLS(:, 1), 1, length(selected_samples));
+    [OPTIONS, obj] = be_main_alpha(obj, OPTIONS);
 
     %% ===== Solve the MEM ===== %%
     [obj.ImageGridAmp, OPTIONS] = be_launch_mem(obj, OPTIONS);
