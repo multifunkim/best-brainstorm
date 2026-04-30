@@ -57,7 +57,7 @@ if strcmp(OPTIONS.optional.normalization,'adaptive') ||  strcmp(OPTIONS.mandator
     % we compute MNE (using l-curve for nirs or depth-weighted version)
 
     OBJ_FUS = be_fusion_of_modalities(obj, OPTIONS, 0);
-    [obj, OPTIONS] = be_main_mne(OBJ_FUS, OPTIONS);
+    [~, OPTIONS] = be_main_mne(OBJ_FUS, OPTIONS);
 
 end
 
