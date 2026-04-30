@@ -55,7 +55,8 @@ if ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
             if OPTIONS.model.alpha_method < 6
                 [ALPHA, CLS, OPTIONS] = be_scores2alpha(SCR, CLS, OPTIONS);
             else % We compute the score using MNE
-                [ALPHA, CLS, OPTIONS] = be_mne2alpha(obj , CLS, OPTIONS);
+                OBJ_FUS               = be_fusion_of_modalities(obj, OPTIONS, 0);
+                [ALPHA, CLS, OPTIONS] = be_mne2alpha(OBJ_FUS , CLS, OPTIONS);
             end
 
         case 'rMEM'
