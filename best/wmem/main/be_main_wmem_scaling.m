@@ -39,11 +39,11 @@ function [obj, OPTIONS] = be_main_wmem_scaling(obj, OPTIONS)
 
     %% =====   Replace the selected sample ===== %%
     Nj                  = fix(log2(size(obj.data,2)));
-    max_scale           = OPTIONS.automatic.scales(1,end);
-    iBoxes_max_scale    = OPTIONS.automatic.selected_samples(2,:)==max_scale;
-    selected_k = OPTIONS.automatic.selected_samples(3,iBoxes_max_scale);
+    max_scale           = max(OPTIONS.automatic.scales);
+    iBoxes_max_scale    = OPTIONS.automatic.selected_samples(2,:) == max_scale;
+    selected_k = OPTIONS.automatic.selected_samples(3, iBoxes_max_scale);
     
-    selected_samples = zeros(6,sum(iBoxes_max_scale));
+    selected_samples = zeros(6, sum(iBoxes_max_scale));
     selected_samples(1,:) = selected_k+1;
     selected_samples(2,:) = Nj;
     selected_samples(3,:) = selected_k;

@@ -63,22 +63,22 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS)
         M = M(:,selected_samples);
     end
 
-    for jj=1:size(CLS,2)
-        clusters    = CLS(:,jj);
+    for iTime = 1:size(CLS,2)
+        clusters    = CLS(:, iTime);
         nb_clusters = max(clusters);
         curr_cls    = 1;
 
-        weight_alpha    = kernel * M(:,jj);
+        weight_alpha    = kernel * M(:, iTime);
     
-        for ii = 1:nb_clusters
-            idCLS = clusters==ii;
+        for iCluster = 1:nb_clusters
+            idCLS = (clusters == iCluster);
     
-            WSjj            = weight_alpha.^2;
-            WSjj_ii         = WSjj(idCLS); 
-            alpha(idCLS,jj) = sqrt((sum(WSjj_ii) / sum(WSjj)));
+            WSjj                = weight_alpha.^2;
+            WSjj_ii             = WSjj(idCLS); 
+            alpha(idCLS, iTime) = sqrt((sum(WSjj_ii) / sum(WSjj)));
                     
-            CLS(idCLS,jj)   = curr_cls;
-            curr_cls        = curr_cls + 1;
+            CLS(idCLS, iTime)   = curr_cls;
+            curr_cls            = curr_cls + 1;
         end
         
     end
