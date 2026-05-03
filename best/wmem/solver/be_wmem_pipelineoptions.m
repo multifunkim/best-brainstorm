@@ -40,7 +40,8 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         DEF.wavelet.order               = 10;
         DEF.wavelet.nb_levels           = 128;
         DEF.wavelet.shrinkage           = 0;
-        DEF.wavelet.selected_scales     = 0;
+        DEF.wavelet.selected_scales     = [];
+        DEF.wavelet.localize_scales     = 0;
         DEF.wavelet.verbose             = 0;
         DEF.wavelet.single_box          = 0;
         

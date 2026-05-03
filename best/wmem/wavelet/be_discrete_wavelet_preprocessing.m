@@ -31,8 +31,14 @@ function [obj, OPTIONS] = be_discrete_wavelet_preprocessing(obj, OPTIONS)
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
+    
+if OPTIONS.optional.verbose
+    fprintf('%s, wavelet pre-processing (new)\n',OPTIONS.mandatory.pipeline);
+end
 
+obj.t0      = OPTIONS.mandatory.DataTime(1);
 obj.data_type = 'discrete_wavelet';
+
 % we then wavelet transform the data (that are xtended to the next power 2)
 for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
     [obj.data{ii}, obj.info_extension] =  be_extended_dyadic(OPTIONS.automatic.Modality(ii).data);

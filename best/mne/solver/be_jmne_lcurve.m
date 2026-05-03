@@ -155,8 +155,8 @@ function [Kermel, J, alpha] = be_jmne_lcurve(obj, OPTIONS, sfig)
         plot(ax, Prior, Fit,'b.');
         plot(ax, Prior(Index), Fit(Index),'ro');
         hold(ax,'off');
-        xlabel('Norm |WJ|');
-        ylabel('Residual |M-GJ|');
+        xlabel(ax, 'Norm |WJ|');
+        ylabel(ax, 'Residual |M-GJ|');
     end
 
 end
