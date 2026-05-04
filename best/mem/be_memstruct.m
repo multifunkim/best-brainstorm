@@ -139,6 +139,7 @@ mem.nb_sources                       = nb_sources;
 mem.nb_clusters                      = nb_clusters;
 mem.optim_algo                       = OPTIONS.solver.Optim_method;
 mem.optimoptions                     = OPTIONS.solver.optimoptions;
+mem.useHessian                       = OPTIONS.solver.useHessian;
 mem.G_active_var_Gt                  = cat(3,obj.G_active_var_Gt{:});
 
 % Lambda initialization
