@@ -148,10 +148,10 @@ mem.G_active_var_Gt                  = G_active_var_Gt;
 switch OPTIONS.model.initial_lambda 
     
     case 0
-        mem.lambda	=   zeros(size(mem.M));
+        mem.lambda	=   zeros(nb_sensors, 1);
     
     case 1
-        mem.lambda	=   randn(size(mem.M)) / mean( abs(mem.M) ); % initial value for threshold diff 0
+        mem.lambda	=   randn(nb_sensors, 1) / mean( abs(mem.M), 1 ); 
 
 end
 

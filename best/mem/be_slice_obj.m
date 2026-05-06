@@ -113,38 +113,15 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
 
     % Estimate the active variance 
-    % Multiply Signa_s by 5% of the MNE solution
-    if strcmp(OPTIONS.clustering.clusters_type, 'static')
-        clusters = obj.CLS(:,1);
-        
-        for i = 1:nbSmp
+    for i = 1:nbSmp
+        clusters = obj.CLS(:,i);
 
-            energy = zeros(max(clusters), 1);
+        Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
+        Jmne = Jmne  ./ max(abs(Jmne));
 
-            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
-            Jmne = Jmne  ./ max(abs(Jmne));
-    
-            for ii = 1:max(clusters)
-                energy(ii)  = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii).^2);
-            end
-
-            obj_slice(i).mne_energy = energy;            
-        end
-    else
-        for i = 1:nbSmp
-            clusters = obj.CLS(:,i);
-            energy = zeros(max(clusters),1);
-
-            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
-            Jmne = Jmne  ./ max(abs(Jmne));
-
-            for ii = 1:max(clusters)
-                energy(ii) = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii).^2);        
-            end
-            obj_slice(i).mne_energy = energy;
-        end
+        energy      =  accumarray(clusters, Jmne .^ 2, [max(clusters), 1], @(x)mean(x,1));
+        obj_slice(i).mne_energy = OPTIONS.solver.active_var_mult *  energy; 
     end
-    
 
     obj_const.gain          = obj.gain;
     obj_const.nb_sources    = obj.nb_sources;
