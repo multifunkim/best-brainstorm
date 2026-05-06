@@ -35,9 +35,7 @@ function [lambda, entropy, iter] = be_minimize_free_energy(mem_struct)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-    if strcmpi(mem_struct.optim_algo, 'fminunc')  && ...
-       license('test', 'Optimization_Toolbox') && ...
-       exist('fminunc', 'file')
+    if strcmpi(mem_struct.optim_algo, 'fminunc')
     
         % call the unconstrained minimization routine from MATLAB optimization
         %  toolbox, if available.
