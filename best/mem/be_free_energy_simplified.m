@@ -74,10 +74,9 @@ function [D, dD, H] = be_free_energy_simplified(lambda, M, noise_var, G_active_v
     % Compute the Hessian
     if nargout >= 3
         
-        % Curvature term: sum_i s1_i * G*Sigma_i*G'
-        nSensor = size(M,1);
-        curvature_term = reshape( reshape(G_active_var_Gt, nSensor * nSensor, []) * s1', nSensor, nSensor);
-    
+        % Curvature term: sum_i s1_i * G*Sigma_i*G'               
+        curvature_term = squeeze(pagemtimes(permute(G_active_var_Gt, [2, 3, 1]), s1'));
+
         % Rank-1 term: sum_i s1_i*(1-s1_i) * delta_i*delta_i'
         w_delta      = dF1 .* sqrt(s1 .* (1 - s1));
         rank1_term   = w_delta * w_delta'; 
