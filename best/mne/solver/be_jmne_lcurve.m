@@ -42,9 +42,11 @@ function [Kermel, J, alpha] = be_jmne_lcurve(obj, OPTIONS, sfig)
     end
     
     G = obj.gain; 
-
-    fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
     
+    if OPTIONS.optional.verbose
+        fprintf('%s, solving MNE by L-curve ...', OPTIONS.mandatory.pipeline);
+    end
+
     p       = OPTIONS.model.depth_weigth_MNE;
     % Compute covariance matrices
     if OPTIONS.solver.mne_use_noiseCov && ~isempty(OPTIONS.automatic.Modality(1).covariance) && size(OPTIONS.automatic.Modality(1).covariance,3) == 1
@@ -132,8 +134,11 @@ function [Kermel, J, alpha] = be_jmne_lcurve(obj, OPTIONS, sfig)
     if ~OPTIONS.automatic.stand_alone
         bst_progress('stop');
     end
-    fprintf('done. \n');
     
+    if OPTIONS.optional.verbose
+        fprintf('done. \n');
+    end
+
     if OPTIONS.optional.display
         if isempty(sfig.hfig)
             sfig.hfig =  figure();
