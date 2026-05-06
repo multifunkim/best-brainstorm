@@ -128,7 +128,7 @@ end
 
 % ----------------------------------------------------------------------- %
 
-function Def_OPTIONS=   BEst_defaults()
+function Def_OPTIONS =   BEst_defaults()
 
     % ===== common I/O arguments ===== %%
     
