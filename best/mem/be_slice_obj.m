@@ -2,10 +2,11 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
     nbSmp       = size(Data,2); 
     nb_sensors  = size(Data,1); 
-
     obj_slice(nbSmp)    = struct();
 
-    fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
+    if OPTIONS.optional.verbose
+        fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
+    end
 
     for i = 1:nbSmp
         
@@ -139,7 +140,6 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
        exist('fminunc', 'file')
         
         if OPTIONS.solver.useHessian
-            disp('Using Hessian')
             OPTIONS.solver.optimoptions =   optimoptions('fminunc',...
                                                     'MaxIter', 1000, ...
                                                     'MaxFunEvals', 1000, ...
@@ -179,6 +179,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
         OPTIONS.solver.optimoptions = options;
     end
 
-    fprintf('done. \n');
-
+    if OPTIONS.optional.verbose
+        fprintf('done. \n');    
+    end
 end
