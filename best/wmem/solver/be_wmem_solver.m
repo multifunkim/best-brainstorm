@@ -87,7 +87,7 @@ function [Results, OPTIONS] = be_wmem_solver(obj, OPTIONS)
 
 %% ===== AVG reference ===== %% 
 % Convert to average reference (only for EEG / iEEG)
-[OPTIONS]       = be_avg_reference(OPTIONS);
+%[OPTIONS]       = be_avg_reference(OPTIONS);
 
 %% ===== Pre-process the leadfield(s) ==== %% 
 % we keep leadfields of interest; we compute svd of normalized leadfields

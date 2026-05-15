@@ -25,30 +25,30 @@ function [OPTIONS] = be_avg_reference(OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-    for ii = 1:numel(OPTIONS.mandatory.DataTypes)
+    for iMod = 1:numel(OPTIONS.mandatory.DataTypes)
 
-        if ~ismember(OPTIONS.mandatory.DataTypes{ii}, {'EEG','SEEG','ECOG','ECOG+SEEG'})
+        if ~ismember(OPTIONS.mandatory.DataTypes{iMod}, {'EEG','SEEG','ECOG','ECOG+SEEG'})
             % Nothing to do
             continue;
         end
     
         % Compute the average montage projection
-        nChan = size(OPTIONS.automatic.Modality(ii).data,1);
+        nChan = size(OPTIONS.automatic.Modality(iMod).data,1);
         projector = eye(nChan) - ones(nChan) ./ nChan;
 
         % Apply to the data, and baseline
-        OPTIONS.automatic.Modality(ii).data = projector * OPTIONS.automatic.Modality(ii).data;
-        OPTIONS.automatic.Modality(ii).baseline = projector * OPTIONS.automatic.Modality(ii).baseline;
+        OPTIONS.automatic.Modality(iMod).data = projector * OPTIONS.automatic.Modality(iMod).data;
+        OPTIONS.automatic.Modality(iMod).baseline = projector * OPTIONS.automatic.Modality(iMod).baseline;
         
         % Apply to the noise covariance
-        if ~isempty(OPTIONS.automatic.Modality(ii).covariance)
+        if ~isempty(OPTIONS.automatic.Modality(iMod).covariance)
             for i_sc = 1: size(OPTIONS.solver.NoiseCov, 3)
-                OPTIONS.automatic.Modality(ii).covariance(:, :, i_sc) =  projector *  OPTIONS.automatic.Modality(ii).covariance(:, :, i_sc) * projector';
+                OPTIONS.automatic.Modality(iMod).covariance(:, :, i_sc) =  projector *  OPTIONS.automatic.Modality(iMod).covariance(:, :, i_sc) * projector';
             end
         end
 
         % Apply to the gain matrix
-        OPTIONS.automatic.Modality(ii).gain     =   projector * OPTIONS.automatic.Modality(ii).gain;
+        OPTIONS.automatic.Modality(iMod).gain     =   projector * OPTIONS.automatic.Modality(iMod).gain;
 
     end
 end
