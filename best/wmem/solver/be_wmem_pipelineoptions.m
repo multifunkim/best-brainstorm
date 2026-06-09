@@ -41,6 +41,11 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         DEF.wavelet.nb_levels           = 128;
         DEF.wavelet.shrinkage           = 0;
         DEF.wavelet.selected_scales     = 0;
+        if any(ismember( 'nirs', lower(DataTypes)))
+            DEF.wavelet.selected_scales_baseline     = 3;
+        else
+            DEF.wavelet.selected_scales_baseline     = 2;
+        end
         DEF.wavelet.verbose             = 0;
         DEF.wavelet.single_box          = 0;
         
