@@ -185,7 +185,7 @@ function [noise_var] = estimate_noise_var(OPTIONS)
 
                 case 6
                     % Scale one which the noise covariance is calculated
-                    isc = DEF.wavelet.selected_scales_covariance;
+                    isc = OPTIONS.wavelet.selected_scales_covariance;
                     
                     % Select the wavelet coefficient for scale isc
                     % (exclude the 5 first and last boxes) 
