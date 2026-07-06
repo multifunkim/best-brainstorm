@@ -106,7 +106,7 @@ function [OPTIONS, FLAG, verbose] = be_initialize_options(OPTIONS)
 
     % Initialize channel flag
     if isfield(OPTIONS.optional, 'ChannelFlag') && length(OPTIONS.optional.ChannelFlag) == size(OPTIONS.mandatory.Data, 1)      
-        OPTIONS.automatic.GoodChannel = find(OPTIONS.optional.ChannelFlag);
+        OPTIONS.automatic.GoodChannel = find(OPTIONS.optional.ChannelFlag == 1);
     end
     
 

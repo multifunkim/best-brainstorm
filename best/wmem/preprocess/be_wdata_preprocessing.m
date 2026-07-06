@@ -181,15 +181,10 @@ function [noise_var] = estimate_noise_var(OPTIONS)
 
                 case 6
                     % Scale one which the noise covariance is calculated
-                    if strcmp(OPTIONS.automatic.Modality(ii).name, 'NIRS')
-                        isc = 3;
-                    else
-                        isc = 2; 
-                    end
+                    isc = OPTIONS.wavelet.selected_scales_covariance;
                     
                     % Select the wavelet coefficient for scale isc
                     % (exclude the 5 first and last boxes) 
-
                     w1 = wavelet_obj.data{1}(:,end/2^(isc)+6:end/2^(isc-1)-5)';
 
                     % The following code might be more robust but needs to

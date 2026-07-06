@@ -42,6 +42,11 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         DEF.wavelet.shrinkage           = 0;
         DEF.wavelet.selected_scales     = [];
         DEF.wavelet.localize_scales     = 0;
+        if any(ismember( 'nirs', lower(DataTypes)))
+            DEF.wavelet.selected_scales_covariance     = 3;
+        else
+            DEF.wavelet.selected_scales_covariance     = 2;
+        end
         DEF.wavelet.verbose             = 0;
         DEF.wavelet.single_box          = 0;
         
