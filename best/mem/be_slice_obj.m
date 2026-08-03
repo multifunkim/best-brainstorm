@@ -2,10 +2,11 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
     nbSmp       = size(Data,2); 
     nb_sensors  = size(Data,1); 
-
     obj_slice(nbSmp)    = struct();
 
-    fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
+    if OPTIONS.optional.verbose
+        fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
+    end
 
     for i = 1:nbSmp
         
@@ -113,38 +114,15 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
 
     % Estimate the active variance 
-    % Multiply Signa_s by 5% of the MNE solution
-    if strcmp(OPTIONS.clustering.clusters_type, 'static')
-        clusters = obj.CLS(:,1);
-        
-        for i = 1:nbSmp
+    for i = 1:nbSmp
+        clusters = obj.CLS(:,i);
 
-            energy = zeros(max(clusters), 1);
+        Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
+        Jmne = Jmne  ./ max(abs(Jmne));
 
-            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
-            Jmne = Jmne  ./ max(abs(Jmne));
-    
-            for ii = 1:max(clusters)
-                energy(ii)  = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii).^2);
-            end
-
-            obj_slice(i).mne_energy = energy;            
-        end
-    else
-        for i = 1:nbSmp
-            clusters = obj.CLS(:,i);
-            energy = zeros(max(clusters),1);
-
-            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
-            Jmne = Jmne  ./ max(abs(Jmne));
-
-            for ii = 1:max(clusters)
-                energy(ii) = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii).^2);        
-            end
-            obj_slice(i).mne_energy = energy;
-        end
+        energy      =  accumarray(clusters, Jmne .^ 2, [max(clusters), 1], @(x)mean(x,1));
+        obj_slice(i).mne_energy = OPTIONS.solver.active_var_mult *  energy; 
     end
-    
 
     obj_const.gain          = obj.gain;
     obj_const.nb_sources    = obj.nb_sources;
@@ -160,12 +138,26 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     if strcmpi(OPTIONS.solver.Optim_method, 'fminunc') && ...
        license('test', 'Optimization_Toolbox') && ...
        exist('fminunc', 'file')
+        
+        if OPTIONS.solver.useHessian
+            OPTIONS.solver.optimoptions =   optimoptions('fminunc',...
+                                                    'MaxIter', 1000, ...
+                                                    'MaxFunEvals', 1000, ...
+                                                    'algorithm', 'trust-region', ...
+                                                    'SpecifyObjectiveGradient',true, ...
+                                                    'GradObj', 'on', ...
+                                                    'HessianFcn', 'objective', ...
+                                                    'Display', 'off');  
 
-        OPTIONS.solver.optimoptions =   optimoptions('fminunc','GradObj', 'on', ...
-                                                    'MaxIter', MAX_ITER, ...
-                                                    'MaxFunEvals', MAX_ITER, ...
-                                                    'algorithm', 'quasi-newton',... % 'quasi-newton' trust-region'
-                                                    'Display', 'off' );
+
+        else
+
+            OPTIONS.solver.optimoptions =   optimoptions('fminunc','GradObj', 'on', ...
+                                                        'MaxIter', MAX_ITER, ...
+                                                        'MaxFunEvals', MAX_ITER, ...
+                                                        'algorithm', 'quasi-newton',... % 'quasi-newton' trust-region'
+                                                        'Display', 'off' );
+        end
     else
 
         if strcmpi(OPTIONS.solver.Optim_method, 'fminunc')
@@ -187,6 +179,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
         OPTIONS.solver.optimoptions = options;
     end
 
-    fprintf('done. \n');
-
+    if OPTIONS.optional.verbose
+        fprintf('done. \n');    
+    end
 end

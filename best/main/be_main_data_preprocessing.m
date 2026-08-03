@@ -91,8 +91,10 @@ else
             % OPTIONS.mandatory.Data                            = OPTIONS.automatic.Modality(ii).emptyroom;
             OPTIONS.automatic.Modality(ii).data             	= OPTIONS.automatic.Modality(ii).emptyroom;
             OPTIONS.mandatory.DataTime                       	= OPTIONS.automatic.Emptyroom_time;  
-            fprintf('MEM : New noise covariance is computed using empty room data\n');
-            
+
+            if OPTIONS.optional.verbose
+                fprintf('MEM : New noise covariance is computed using empty room data\n');
+            end
         elseif ~isempty( OPTIONS.automatic.Modality(ii).baseline )
             idNb = any(isnan(OPTIONS.automatic.Modality(ii).baseline));
             OPTIONS.automatic.Modality(ii).baseline(:,idNb)     = 0;
@@ -103,10 +105,14 @@ else
                 TLM                                             =   be_closest(OPTIONS.optional.BaselineSegment([1 end]), OPTIONS.mandatory.DataTime);
                 OPTIONS.mandatory.DataTime                      = OPTIONS.mandatory.DataTime( TLM(1):TLM(end) );      
             end
-            fprintf('MEM : New noise covariance is computed using baseline\n');
-            
+
+            if OPTIONS.optional.verbose
+                fprintf('MEM : New noise covariance is computed using baseline\n');
+            end
         else
-        	fprintf('MEM : No baseline nor covariance matrix provided. Covariance set to identity\n');
+            if OPTIONS.optional.verbose
+        	    fprintf('MEM : No baseline nor covariance matrix provided. Covariance set to identity\n');
+            end
             OPTIONS.automatic.Modality(ii).baseline             =   eye(OPTIONS.automatic.Modality(ii).channels);
             OPTIONS.solver.NoiseCov_method                      =   0;
         end

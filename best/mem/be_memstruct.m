@@ -80,6 +80,8 @@ function [OPTIONS, mem, active_var_out] = be_memstruct(OPTIONS, obj)
 % some basic parameters
 nb_clusters = max(obj.clusters);
 nb_sources  = obj.nb_sources;
+nb_sensors   = length(obj.data);
+
 
 % some definitions 
 clusters_struct(nb_clusters) = struct;
@@ -88,6 +90,7 @@ cID         = cell(1,nb_clusters);
 active_mean = cell(1,nb_clusters);
 inactive_var= cell(1,nb_clusters);
 active_var_out = zeros(obj.nb_sources,1);
+G_active_var_Gt = zeros(nb_sensors, nb_sensors, nb_clusters);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the following loop goes though each of the clusters (non null clusters)
@@ -109,7 +112,7 @@ for ii = 1:nb_clusters
 
     % Multiply the active variance by the MNE energy
     obj.active_var{ii} = obj.active_var{ii}     * obj.mne_energy(ii);
-    obj.G_active_var_Gt{ii}     = obj.G_active_var_Gt{ii} * obj.mne_energy(ii);
+    G_active_var_Gt(:, :, ii)   = obj.G_active_var_Gt{ii} * obj.mne_energy(ii);
     active_var_out(idx_cluster) = diag( obj.active_var{ii} );
     
     % SIGMA0: variance of the inactive state (not relevant for the present version)
@@ -128,7 +131,6 @@ end
 [clusters_struct.active_mean]        = active_mean{:};
 [clusters_struct.active_var]         = obj.active_var{:};
 [clusters_struct.inactive_var]       = inactive_var{:};  
-[clusters_struct.G_active_var_Gt]    = obj.G_active_var_Gt{:};  
 [clusters_struct.indices]            = cID{:};
 
 % Creation of the structure to solve the MEM
@@ -139,16 +141,17 @@ mem.nb_sources                       = nb_sources;
 mem.nb_clusters                      = nb_clusters;
 mem.optim_algo                       = OPTIONS.solver.Optim_method;
 mem.optimoptions                     = OPTIONS.solver.optimoptions;
-mem.G_active_var_Gt                  = cat(3,obj.G_active_var_Gt{:});
+mem.useHessian                       = OPTIONS.solver.useHessian;
+mem.G_active_var_Gt                  = G_active_var_Gt;
 
 % Lambda initialization
 switch OPTIONS.model.initial_lambda 
     
     case 0
-        mem.lambda	=   zeros(size(mem.M));
+        mem.lambda	=   zeros(nb_sensors, 1);
     
     case 1
-        mem.lambda	=   randn(size(mem.M)) / mean( abs(mem.M) ); % initial value for threshold diff 0
+        mem.lambda	=   randn(nb_sensors, 1) / mean( abs(mem.M), 1 ); 
 
 end
 
