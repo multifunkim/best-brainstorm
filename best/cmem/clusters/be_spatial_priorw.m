@@ -31,8 +31,7 @@ function [OPTIONS, W] = be_spatial_priorw(OPTIONS, neighbors)
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
-                                              
-                                              
+
 % Default options settings
 Def_OPTIONS.solver = struct('spatial_smoothing', 0.6);
 
@@ -50,13 +49,13 @@ nb_vertices = size(OPTIONS.automatic.Modality(1).gain,2);
 rho = OPTIONS.solver.spatial_smoothing; % scalar that weight the adjacency matrix 
 W   = speye(nb_vertices);
 
+% If we don't smooth, or if neighbor is emtpy, nothing to do.
+if (rho == 0 || isempty(neighbors))
+    return;
+end
 
 % Add comment to result
-if rho && ~isempty(neighbors)
-    OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' | smooth=' num2str(rho)];
-else
-    return
-end
+OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' | smooth=' num2str(rho)];
 
 % Preallocation of the sparse matrix
 A  = neighbors - spdiags(sum(neighbors,2),0,nb_vertices,nb_vertices);

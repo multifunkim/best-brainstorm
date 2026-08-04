@@ -70,12 +70,13 @@ end
 % and the leadfields
 [OPTIONS, obj] = be_normalize_and_units(obj, OPTIONS);
 
+%% ===== Fuse modalities ===== %%   
+obj = be_fusion_of_modalities(obj, OPTIONS, 0);
+
 %% ===== Compute Minimum Norm Solution ==== %% 
 [obj, OPTIONS] = be_main_mne(obj, OPTIONS, OPTIONS.solver.mne_method);
 
 %% ===== Results  ===== %%
-OBJ_FUS = be_fusion_of_modalities(obj, OPTIONS, 0);
-
 obj.ImageGridAmp = OPTIONS.automatic.Modality.MneKernel * OBJ_FUS.data;
 [OPTIONS, obj]   = be_apply_window( OPTIONS, obj );
 
