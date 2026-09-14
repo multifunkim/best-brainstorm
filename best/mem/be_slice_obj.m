@@ -15,17 +15,32 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     end
 
     % Prepare clusters and active probability
-    for iTime = 1:nbSmp
-        clusters            = obj.CLS(:, iTime);
+    if strcmp(OPTIONS.clustering.clusters_type, 'static')
+        clusters            = obj.CLS(:, 1);
         nb_clusters         = max(clusters);
-        active_probability  = zeros(nb_clusters, 1);
+        active_probability  = zeros(nb_clusters, nbSmp);
 
         for iCluster = 1:nb_clusters
             idx_cluster  = find(clusters == iCluster);
-            active_probability(iCluster) = obj.ALPHA(idx_cluster(1), iTime);
+            active_probability(iCluster, :) = obj.ALPHA(idx_cluster(1), :);
         end
 
-        obj_slice(iTime).active_probability = active_probability;
+        for iTime = 1:nbSmp
+            obj_slice(iTime).active_probability = active_probability(:, iTime);
+        end
+    else
+        for iTime = 1:nbSmp
+            clusters            = obj.CLS(:, iTime);
+            nb_clusters         = max(clusters);
+            active_probability  = zeros(nb_clusters, 1);
+    
+            for iCluster = 1:nb_clusters
+                idx_cluster  = find(clusters == iCluster);
+                active_probability(iCluster) = obj.ALPHA(idx_cluster(1), iTime);
+            end
+    
+            obj_slice(iTime).active_probability = active_probability;
+        end
     end
 
     for i = 1:nbSmp
