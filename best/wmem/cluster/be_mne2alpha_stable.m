@@ -1,4 +1,4 @@
-function [alpha, CLS, OPTIONS] = be_mne2alpha_stable(obj, CLS, OPTIONS)
+function [alpha, OPTIONS] = be_mne2alpha_stable(obj, CLS, OPTIONS)
 % BE_GAIN2ALPHA computes the initial probability of a parcel being active in 
 %   the MEM using the % of MNE energy within each parcels
 %
@@ -13,9 +13,7 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha_stable(obj, CLS, OPTIONS)
 %
 %   OUTPUTS:
 %       - OPTIONS   : Keep track of parameters
-%       -   ALPHA   : vector of probabilities (1xNparcels)
-%       -   CLS     : cell array (1xNparcels). Each cell contains the indices of        
-%                     the sources within that parcel
+%       -   ALPHA   : matrix of probabilities (NvertexsxNtime)
 %
 %% ==============================================
 % Copyright (C) 2011 - LATIS Team
@@ -84,5 +82,5 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha_stable(obj, CLS, OPTIONS)
         alpha(cluster_masks(:, iCluster), :) = repmat(sqrt(sum_weight_squared(iCluster, :) ./ sum_norm), cluster_sizes(iCluster), 1);
     end
     alpha(alpha > 0.8) = 1;
-    
+
 end
