@@ -6,24 +6,29 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     obj_slice(nbSmp)    = struct();
 
     fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
+    
+    % Prepare data
+    for iTime = 1:nbSmp
+        obj_slice(iTime).data   = Data(:, iTime);
+        obj_slice(iTime).time   = obj.time(:, iTime);
+        obj_slice(iTime).scale  = obj.scale(:, iTime);
+    end
 
-    for i = 1:nbSmp
-        
-        obj_slice(i).data   = Data(:,i);
-        obj_slice(i).time   = obj.time(:,i);
-        obj_slice(i).scale  = obj.scale(:,i);
-
-        clusters            = obj.CLS(:,i);
+    % Prepare clusters and active probability
+    for iTime = 1:nbSmp
+        clusters            = obj.CLS(:, iTime);
         nb_clusters         = max(clusters);
-        active_probability  = zeros(nb_clusters,1);
+        active_probability  = zeros(nb_clusters, 1);
 
-        for ii = 1:nb_clusters
-            idx_cluster  = find(clusters == ii);
-            active_probability(ii) = obj.ALPHA(idx_cluster(1),i);
+        for iCluster = 1:nb_clusters
+            idx_cluster  = find(clusters == iCluster);
+            active_probability(iCluster) = obj.ALPHA(idx_cluster(1), iTime);
         end
 
-        obj_slice(i).active_probability = active_probability;
-        
+        obj_slice(iTime).active_probability = active_probability;
+    end
+
+    for i = 1:nbSmp
         % estimate active mean
         % Method 1: initialization FROM the null hypothesis (alpha=1, mu=0)
         % Method 2: Method used by Christophe
@@ -86,10 +91,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
         else
             obj_const.noise_var = obj.noise_var;
         end
-
     end
-
-
 
     % Smooth the coveriance matrix along the cortical surface
     if strcmp(OPTIONS.clustering.clusters_type, 'static')
