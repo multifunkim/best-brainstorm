@@ -58,7 +58,11 @@ function [OPTIONS, obj] = be_main_alpha(obj, OPTIONS)
     if OPTIONS.model.alpha_method < 6   % Initlialize alpha based on MSP
         [ALPHA, CLS, OPTIONS] = be_scores2alpha(obj.SCR, obj.CLS, OPTIONS);
     else                                % Initlialize alpha based on MNE
-        [ALPHA, CLS, OPTIONS] = be_mne2alpha(obj , obj.CLS, OPTIONS);
+        if strcmp(OPTIONS.clustering.clusters_type,'static')
+            [ALPHA, CLS, OPTIONS] = be_mne2alpha_stable(obj , obj.CLS, OPTIONS);
+        else
+            [ALPHA, CLS, OPTIONS] = be_mne2alpha(obj , obj.CLS, OPTIONS);
+        end
     end
     [OPTIONS] = be_switch_precision(OPTIONS, 'double');
     
