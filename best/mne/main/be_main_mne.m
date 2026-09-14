@@ -12,21 +12,18 @@ function [obj, OPTIONS] = be_main_mne(obj, OPTIONS, method)
 %       -   obj
 
     if nargin < 3 || isempty(method)
-        if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp( OPTIONS.mandatory.DataTypes,'NIRS')) 
+        if OPTIONS.model.depth_weigth_MNE > 0 || any(strcmp(OPTIONS.mandatory.DataTypes, 'NIRS')) 
             method = 'mne_lcurve';
         else
             method = 'mne';
         end
     end
 
-    % apply the fusion of modalities
-    OBJ_FUS = be_fusion_of_modalities(obj, OPTIONS, 0);
-    
     switch(method)
         case 'mne_lcurve'
-            Kernel   =   be_jmne_lcurve(OBJ_FUS, OPTIONS, struct('hfig',obj.hfig, 'hfigtab',obj.hfigtab)); 
+            Kernel   =   be_jmne_lcurve(obj, OPTIONS, struct('hfig',obj.hfig, 'hfigtab',obj.hfigtab)); 
         case 'mne'
-            Kernel   =   be_jmne(OBJ_FUS, OPTIONS);
+            Kernel   =   be_jmne(obj, OPTIONS);
     end
 
     for ii  =   1 : numel(OPTIONS.mandatory.DataTypes)

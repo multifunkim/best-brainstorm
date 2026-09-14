@@ -31,22 +31,8 @@ function [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS)
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
-
-    obj.t0      = OPTIONS.mandatory.DataTime(1);
     
-    if OPTIONS.optional.verbose
-        if ~strcmp(OPTIONS.mandatory.pipeline,'wMEM')
-            fprintf('%s, wavelet processing not correctly called\n',OPTIONS.mandatory.pipeline);
-        else
-            fprintf('%s, wavelet pre-processing (new)\n',OPTIONS.mandatory.pipeline);
-        end
-    end
-
-    % ====  this is the wavelet-MEM (Lina and co.)
-    % we first re-organize the data with respect to the modalities
-    % concerned (the order being given by the OPTIONS.DataTypes)
-    % normalization/wavelet/denoise
-    [obj, OPTIONS] = be_discrete_wavelet_preprocessing(obj, OPTIONS);
+    assert(strcmp(OPTIONS.mandatory.pipeline,'wMEM'), 'wavelet processing not correctly called');
 
     if isempty(OPTIONS.solver.NoiseCov)
         if ~isempty( OPTIONS.automatic.Modality(1).emptyroom )
@@ -69,9 +55,7 @@ function [OPTIONS, obj] = be_wdata_preprocessing(obj, OPTIONS)
     % we nomalize the cov of each modalities (we regularize the cov matrices)
     for ii = 1 : numel( OPTIONS.automatic.Modality )
         for isc=1:noise_var_jn
-            OPTIONS.automatic.Modality(ii).covariance(:,:,isc) = ...
-                noise_var(OPTIONS.automatic.Modality(ii).channels,...
-                OPTIONS.automatic.Modality(ii).channels, isc );
+            OPTIONS.automatic.Modality(ii).covariance(:, :, isc) = noise_var(OPTIONS.automatic.Modality(ii).channels, OPTIONS.automatic.Modality(ii).channels, isc );
         end
     end
 end
