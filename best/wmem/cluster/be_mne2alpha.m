@@ -1,4 +1,4 @@
-function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
+function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS)
 % BE_GAIN2ALPHA computes the initial probability of a parcel being active in 
 %   the MEM using the % of MNE energy within each parcels
 %
@@ -42,11 +42,9 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
     alpha = zeros(size(CLS));
     ALPHA_METHOD = OPTIONS.model.alpha_method;
 
-    OBJ_FUS         = be_fusion_of_modalities(obj, OPTIONS, 0);
-
     % selection of the Kernel:
     if ALPHA_METHOD == 6
-        kernel    = be_jmne_normalized(OBJ_FUS, OPTIONS);  
+        kernel    = be_jmne_normalized(obj, OPTIONS);  
     elseif ALPHA_METHOD == 7
         kernel = OPTIONS.automatic.Modality(1).MneKernel;
     else
@@ -55,9 +53,9 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
 
     % selection of the data:
     if ALPHA_METHOD == 6
-        M = OBJ_FUS.data_normalized;
+        M = obj.data_normalized;
     else
-        M = OBJ_FUS.data;
+        M = obj.data;
     end
 
     if ~isempty(OPTIONS.automatic.selected_samples)   
@@ -65,23 +63,22 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS, varargin)
         M = M(:,selected_samples);
     end
 
-    for jj=1:size(CLS,2)
-        clusters    = CLS(:,jj);
+    for iTime = 1:size(CLS,2)
+        clusters    = CLS(:, iTime);
         nb_clusters = max(clusters);
         curr_cls    = 1;
 
-        weight_alpha    = kernel * M(:,jj);
+        weight_alpha    = kernel * M(:, iTime);
     
-        for ii = 1:nb_clusters
-            idCLS = clusters==ii;
+        for iCluster = 1:nb_clusters
+            idCLS = (clusters == iCluster);
     
-            WSjj            = weight_alpha.^2;
-            WSjj_ii         = WSjj(idCLS); 
-            alpha(idCLS,jj) = sqrt((sum(WSjj_ii) / sum(WSjj)));
+            WSjj                = weight_alpha.^2;
+            WSjj_ii             = WSjj(idCLS); 
+            alpha(idCLS, iTime) = sqrt((sum(WSjj_ii) / sum(WSjj)));
                     
-            CLS(idCLS,jj)   = curr_cls;
-            curr_cls        = curr_cls + 1;
-            
+            CLS(idCLS, iTime)   = curr_cls;
+            curr_cls            = curr_cls + 1;
         end
         
     end

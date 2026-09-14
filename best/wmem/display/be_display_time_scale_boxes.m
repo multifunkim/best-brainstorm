@@ -39,13 +39,17 @@ function obj = be_display_time_scale_boxes(obj, OPTIONS)
 % N : nomber of samples
 % TFboxes is a structure .k ans .j are (j,k) coordinates
     
+    if ~OPTIONS.optional.display
+        return;
+    end
+
     if ~strcmp(obj.data_type,'discrete_wavelet')
         warning('NO WAVELET DISPLAY');
         return
     end
     
     % Ensure that the figure is open
-    if ~isvalid(obj.hfigtab)
+    if ~isfield(obj, 'hfigtab') || ~isvalid(obj.hfigtab)
         [obj.hfig, obj.hfigtab] = be_create_figure(OPTIONS);
         
         if ~isvalid(obj.hfigtab)

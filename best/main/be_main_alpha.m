@@ -1,6 +1,5 @@
-function [OPTIONS, obj] = be_main_clustering(obj, OPTIONS)
-% BE_MAIN_CLUSTERING launches the appropriate cortex clustering functions 
-% according to the chosen MEM pipeline
+function [OPTIONS, obj] = be_main_alpha(obj, OPTIONS)
+% BE_MAIN_ALPHA initialize the alpha value for each cluster
 %
 % Inputs:
 % -------
@@ -36,45 +35,38 @@ function [OPTIONS, obj] = be_main_clustering(obj, OPTIONS)
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
-
-   %% ===== User-provided clusters   ===== %%
-    if isfield(OPTIONS.optional.clustering, 'clusters') && ~isempty(OPTIONS.optional.clustering.clusters)
+   
+    %% ===== User-provided alpha   ===== %%
+    if isfield(OPTIONS.optional.clustering, 'initial_alpha') && ~isempty(OPTIONS.optional.clustering.initial_alpha)
         if strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
-            CLS   = OPTIONS.optional.clustering.clusters * ones(1,size(OPTIONS.automatic.Modality(1).selected_jk, 2));
-            SCR   = [];
+            ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1, size(OPTIONS.automatic.Modality(1).selected_jk, 2));
         else
-            CLS   = OPTIONS.optional.clustering.clusters * ones(1,size(OPTIONS.automatic.Modality(1).data, 2));
-            SCR   = [];
+            ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1, size(OPTIONS.automatic.Modality(1).data, 2));
         end
+    
+        obj.ALPHA = ALPHA;
+        return
+    end
+    
+    %% ===== Computing alpha   ===== %%
 
-        % the final scores (SCR), clusters (CLS)
-        obj.SCR   = SCR;
-        obj.CLS   = CLS;
-        
-        return;
+    if OPTIONS.optional.verbose
+        fprintf('%s, initialize alpha...', OPTIONS.mandatory.pipeline);
     end
 
-    %% ===== Sources prescoring - MSP (ref. Mattout et al. 2006) and clustering  ===== %%
-
     [OPTIONS] = be_switch_precision(OPTIONS, 'single');
-    switch OPTIONS.mandatory.pipeline
-        case 'cMEM'
-            [CLS, SCR, OPTIONS] = be_cmem_clusterize_multim(obj, OPTIONS); 
-        case 'wMEM'
-            [CLS, SCR, OPTIONS] = be_wmem_clusterize_multim(obj, OPTIONS);
-        case 'rMEM'
-            [CLS, SCR, OPTIONS] = be_rmem_clusterize_multim(obj, OPTIONS);
-    end   
+    if OPTIONS.model.alpha_method < 6   % Initlialize alpha based on MSP
+        [ALPHA, CLS, OPTIONS] = be_scores2alpha(obj.SCR, obj.CLS, OPTIONS);
+    else                                % Initlialize alpha based on MNE
+        [ALPHA, CLS, OPTIONS] = be_mne2alpha(obj , obj.CLS, OPTIONS);
+    end
     [OPTIONS] = be_switch_precision(OPTIONS, 'double');
     
-    % the final scores (SCR), clusters (CLS) and alpha's (ALPHA)
-    obj.SCR   = SCR;
+    if OPTIONS.optional.verbose
+        fprintf(' done.\n');
+    end
+
+    %% ===== Store the final alpha and clusters ===== %%
     obj.CLS   = CLS;
-
+    obj.ALPHA = ALPHA;
 end
-
-
-
-
-
- 

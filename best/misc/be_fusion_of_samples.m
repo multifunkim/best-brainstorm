@@ -69,11 +69,10 @@ if length(OPTIONS.mandatory.DataTypes)==2
 
 else % only one modality, we keep the ordering related to the power 
     nboxes = size(OPTIONS.automatic.Modality(1).selected_jk,2);
-    OPTIONS.automatic.selected_samples = ...
-        [OPTIONS.automatic.Modality(1).selected_jk ; ones(1,nboxes)];
+    OPTIONS.automatic.selected_samples = [OPTIONS.automatic.Modality(1).selected_jk ; ones(1,nboxes)];
     % we may clear the OPTIONS.automatic.Modality(1).selected_jk
     % we code the modality in the last line of the table (1 here)
 end
     
     
-return
+end
