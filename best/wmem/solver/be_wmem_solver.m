@@ -147,7 +147,7 @@ end
 
 %% Conversion to time-series
 if ~OPTIONS.wavelet.single_box
-    inv_proj = be_wavelet_inverse_projection(obj,OPTIONS);
+    inv_proj = be_wavelet_inverse_projection_fast(obj, OPTIONS); 
 
     if OPTIONS.output.save_factor
         obj.ImageGridAmp = {obj.ImageGridAmp, inv_proj};
