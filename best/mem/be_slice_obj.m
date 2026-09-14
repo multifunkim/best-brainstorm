@@ -116,32 +116,40 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     % Multiply Signa_s by 5% of the MNE solution
     if strcmp(OPTIONS.clustering.clusters_type, 'static')
         clusters = obj.CLS(:,1);
-        
-        for i = 1:nbSmp
 
-            energy = zeros(max(clusters), 1);
+        % Computer the max of MNE accross vertex for each time point
+        max_mne = zeros(1, nbSmp);
+        for iCluster = 1:max(clusters)
+            Jmne = OPTIONS.automatic.Modality(1).MneKernel(clusters == iCluster, :) * Data;
+            max_mne = max(max_mne, max(abs(Jmne)));
+        end
 
-            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
-            Jmne = Jmne  ./ max(abs(Jmne));
-    
-            for ii = 1:max(clusters)
-                energy(ii)  = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii).^2);
-            end
+        % Computer the MNE energy for each time point for each cluster
+        energy = zeros(max(clusters), nbSmp);
+        for iCluster= 1:max(clusters)
+            Jmne = OPTIONS.automatic.Modality(1).MneKernel(clusters == iCluster, :) * Data;
+            Jmne = Jmne  ./ max_mne;
 
-            obj_slice(i).mne_energy = energy;            
+            energy(iCluster, :)  = OPTIONS.solver.active_var_mult * mean( Jmne.^2 );
+        end
+
+        % Store the result
+        for iTime = 1:nbSmp
+            obj_slice(iTime).mne_energy = energy(:, iTime);            
         end
     else
-        for i = 1:nbSmp
-            clusters = obj.CLS(:,i);
-            energy = zeros(max(clusters),1);
+        for iTime = 1:nbSmp
+            clusters = obj.CLS(:, iTime);
+            energy = zeros(max(clusters), 1);
 
-            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
+            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(iTime).data;
             Jmne = Jmne  ./ max(abs(Jmne));
 
-            for ii = 1:max(clusters)
-                energy(ii) = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == ii).^2);        
+            for iCluster = 1:max(clusters)
+                energy(iCluster) = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == iCluster).^2);        
             end
-            obj_slice(i).mne_energy = energy;
+
+            obj_slice(iTime).mne_energy = energy;
         end
     end
     
