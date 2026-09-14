@@ -141,5 +141,3 @@ Results.nComponents     = round( length(obj.iModS) / obj.nb_sources );
 OPTIONS                 = be_cleanup_options(obj, OPTIONS);
 
 end
-
-

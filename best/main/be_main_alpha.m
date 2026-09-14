@@ -36,38 +36,37 @@ function [OPTIONS, obj] = be_main_alpha(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
    
-if ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
+    %% ===== User-provided alpha   ===== %%
+    if isfield(OPTIONS.optional.clustering, 'initial_alpha') && ~isempty(OPTIONS.optional.clustering.initial_alpha)
+        if strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
+            ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1, size(OPTIONS.automatic.Modality(1).selected_jk, 2));
+        else
+            ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1, size(OPTIONS.automatic.Modality(1).data, 2));
+        end
+    
+        obj.ALPHA = ALPHA;
+        return
+    end
+    
+    %% ===== Computing alpha   ===== %%
 
-    %% ===== Double to single precision  ===== %%
+    if OPTIONS.optional.verbose
+        fprintf('%s, initialize alpha...', OPTIONS.mandatory.pipeline);
+    end
+
     [OPTIONS] = be_switch_precision(OPTIONS, 'single');
-
-    if OPTIONS.model.alpha_method < 6
+    if OPTIONS.model.alpha_method < 6   % Initlialize alpha based on MSP
         [ALPHA, CLS, OPTIONS] = be_scores2alpha(obj.SCR, obj.CLS, OPTIONS);
-    else % We compute the score using MNE
+    else                                % Initlialize alpha based on MNE
         [ALPHA, CLS, OPTIONS] = be_mne2alpha(obj , obj.CLS, OPTIONS);
     end
-
-    %% ===== Single to double precision  ===== %%
     [OPTIONS] = be_switch_precision(OPTIONS, 'double');
-
     
-else
-    CLS = obj.CLS;
-    if strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
-        ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1,size(OPTIONS.automatic.Modality(1).selected_jk, 2));
-    else
-        ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1,size(OPTIONS.automatic.Modality(1).data, 2));
+    if OPTIONS.optional.verbose
+        fprintf(' done.\n');
     end
+
+    %% ===== Store the final alpha and clusters ===== %%
+    obj.CLS   = CLS;
+    obj.ALPHA = ALPHA;
 end
-
-% the final clusters (CLS) and alpha's (ALPHA)
-obj.CLS   = CLS;
-obj.ALPHA = ALPHA;
-
-end
-
-
-
-
-
- 

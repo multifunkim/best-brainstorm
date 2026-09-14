@@ -54,7 +54,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
     end
 
     % Check caller and Load data
-    if ~isempty(OPTIONS) && isfield(OPTIONS, 'Comment') && strcmp(OPTIONS.Comment,'Compute sources: BEst')
+    if ~isempty(OPTIONS) && isfield(OPTIONS, 'Comment') && ~isempty(OPTIONS.Comment)
         % Call from the process
         inputData   =   varargin{1};
         DTS         =   {inputData.FileName};
