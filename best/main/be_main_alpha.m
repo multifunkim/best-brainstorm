@@ -37,7 +37,7 @@ function [OPTIONS, obj] = be_main_alpha(obj, OPTIONS)
 % -------------------------------------------------------------------------   
    
     %% ===== User-provided alpha   ===== %%
-    if isfield(OPTIONS.optional.clustering, 'initial_alpha')
+    if isfield(OPTIONS.optional.clustering, 'initial_alpha') && ~isempty(OPTIONS.optional.clustering.initial_alpha)
         if strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
             ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1, size(OPTIONS.automatic.Modality(1).selected_jk, 2));
         else
@@ -49,17 +49,23 @@ function [OPTIONS, obj] = be_main_alpha(obj, OPTIONS)
     end
     
     %% ===== Computing alpha   ===== %%
+
+    if OPTIONS.optional.verbose
+        fprintf('%s, initialize alpha...', OPTIONS.mandatory.pipeline);
+    end
+
     [OPTIONS] = be_switch_precision(OPTIONS, 'single');
-    
-    % Initlialize alpha based on MSP
-    if OPTIONS.model.alpha_method < 6
+    if OPTIONS.model.alpha_method < 6   % Initlialize alpha based on MSP
         [ALPHA, CLS, OPTIONS] = be_scores2alpha(obj.SCR, obj.CLS, OPTIONS);
-    else  % Initlialize alpha based on MNE
+    else                                % Initlialize alpha based on MNE
         [ALPHA, CLS, OPTIONS] = be_mne2alpha(obj , obj.CLS, OPTIONS);
     end
-    
     [OPTIONS] = be_switch_precision(OPTIONS, 'double');
     
+    if OPTIONS.optional.verbose
+        fprintf(' done.\n');
+    end
+
     %% ===== Store the final alpha and clusters ===== %%
     obj.CLS   = CLS;
     obj.ALPHA = ALPHA;

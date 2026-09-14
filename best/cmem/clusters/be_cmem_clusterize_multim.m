@@ -68,13 +68,13 @@ function [CLS, SCR, OPTIONS] = be_cmem_clusterize_multim(obj, OPTIONS)
 % -------------------------------------------------------------------------
 
 
-if strcmp(OPTIONS.clustering.clusters_type,'static')
+if strcmp(OPTIONS.clustering.clusters_type, 'static')
     
     % Stable clustering approach:
     if OPTIONS.optional.verbose
         fprintf('%s, stable clustering ...\n', OPTIONS.mandatory.pipeline);
     end
-        [SCR, CLS, OPTIONS] = be_stable_clustering_multim(obj, OPTIONS);
+    [SCR, CLS, OPTIONS] = be_stable_clustering_multim(obj, OPTIONS);
 
 elseif strcmp(OPTIONS.clustering.clusters_type,'blockwise')
 
