@@ -41,7 +41,7 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha_stable(obj, CLS, OPTIONS)
                                                 
     ALPHA_METHOD = OPTIONS.model.alpha_method;
 
-    % selection of the Kernel and data:
+    % Selection of the Kernel and data:
     if ALPHA_METHOD == 6
         kernel    = be_jmne_normalized(obj, OPTIONS);  
         M         = obj.data_normalized;
@@ -54,12 +54,11 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha_stable(obj, CLS, OPTIONS)
 
     if ~isempty(OPTIONS.automatic.selected_samples)   
         selected_samples = OPTIONS.automatic.selected_samples(1,:);
-        M = M(:,selected_samples);
+        M = M(:, selected_samples);
     end
 
     clusters        = CLS(:, 1);
     nb_clusters     = max(clusters);
-    alpha           = zeros(size(CLS));
     sum_weight_squared = zeros(nb_clusters, size(CLS, 2));
     
     % Pre-compute cluster memberships and sizes to avoid redundant logical indexing
@@ -80,9 +79,10 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha_stable(obj, CLS, OPTIONS)
     sum_norm = sum(sum_weight_squared, 1);
     
     % Assign normalized values to cluster members
+    alpha = zeros(size(CLS));
     for iCluster = 1:nb_clusters
         alpha(cluster_masks(:, iCluster), :) = repmat(sqrt(sum_weight_squared(iCluster, :) ./ sum_norm), cluster_sizes(iCluster), 1);
     end
-    
     alpha(alpha > 0.8) = 1;
+    
 end

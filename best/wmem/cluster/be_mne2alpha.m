@@ -39,30 +39,25 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
                                                 
-    alpha = zeros(size(CLS));
     ALPHA_METHOD = OPTIONS.model.alpha_method;
 
-    % selection of the Kernel:
+    % Selection of the Kernel and data:
     if ALPHA_METHOD == 6
-        kernel    = be_jmne_normalized(obj, OPTIONS);  
+        kernel  = be_jmne_normalized(obj, OPTIONS);
+        M       = obj.data_normalized;
     elseif ALPHA_METHOD == 7
-        kernel = OPTIONS.automatic.Modality(1).MneKernel;
+        kernel  = OPTIONS.automatic.Modality(1).MneKernel;
+        M       = obj.data;
     else
         error('Uknown alpha method: %d', ALPHA_METHOD)
     end
 
-    % selection of the data:
-    if ALPHA_METHOD == 6
-        M = obj.data_normalized;
-    else
-        M = obj.data;
-    end
-
     if ~isempty(OPTIONS.automatic.selected_samples)   
         selected_samples = OPTIONS.automatic.selected_samples(1,:);
-        M = M(:,selected_samples);
+        M = M(:, selected_samples);
     end
 
+    alpha = zeros(size(CLS));
     for iTime = 1:size(CLS,2)
         clusters    = CLS(:, iTime);
         nb_clusters = max(clusters);
@@ -80,7 +75,6 @@ function [alpha, CLS, OPTIONS] = be_mne2alpha(obj, CLS, OPTIONS)
             CLS(idCLS, iTime)   = curr_cls;
             curr_cls            = curr_cls + 1;
         end
-        
     end
     
     alpha(alpha > 0.8) = 1;
