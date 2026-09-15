@@ -15,7 +15,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     end
 
     % Prepare clusters and active probability
-    if strcmp(OPTIONS.clustering.clusters_type, 'static')
+    if strcmp(OPTIONS.clustering.clusters_type, 'static') && OPTIONS.model.alpha_threshold == 0
         clusters            = obj.CLS(:, 1);
         nb_clusters         = max(clusters);
         active_probability  = zeros(nb_clusters, nbSmp);
@@ -109,7 +109,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     end
 
     % Smooth the coveriance matrix along the cortical surface
-    if strcmp(OPTIONS.clustering.clusters_type, 'static')
+    if strcmp(OPTIONS.clustering.clusters_type, 'static') && OPTIONS.model.alpha_threshold == 0
         obj_const.clusters = obj.CLS(:,1);
         if isfield(OPTIONS.optional.clustering, 'initial_sigma')
             [ obj_const.active_var,  obj_const.G_active_var_Gt]   = be_smooth_sigma_s(obj.gain, OPTIONS.optional.clustering.initial_sigma, obj_const.clusters,  obj.GreenM2);
@@ -131,7 +131,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
     % Estimate the active variance 
     % Multiply Signa_s by 5% of the MNE solution
-    if strcmp(OPTIONS.clustering.clusters_type, 'static')
+    if strcmp(OPTIONS.clustering.clusters_type, 'static') && OPTIONS.model.alpha_threshold == 0
         clusters = obj.CLS(:,1);
 
         % Computer the max of MNE accross vertex for each time point
