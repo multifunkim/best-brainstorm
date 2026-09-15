@@ -4,27 +4,45 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     nb_sensors  = size(Data,1); 
     obj_slice(nbSmp)    = struct();
 
-    if OPTIONS.optional.verbose
-        fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
+    fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
+    
+    % Prepare data
+    for iTime = 1:nbSmp
+        obj_slice(iTime).data   = Data(:, iTime);
+        obj_slice(iTime).time   = obj.time(:, iTime);
+        obj_slice(iTime).scale  = obj.scale(:, iTime);
+    end
+
+    % Prepare clusters and active probability
+    if strcmp(OPTIONS.clustering.clusters_type, 'static') && OPTIONS.model.alpha_threshold == 0
+        clusters            = obj.CLS(:, 1);
+        nb_clusters         = max(clusters);
+        active_probability  = zeros(nb_clusters, nbSmp);
+
+        for iCluster = 1:nb_clusters
+            idx_cluster  = find(clusters == iCluster);
+            active_probability(iCluster, :) = obj.ALPHA(idx_cluster(1), :);
+        end
+
+        for iTime = 1:nbSmp
+            obj_slice(iTime).active_probability = active_probability(:, iTime);
+        end
+    else
+        for iTime = 1:nbSmp
+            clusters            = obj.CLS(:, iTime);
+            nb_clusters         = max(clusters);
+            active_probability  = zeros(nb_clusters, 1);
+    
+            for iCluster = 1:nb_clusters
+                idx_cluster  = find(clusters == iCluster);
+                active_probability(iCluster) = obj.ALPHA(idx_cluster(1), iTime);
+            end
+    
+            obj_slice(iTime).active_probability = active_probability;
+        end
     end
 
     for i = 1:nbSmp
-        
-        obj_slice(i).data   = Data(:,i);
-        obj_slice(i).time   = obj.time(:,i);
-        obj_slice(i).scale  = obj.scale(:,i);
-
-        clusters            = obj.CLS(:,i);
-        nb_clusters         = max(clusters);
-        active_probability  = zeros(nb_clusters,1);
-
-        for ii = 1:nb_clusters
-            idx_cluster  = find(clusters == ii);
-            active_probability(ii) = obj.ALPHA(idx_cluster(1),i);
-        end
-
-        obj_slice(i).active_probability = active_probability;
-        
         % estimate active mean
         % Method 1: initialization FROM the null hypothesis (alpha=1, mu=0)
         % Method 2: Method used by Christophe
@@ -87,13 +105,10 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
         else
             obj_const.noise_var = obj.noise_var;
         end
-
     end
 
-
-
     % Smooth the coveriance matrix along the cortical surface
-    if strcmp(OPTIONS.clustering.clusters_type, 'static')
+    if strcmp(OPTIONS.clustering.clusters_type, 'static') && OPTIONS.model.alpha_threshold == 0
         obj_const.clusters = obj.CLS(:,1);
         if isfield(OPTIONS.optional.clustering, 'initial_sigma')
             [ obj_const.active_var,  obj_const.G_active_var_Gt]   = be_smooth_sigma_s(obj.gain, OPTIONS.optional.clustering.initial_sigma, obj_const.clusters,  obj.GreenM2);
@@ -114,14 +129,44 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
 
     % Estimate the active variance 
-    for i = 1:nbSmp
-        clusters = obj.CLS(:,i);
+    % Multiply Signa_s by 5% of the MNE solution
+    if strcmp(OPTIONS.clustering.clusters_type, 'static') && OPTIONS.model.alpha_threshold == 0
+        clusters = obj.CLS(:,1);
 
-        Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(i).data;
-        Jmne = Jmne  ./ max(abs(Jmne));
+        % Computer the max of MNE accross vertex for each time point
+        max_mne = zeros(1, nbSmp);
+        for iCluster = 1:max(clusters)
+            Jmne = OPTIONS.automatic.Modality(1).MneKernel(clusters == iCluster, :) * Data;
+            max_mne = max(max_mne, max(abs(Jmne)));
+        end
 
-        energy      =  accumarray(clusters, Jmne .^ 2, [max(clusters), 1], @(x)mean(x,1));
-        obj_slice(i).mne_energy = OPTIONS.solver.active_var_mult *  energy; 
+        % Computer the MNE energy for each time point for each cluster
+        energy = zeros(max(clusters), nbSmp);
+        for iCluster= 1:max(clusters)
+            Jmne = OPTIONS.automatic.Modality(1).MneKernel(clusters == iCluster, :) * Data;
+            Jmne = Jmne  ./ max_mne;
+
+            energy(iCluster, :)  = OPTIONS.solver.active_var_mult * mean( Jmne.^2 );
+        end
+
+        % Store the result
+        for iTime = 1:nbSmp
+            obj_slice(iTime).mne_energy = energy(:, iTime);            
+        end
+    else
+        for iTime = 1:nbSmp
+            clusters = obj.CLS(:, iTime);
+            energy = zeros(max(clusters), 1);
+
+            Jmne = OPTIONS.automatic.Modality(1).MneKernel * obj_slice(iTime).data;
+            Jmne = Jmne  ./ max(abs(Jmne));
+
+            for iCluster = 1:max(clusters)
+                energy(iCluster) = OPTIONS.solver.active_var_mult * mean(Jmne(clusters == iCluster).^2);        
+            end
+
+            obj_slice(iTime).mne_energy = energy;
+        end
     end
 
     obj_const.gain          = obj.gain;

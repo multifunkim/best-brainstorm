@@ -82,6 +82,8 @@ function [OPTIONS, FLAG, verbose] = be_initialize_options(OPTIONS)
 
     if isfield(OPTIONS.optional, 'BaselineChannels') && isstruct(OPTIONS.optional.BaselineChannels) && ~isempty(OPTIONS.optional.BaselineChannels) && isfield(OPTIONS.optional.BaselineChannels(1), 'Name')
         OPTIONS.optional.BaselineChannels = {OPTIONS.optional.BaselineChannels.Name}; 
+    elseif isfield(OPTIONS.optional, 'BaselineChannels') && isstruct(OPTIONS.optional.BaselineChannels) &&  isfield(OPTIONS.optional.BaselineChannels, 'Channel') && ~isempty(OPTIONS.optional.BaselineChannels.Channel) && isfield(OPTIONS.optional.BaselineChannels.Channel(1), 'Name')
+        OPTIONS.optional.BaselineChannels = {OPTIONS.optional.BaselineChannels.Channel.Name}; 
     end
 
     % Reorder Baseline channels
@@ -106,7 +108,7 @@ function [OPTIONS, FLAG, verbose] = be_initialize_options(OPTIONS)
 
     % Initialize channel flag
     if isfield(OPTIONS.optional, 'ChannelFlag') && length(OPTIONS.optional.ChannelFlag) == size(OPTIONS.mandatory.Data, 1)      
-        OPTIONS.automatic.GoodChannel = find(OPTIONS.optional.ChannelFlag);
+        OPTIONS.automatic.GoodChannel = find(OPTIONS.optional.ChannelFlag == 1);
     end
     
 

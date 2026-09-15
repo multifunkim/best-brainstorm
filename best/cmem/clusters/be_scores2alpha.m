@@ -17,7 +17,7 @@ function [alpha, CLS, OPTIONS] = be_scores2alpha(SCR, CLS, OPTIONS, varargin)
 %
 %   OUTPUTS:
 %       - OPTIONS   : Keep track of parameters
-%       -   ALPHA   : vector of probabilities (1xNparcels)
+%       -   ALPHA   : matrix of probabilities (NvertexsxNtime)
 %       -   CLS     : cell array (1xNparcels). Each cell contains the indices of        
 %                     the sources within that parcel
 %

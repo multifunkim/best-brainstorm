@@ -1,4 +1,4 @@
-function [WData, SData, OPTIONS] = be_discrete_wavelet_transform(Data,OPTIONS,varargin)
+function [WData, SData, OPTIONS] = be_discrete_wavelet_transform(Data, OPTIONS, varargin)
 % BE_DISCRETE_WAVELET_TRANSFORM computes time-frequency decomposition
 %
 %   INPUTS:

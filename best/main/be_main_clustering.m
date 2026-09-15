@@ -36,53 +36,40 @@ function [OPTIONS, obj] = be_main_clustering(obj, OPTIONS)
 %    You should have received a copy of the GNU General Public License
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
-   
-if ~isfield(OPTIONS.optional.clustering, 'initial_alpha')
-    % Sources prescoring - MSP (ref. Mattout et al. 2006) and clustering
-    % following different strategies depending of the case cmem, wmem or
-    % rmem
 
-    %% ===== Double to single precision  ===== %%
+   %% ===== User-provided clusters   ===== %%
+    if isfield(OPTIONS.optional.clustering, 'clusters') && ~isempty(OPTIONS.optional.clustering.clusters)
+        if strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
+            CLS   = OPTIONS.optional.clustering.clusters * ones(1,size(OPTIONS.automatic.Modality(1).selected_jk, 2));
+            SCR   = [];
+        else
+            CLS   = OPTIONS.optional.clustering.clusters * ones(1,size(OPTIONS.automatic.Modality(1).data, 2));
+            SCR   = [];
+        end
+
+        % the final scores (SCR), clusters (CLS)
+        obj.SCR   = SCR;
+        obj.CLS   = CLS;
+        
+        return;
+    end
+
+    %% ===== Sources prescoring - MSP (ref. Mattout et al. 2006) and clustering  ===== %%
+
     [OPTIONS] = be_switch_precision(OPTIONS, 'single');
-
     switch OPTIONS.mandatory.pipeline
         case 'cMEM'
             [CLS, SCR, OPTIONS] = be_cmem_clusterize_multim(obj, OPTIONS); 
-            [ALPHA, CLS, OPTIONS]   = be_scores2alpha(SCR, CLS, OPTIONS);
         case 'wMEM'
             [CLS, SCR, OPTIONS] = be_wmem_clusterize_multim(obj, OPTIONS);
-
-            if OPTIONS.model.alpha_method < 6
-                [ALPHA, CLS, OPTIONS] = be_scores2alpha(SCR, CLS, OPTIONS);
-            else % We compute the score using MNE
-                [ALPHA, CLS, OPTIONS] = be_mne2alpha(obj , CLS, OPTIONS);
-            end
-
         case 'rMEM'
             [CLS, SCR, OPTIONS] = be_rmem_clusterize_multim(obj, OPTIONS);
-            [ALPHA, CLS, OPTIONS]   = be_scores2alpha(SCR, CLS, OPTIONS);
-
     end   
-
-    %% ===== Single to double precision  ===== %%
     [OPTIONS] = be_switch_precision(OPTIONS, 'double');
-
     
-elseif strcmp( OPTIONS.mandatory.pipeline, 'wMEM' )
-    ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1,size(OPTIONS.automatic.Modality(1).selected_jk, 2));
-    CLS   = OPTIONS.optional.clustering.clusters * ones(1,size(OPTIONS.automatic.Modality(1).selected_jk, 2));
-    SCR   = [];
-    
-else
-    ALPHA = OPTIONS.optional.clustering.initial_alpha * ones(1,size(OPTIONS.automatic.Modality(1).data, 2));
-    CLS   = OPTIONS.optional.clustering.clusters * ones(1,size(OPTIONS.automatic.Modality(1).data, 2));
-    SCR   = [];
-end
-
-% the final scores (SCR), clusters (CLS) and alpha's (ALPHA)
-obj.SCR   = SCR;
-obj.CLS   = CLS;
-obj.ALPHA = ALPHA;
+    % the final scores (SCR), clusters (CLS) and alpha's (ALPHA)
+    obj.SCR   = SCR;
+    obj.CLS   = CLS;
 
 end
 

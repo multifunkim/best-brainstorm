@@ -127,9 +127,15 @@ for ii = 1 : nNEWdata
     [OPTIONS2, obj] = be_main_data_preprocessing(obj, OPTIONS2);
 
     %% ===== Clusterize cortical surface ===== %%
-    
     [OPTIONS2, obj] = be_main_clustering(obj, OPTIONS2);
+
+    %% ===== Fuse modalities ===== %%   
+    obj = be_fusion_of_modalities(obj, OPTIONS);
     
+    %% ===== Set Alpha ===== %%
+    % Set Alpha value for each cluster
+    [OPTIONS, obj] = be_main_alpha(obj, OPTIONS);
+
     %% ===== pre-processing for spatial smoothing (Green mat. square) ===== %%
     % matrix W'W from the Henson paper
     [OPTIONS2, obj.GreenM2] = be_spatial_priorw( OPTIONS2, obj.VertConn);
@@ -166,7 +172,7 @@ if OPTIONS.optional.waitbar
     pause(.5); close(obj.hmem);
 end
 
-if ~OPTIONS.automatic.stand_alone | OPTIONS.automatic.process                                 
+if ~OPTIONS.automatic.stand_alone || OPTIONS.automatic.process                                 
 	
  	% If added to a 'default_study' node: need to update results links12 30
 	OPTIONS.automatic           =   OPTIONS2.automatic;
