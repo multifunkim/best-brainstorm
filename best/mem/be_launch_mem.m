@@ -156,11 +156,11 @@ function [R, E, A, S] = MEM_mainLoop(ii, obj, obj_const, OPTIONS)
     
     if ~sum(obj.clusters)
         if OPTIONS.optional.verbose
-            disp(['MEM warning: The distributed dipoles could not be clusterized at sample ' num2str(ii) '. (null solution returned)']);
+            fprintf('MEM warning: The distributed dipoles could not be clusterized at sample %d. (null solution returned) \n', ii);
         end
         
         % Save empty solution
-        R   = zeros( size(obj.iModS) );
+        R   = zeros(1, obj.nb_sources);
         E   = NaN; A   = NaN; S   = [];
         return;
     end
@@ -185,8 +185,6 @@ function [R, E, A, S] = MEM_mainLoop(ii, obj, obj_const, OPTIONS)
     if any(isnan(J))
         fprintf('killed\n');
         J(isnan(J)) = 0;
-
-        
     elseif OPTIONS.optional.verbose
         fprintf('\n\t\t%3d clusters,\n\t\t%3d iter.\n\t\tEntropy drop:%4.1f\n',nclus, niter, entropy_drop); 
     end
