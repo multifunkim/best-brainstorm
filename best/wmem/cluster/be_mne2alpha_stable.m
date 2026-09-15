@@ -1,4 +1,4 @@
-function [alpha, OPTIONS] = be_mne2alpha(obj, OPTIONS)
+function [alpha, OPTIONS] = be_mne2alpha_stable(obj, CLS, OPTIONS)
 % BE_GAIN2ALPHA computes the initial probability of a parcel being active in 
 %   the MEM using the % of MNE energy within each parcels
 %
@@ -41,8 +41,8 @@ function [alpha, OPTIONS] = be_mne2alpha(obj, OPTIONS)
 
     % Selection of the Kernel and data:
     if ALPHA_METHOD == 6
-        kernel  = be_jmne_normalized(obj, OPTIONS);
-        M       = obj.data_normalized;
+        kernel    = be_jmne_normalized(obj, OPTIONS);  
+        M         = obj.data_normalized;
     elseif ALPHA_METHOD == 7
         kernel  = OPTIONS.automatic.Modality(1).MneKernel;
         M       = obj.data;
@@ -55,20 +55,32 @@ function [alpha, OPTIONS] = be_mne2alpha(obj, OPTIONS)
         M = M(:, selected_samples);
     end
 
-    alpha = zeros(size(CLS));
-    for iTime = 1:size(CLS,2)
-        clusters    = CLS(:, iTime);
-        nb_clusters = max(clusters);
-        weight_alpha    = kernel * M(:, iTime);
+    clusters        = CLS(:, 1);
+    nb_clusters     = max(clusters);
+    sum_weight_squared = zeros(nb_clusters, size(CLS, 2));
     
-        for iCluster = 1:nb_clusters
-            idCLS = (clusters == iCluster);
-    
-            WSjj                = weight_alpha.^2;
-            WSjj_ii             = WSjj(idCLS); 
-            alpha(idCLS, iTime) = sqrt((sum(WSjj_ii) / sum(WSjj)));
-        end
+    % Pre-compute cluster memberships and sizes to avoid redundant logical indexing
+    cluster_masks = false(length(clusters), nb_clusters);
+    for iCluster = 1:nb_clusters
+        cluster_masks(:, iCluster) = (clusters == iCluster);
+    end
+    cluster_sizes = sum(cluster_masks, 1);
+
+    % Compute weighted squared sums for each cluster
+    for iCluster = 1:nb_clusters
+        weight_alpha = kernel(cluster_masks(:, iCluster), :) * M;
+        weight_squared = weight_alpha.^2;
+        sum_weight_squared(iCluster, :) = sum(weight_squared, 1);
     end
     
+    % Normalize by total across all clusters
+    sum_norm = sum(sum_weight_squared, 1);
+    
+    % Assign normalized values to cluster members
+    alpha = zeros(size(CLS));
+    for iCluster = 1:nb_clusters
+        alpha(cluster_masks(:, iCluster), :) = repmat(sqrt(sum_weight_squared(iCluster, :) ./ sum_norm), cluster_sizes(iCluster), 1);
+    end
     alpha(alpha > 0.8) = 1;
+
 end
