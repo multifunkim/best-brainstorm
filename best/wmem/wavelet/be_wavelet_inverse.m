@@ -79,7 +79,7 @@ elseif strcmp(OPTIONS.wavelet.type,'rdw')
 
     filtre = be_get_filter(filtre);
     
-    if OPTIONS.solver.parallel_matlab || ( be_canUseParallelPool()  && Ns > 1000)
+    if OPTIONS.solver.parallel_matlab || (Ns > 1000 && be_canUseParallelPool())
         
         try 
 
