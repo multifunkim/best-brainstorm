@@ -33,9 +33,9 @@ function inv_proj = be_wavelet_inverse_projection_fast(obj,OPTIONS)
         [nz_row, nz_cols, nz_vals] = find(inv_wavelet);  % Find non-zero positions and values
         
         % Calculate shift amounts for ALL boxes at once
-        shift_amounts = shifting * (ref_transl(iScale) - transls(:));  % [num_boxes, 1]
+        shift_amounts = shifting * (ref_transl(iScale) - transls(:));
         
-        % Vectorized: compute new columns (broadcasts to [num_boxes, num_nz])
+        % Vectorized: compute new columns
         new_cols = mod(nz_cols - shift_amounts - 1, nbSmpTime) + 1;
 
         % Accumulate indices and values
@@ -65,6 +65,7 @@ function [iBoxesRef, mother_wavelet] = prepare_wavelet(nbSmpTime, OPTIONS)
             
         % find all translations for the scale
         translations = sort(all_transls(tmp));
+        % select a translation far from the edge
         selected_translation = translations(round(length(tmp) / 2));
 
         iBoxesRef(iScale) = find(all_scales == unique_scales(iScale) & all_transls == selected_translation, 1);
