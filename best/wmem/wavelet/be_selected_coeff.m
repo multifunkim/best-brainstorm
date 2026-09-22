@@ -44,18 +44,16 @@ function [OPTIONS] = be_selected_coeff(WM, obj, OPTIONS)
 % -------------------------------------------------------------------------   
 
 % === Initialize the parameters
-% number of scales (total)
-nbl = size(OPTIONS.automatic.scales,2);
-% number of time samples (extended)
-nbb = size(WM{1},2);
-% number of channels
-nbc = size(WM{1},1);
+nScale          = size(OPTIONS.automatic.scales,2);
+nSampleExtended = size(WM{1}, 2);
+nboxes          = nSampleExtended * ( 1 - 2^(-nScale));
+
 % time t0 in the extended data
-fs = OPTIONS.automatic.sampling_rate;
+fs          = OPTIONS.automatic.sampling_rate;
 t0_extended = obj.t0 - (obj.info_extension.start -1)/fs;
 
 % === Table of selection
-selected_jk = struct([]);
+selected_values = cell(1, length(OPTIONS.mandatory.DataTypes));
 
 % we keep 99pc of power for EEG/MEG, 100% of power for fNIRS
 if any(strcmp(OPTIONS.mandatory.DataTypes,'NIRS'))
@@ -64,41 +62,51 @@ else
     pc_power    = 0.99;
 end
 
-for jj = 1 : length(OPTIONS.mandatory.DataTypes)
-    i_kept = [];
-    j_kept = [];
-    k_kept = [];
-    t_kept = [];
-    Wgfp   = [];
-    selected_jk{jj} = [];
-    for j=1:nbl
-        deb    = 1+nbb/2^j + 2;
-        fin    = nbb/2^(j-1)-2;
-        Wgfp   = [Wgfp (sum(abs(WM{jj}(:,deb:fin)).^2,1)/nbc)];
-        i_kept = [i_kept deb:fin];
-        j_kept = [j_kept j*ones(1,length(deb:fin))];
-        k_kept = [k_kept (deb-nbb/2^j):(fin-nbb/2^j)];
-        t_kept = [t_kept t0_extended+(2^(j-1))*(2*((deb-nbb/2^j):(fin-nbb/2^j))-1)/fs ];
+for iMod = 1 : length(OPTIONS.mandatory.DataTypes)
+
+    selected_jk  = zeros(3, nboxes);
+    t_kept       = zeros(1, nboxes);
+    Wgfp         = zeros(1, nboxes);
+
+    k = 1;
+    for iScale=1:nScale
+        
+        scale_start     = 1+nSampleExtended/2^iScale + 2;
+        scale_end       = nSampleExtended/2^(iScale-1) - 2;
+        nSample         = 1+ scale_end - scale_start;   
+        
+        data = WM{iMod}(:, scale_start:scale_end);
+
+        Wgfp(k:(k+nSample-1))             = mean(abs(data).^2, 1);
+        selected_jk(1, k:(k+nSample-1))   = scale_start:scale_end;
+        selected_jk(2, k:(k+nSample-1))   = iScale;
+        selected_jk(3, k:(k+nSample-1))   = (scale_start-nSampleExtended/2^iScale):(scale_end-nSampleExtended/2^iScale);
+        t_kept(k:(k+nSample-1))           = t0_extended+(2^(iScale-1))*(2*((scale_start-nSampleExtended/2^iScale):(scale_end-nSampleExtended/2^iScale))-1)/fs;
+
+        k = k + nSample;
     end
     
+    % Trim the array -- because of the +2, -2 on line 77, 78.
+    Wgfp        = Wgfp(1:(k-1));
+    selected_jk = selected_jk(:, 1:(k-1));
+    t_kept      = t_kept(1:(k-1));
+
     % === selection (based on the power)
     [Wgfp_sorted, I] = sort(Wgfp,'descend');
-    Ic = find(cumsum(Wgfp_sorted)/sum(Wgfp_sorted) <= pc_power,1,'last');
-    i_kept = i_kept(I(1:Ic));
-    j_kept = j_kept(I(1:Ic));
-    k_kept = k_kept(I(1:Ic));
-    t_kept = t_kept(I(1:Ic));
-    e_kept = 100*Wgfp(I(1:Ic))/sum(Wgfp(I(1:Ic)));
+    Ic               = find(cumsum(Wgfp_sorted)/sum(Wgfp) <= pc_power,1,'last');
+
     % what we finally keep:
-    selected_jk{jj} = [i_kept ; j_kept ; k_kept ];
-    
+    selected_jk = selected_jk(:, I(1:Ic));
+    Wgfp        = Wgfp(I(1:Ic));
+    t_kept      = t_kept(I(1:Ic));
+
     % MSP windows (in the true data samples -not extended-)
-    win_l = max((selected_jk{jj}(3,:)-1).*(2.^selected_jk{jj}(2,:))+1,obj.info_extension.start) - obj.info_extension.start +1;
-    win_r = min( selected_jk{jj}(3,:).*(2.^selected_jk{jj}(2,:)),obj.info_extension.end)        - obj.info_extension.start +1;
+    win_l = max((selected_jk(3,:)-1).*(2.^selected_jk(2,:))+1,obj.info_extension.start) - obj.info_extension.start +1;
+    win_r = min( selected_jk(3,:).*(2.^selected_jk(2,:)),obj.info_extension.end)        - obj.info_extension.start +1;
 
     % === what we keep, finally:
-    OPTIONS.automatic.Modality(jj).selected_jk = [selected_jk{jj} ; win_l ; win_r ; t_kept];
-    selected_values{jj} = [Wgfp_sorted(1:Ic) ; e_kept];
+    OPTIONS.automatic.Modality(iMod).selected_jk = [selected_jk ; win_l ; win_r ; t_kept];
+    selected_values{iMod} = [Wgfp ;  100 * Wgfp  / sum(Wgfp)];
 end
 
 % we keep the selection in the OPTIONS
@@ -149,7 +157,7 @@ if OPTIONS.wavelet.single_box
 end
 
 if OPTIONS.optional.verbose
-    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d.\n', OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.selected_samples,2), nbb);
+    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d.\n', OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.selected_samples,2), nSampleExtended);
 end
 
 end
