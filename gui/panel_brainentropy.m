@@ -77,21 +77,21 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
 
         OPTIONS = be_struct_copy_fields(OPTIONS,be_main,[],0);
 
-    elseif numel(varargin)==0
+    elseif numel(varargin) == 0
+        
         % Call from the GUI
         bstPanel        = bst_get('Panel', 'Protocols');
         jTree           = get(bstPanel,'sControls');
-        selectedPaths   = awtinvoke(jTree.jTreeProtocols, 'getSelectionPaths()');
+        selectedPaths   = jTree.jTreeProtocols.getSelectionPaths();
         SUBJ={}; DTS={};STD=[];
         for ii = 1 : numel( selectedPaths )
-            last    = awtinvoke( selectedPaths(ii), 'getLastPathComponent');
+            last    = selectedPaths(ii).getLastPathComponent();
             DTS{ii} = char(last.getFileName);
             curS    = strrep( bst_fileparts( bst_fileparts( DTS{ii} ) ), filesep, '' );
             SUBJ    = [SUBJ {curS}];
             [st,is] = bst_get('Study', fullfile( bst_fileparts(DTS{ii}), 'brainstormstudy.mat' ) );
             STD     = [STD is];
         end
-
 
         ChannelTypes = st.Channel.Modalities; 
         ChannelFile  = st.Channel.FileName; 
