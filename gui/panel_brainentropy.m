@@ -57,10 +57,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
     if ~isempty(OPTIONS) && isfield(OPTIONS, 'Comment') && ~isempty(OPTIONS.Comment)
         % Call from the process
         inputData   =   varargin{1};
-        DTS         =   {inputData.FileName};
-        SUBJ        =   cellfun( @(a) strrep( bst_fileparts( bst_fileparts( a ) ), filesep, '' ), DTS, 'uni', 0 );
-        [~, STD]    =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), DTS, 'uni', 0 );
-        STD         =   cell2mat( STD );
+        FileName    =   {inputData.FileName};
+        subjectList        =   cellfun( @(a) strrep( bst_fileparts( bst_fileparts( a ) ), filesep, '' ), FileName, 'uni', 0 );
+        [~, studyList]    =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), FileName, 'uni', 0 );
+        studyList         =   cell2mat( studyList );
         
         ChannelTypes = inputData(1).ChannelTypes;  
         ChannelFile  = inputData(1).ChannelFile; 
@@ -77,21 +77,28 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
 
         OPTIONS = be_struct_copy_fields(OPTIONS,be_main,[],0);
 
-    elseif numel(varargin)==0
+    elseif numel(varargin) == 0
+        
         % Call from the GUI
         bstPanel        = bst_get('Panel', 'Protocols');
         jTree           = get(bstPanel,'sControls');
-        selectedPaths   = awtinvoke(jTree.jTreeProtocols, 'getSelectionPaths()');
-        SUBJ={}; DTS={};STD=[];
-        for ii = 1 : numel( selectedPaths )
-            last    = awtinvoke( selectedPaths(ii), 'getLastPathComponent');
-            DTS{ii} = char(last.getFileName);
-            curS    = strrep( bst_fileparts( bst_fileparts( DTS{ii} ) ), filesep, '' );
-            SUBJ    = [SUBJ {curS}];
-            [st,is] = bst_get('Study', fullfile( bst_fileparts(DTS{ii}), 'brainstormstudy.mat' ) );
-            STD     = [STD is];
-        end
+        jSelectedFiles  = java_call(jTree.jTreeProtocols, 'getSelectionPaths');
+        nSelectedFiles  = length(jSelectedFiles);
 
+        subjectList     = cell(1, nSelectedFiles); 
+        FileName    = cell(1, nSelectedFiles);
+        studyList       = cell(1, nSelectedFiles);
+
+        for iFile = 1 : nSelectedFiles
+            filepath    = char(java_call(java_call(jSelectedFiles(iFile),'getLastPathComponent'), 'getFileName'));
+
+            FileName{iFile} = filepath;
+            curS    = strrep( bst_fileparts( bst_fileparts( filepath) ), filesep, '' );
+            subjectList{iFile} = curS;
+            
+            [st,is] = bst_get('Study', fullfile( bst_fileparts(FileName{iFile}), 'brainstormstudy.mat' ) );
+            studyList{iFile}  = is;
+        end
 
         ChannelTypes = st.Channel.Modalities; 
         ChannelFile  = st.Channel.FileName; 
@@ -113,9 +120,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
     jTXTver =   JTextField(OPTIONS.automatic.version);
     jTXTupd =   JTextField(OPTIONS.automatic.last_update);
 
-    MEMglobal.DataToProcess = DTS;
-    MEMglobal.SubjToProcess = SUBJ;
-    MEMglobal.StudToProcess = STD;
+    MEMglobal.DataToProcess = FileName;
+    MEMglobal.SubjToProcess = subjectList;
+    MEMglobal.StudToProcess = studyList;
     
     % Constants
     TEXT_WIDTH      = 60;
@@ -1175,6 +1182,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
 
         % Release mutex and keep the panel opened
         bst_mutex('release', panelName);
+
+        if bst_plugin('CompareVersions',  bst_get('Version').Version , '3.261008') >= 0 
+            gui_release_dialog(panelName);
+        end
+
         be_print_best(OPTIONS);
     end
 
