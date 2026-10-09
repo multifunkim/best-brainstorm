@@ -82,7 +82,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         % Call from the GUI
         bstPanel        = bst_get('Panel', 'Protocols');
         jTree           = get(bstPanel,'sControls');
-        jSelectedFiles  = jTree.jTreeProtocols.getSelectionPaths();
+        jSelectedFiles  = java_call(jTree.jTreeProtocols, 'getSelectionPaths');
         nSelectedFiles  = length(jSelectedFiles);
 
         subjectList     = cell(1, nSelectedFiles); 
@@ -90,7 +90,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         studyList       = cell(1, nSelectedFiles);
 
         for iFile = 1 : nSelectedFiles
-            filepath    = char(jSelectedFiles(iFile).getLastPathComponent().getFileName());
+            filepath    = char(java_call(java_call(jSelectedFiles(iFile),'getLastPathComponent'), 'getFileName'));
 
             FileName{iFile} = filepath;
             curS    = strrep( bst_fileparts( bst_fileparts( filepath) ), filesep, '' );
