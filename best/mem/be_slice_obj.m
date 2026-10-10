@@ -2,7 +2,6 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
 
     nbSmp       = size(Data,2); 
     nb_sensors  = size(Data,1); 
-
     obj_slice(nbSmp)    = struct();
 
     fprintf('%s, finalizing MEM prior ...', OPTIONS.mandatory.pipeline);
@@ -169,7 +168,6 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
             obj_slice(iTime).mne_energy = energy;
         end
     end
-    
 
     obj_const.gain          = obj.gain;
     obj_const.nb_sources    = obj.nb_sources;
@@ -185,12 +183,26 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
     if strcmpi(OPTIONS.solver.Optim_method, 'fminunc') && ...
        license('test', 'Optimization_Toolbox') && ...
        exist('fminunc', 'file')
+        
+        if OPTIONS.solver.useHessian
+            OPTIONS.solver.optimoptions =   optimoptions('fminunc',...
+                                                    'MaxIter', 1000, ...
+                                                    'MaxFunEvals', 1000, ...
+                                                    'algorithm', 'trust-region', ...
+                                                    'SpecifyObjectiveGradient',true, ...
+                                                    'GradObj', 'on', ...
+                                                    'HessianFcn', 'objective', ...
+                                                    'Display', 'off');  
 
-        OPTIONS.solver.optimoptions =   optimoptions('fminunc','GradObj', 'on', ...
-                                                    'MaxIter', MAX_ITER, ...
-                                                    'MaxFunEvals', MAX_ITER, ...
-                                                    'algorithm', 'quasi-newton',... % 'quasi-newton' trust-region'
-                                                    'Display', 'off' );
+
+        else
+
+            OPTIONS.solver.optimoptions =   optimoptions('fminunc','GradObj', 'on', ...
+                                                        'MaxIter', MAX_ITER, ...
+                                                        'MaxFunEvals', MAX_ITER, ...
+                                                        'algorithm', 'quasi-newton',... % 'quasi-newton' trust-region'
+                                                        'Display', 'off' );
+        end
     else
 
         if strcmpi(OPTIONS.solver.Optim_method, 'fminunc')
@@ -212,6 +224,7 @@ function [OPTIONS, obj_slice, obj_const] = be_slice_obj(Data, obj, OPTIONS)
         OPTIONS.solver.optimoptions = options;
     end
 
-    fprintf('done. \n');
-
+    if OPTIONS.optional.verbose
+        fprintf('done. \n');    
+    end
 end
