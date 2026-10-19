@@ -552,9 +552,13 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         JViewOscillation = gui_component('button', jPanel, [], 'Visualize Time-Frequency', [], [], @(~,~) VisualizeOscillation(), []);
 
 
+        jLocalizeScale = gui_component('checkbox', jPanel, [], 'Localize scaling coeficients', [], [], [], []);
+
+
         ctrl = struct('JPanelnwav',jPanel,...
                      'jBoxWAVsc', jBoxWAVsc, ...
                      'JViewOscillation', JViewOscillation, ...
+                     'jLocalizeScale', jLocalizeScale, ...
                      'jWavScales', jBoxWAVsc);
     end
 
@@ -1075,6 +1079,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
             ctrl.jWavScales.setSelectedIndex(1);
         end
 
+        % Options to localize scaling coefficients
+        ctrl.jLocalizeScale.setSelected(OPTIONS.wavelet.localize_scales);
+
+
         % OPTIONS from CreatePanelSynchrony()
 
         if ~isempty(OPTIONS.ridges.frequency_range)
@@ -1140,6 +1148,7 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         ctrl.jWavShrinkage.setText(num2str(OPTIONS.wavelet.shrinkage))
         ctrl.jWavOrder.setText(num2str(OPTIONS.wavelet.order))
         ctrl.jWavLevels.setText(num2str(OPTIONS.wavelet.nb_levels))
+        
 
         % OPTIONS from CreatePanelRidge()
 
@@ -1955,7 +1964,10 @@ function s = GetPanelContents(varargin)
             end
             MEMpaneloptions.wavelet.selected_scales = eval(['[' SCL ']']);
         end
-        
+
+        % Options to localize scaling coefficients
+        MEMpaneloptions.wavelet.localize_scales = ctrl.jLocalizeScale.isSelected();
+
     elseif strcmp(MEMpaneloptions.mandatory.pipeline, 'rMEM')
 
         MEMpaneloptions.ridges.scalo_threshold       =   str2double( ctrl.jRDGscaloth.getText() );

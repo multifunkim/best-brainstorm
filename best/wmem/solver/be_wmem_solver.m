@@ -157,7 +157,31 @@ if ~OPTIONS.wavelet.single_box
 end
 
 %% ===== Update Comment ===== %%
-OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ')'];
+
+if OPTIONS.wavelet.localize_scales
+    OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ' + scaling)'];
+else
+    OPTIONS.automatic.Comment = [OPTIONS.automatic.Comment ' DWT(j' num2str(OPTIONS.wavelet.selected_scales) ')'];
+end
+
+%% ===== Solve the MEM on the scaling coeficient ===== %%
+
+if OPTIONS.wavelet.localize_scales
+    [obj_scaling, OPTIONS_scaling] = be_main_wmem_scaling(obj, OPTIONS);
+    if OPTIONS_scaling.optional.display
+        be_display_entropy_drops(obj_scaling,OPTIONS_scaling);
+    end
+    
+    % Merge the output with the regular scale
+    if OPTIONS.output.save_factor
+        obj.ImageGridAmp{1} = [obj.ImageGridAmp{1}, obj_scaling.ImageGridAmp];
+        obj.ImageGridAmp{2} = [obj.ImageGridAmp{2}; obj_scaling.inv_proj];
+    else
+        obj.ImageGridAmp = obj.ImageGridAmp + (obj_scaling.ImageGridAmp * obj_scaling.inv_proj);
+    end
+
+end
+
 
 % Results
 Results = be_template('resultsmat');

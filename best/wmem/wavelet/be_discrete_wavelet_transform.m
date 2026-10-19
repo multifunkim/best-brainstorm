@@ -65,9 +65,16 @@ switch (OPTIONS.wavelet.type)
         else
             filter = ['rdw' num2str(OPTIONS.wavelet.vanish_moments)];
         end
+        
         [~,No] = size(Data);
         Nj    = fix(log2(No));
         Njs   = max(Nj-3,1);
+
+        % Restrain the decomposition to the largest selected scale
+        if ~isempty(OPTIONS.wavelet.selected_scales)
+            Njs   = min(Njs, max(OPTIONS.wavelet.selected_scales));
+        end
+        
         SData = zeros(size(Data));
 
         [WData, Winfo ] = be_dwanalysis( Data, Njs, filter );
