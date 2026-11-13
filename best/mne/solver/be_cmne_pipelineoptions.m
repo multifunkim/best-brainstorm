@@ -11,13 +11,6 @@ function DEF = be_cmne_pipelineoptions(DataTypes)
             DEF.mandatory.DataTypes = DataTypes;
         end
 
-        % Datatypes
-        if ischar(DataTypes)
-            DEF.mandatory.DataTypes = {DataTypes};
-        else
-            DEF.mandatory.DataTypes = DataTypes;
-        end
-        
         % clustering
         DEF.clustering.clusters_type     	= 'static';
         DEF.solver.mne_method               = 'mne_lcurve';
