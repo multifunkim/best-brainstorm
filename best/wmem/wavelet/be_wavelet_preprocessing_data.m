@@ -31,24 +31,25 @@ function [obj, OPTIONS] = be_wavelet_preprocessing_data(obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-obj.data_type = 'discrete_wavelet';
-% we then wavelet transform the data (that are xtended to the next power 2)
-for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
-    [obj.data{ii}, obj.info_extension] = be_extended_dyadic(OPTIONS.automatic.Modality(ii).data);
-    [obj.data{ii}, obj.scaling_data{ii}, OPTIONS] = be_discrete_wavelet_transform(obj.data{ii}, OPTIONS);
-end
-
-% we wavelet denoise (if selected) 
-% Equation (3) in ref.[1]
-if OPTIONS.wavelet.shrinkage
+    obj.data_type = 'discrete_wavelet';
+    % we then wavelet transform the data (that are xtended to the next power 2)
     for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
-         if OPTIONS.optional.verbose
-         fprintf('%s, wavelet processing of the %s\n',OPTIONS.mandatory.pipeline,OPTIONS.mandatory.DataTypes{ii});
-         end
-        [W,C] = be_whittening_dewhittening_matrices(OPTIONS.automatic.Modality(ii).data);
-        [obj.data{ii}, OPTIONS] = be_wdenoise_csoft(obj.data{ii}, W, C, OPTIONS);
+        [obj.data{ii}, obj.info_extension] = be_extended_dyadic(OPTIONS.automatic.Modality(ii).data);
+        [obj.data{ii}, obj.scaling_data{ii}, OPTIONS] = be_discrete_wavelet_transform(obj.data{ii}, OPTIONS);
     end
+    
+    % we wavelet denoise (if selected) 
+    % Equation (3) in ref.[1]
+    if OPTIONS.wavelet.shrinkage
+        for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
+             if OPTIONS.optional.verbose
+             fprintf('%s, wavelet processing of the %s\n',OPTIONS.mandatory.pipeline,OPTIONS.mandatory.DataTypes{ii});
+             end
+            [W,C] = be_whittening_dewhittening_matrices(OPTIONS.automatic.Modality(ii).data);
+            [obj.data{ii}, OPTIONS] = be_wdenoise_csoft(obj.data{ii}, W, C, OPTIONS);
+        end
+    end
+    
+    % selection of boxes with power
+    [OPTIONS] = be_selected_coeff(obj.data, obj, OPTIONS);
 end
-% selection of boxes with power
-[OPTIONS] = be_selected_coeff(obj.data, obj, OPTIONS);
-return

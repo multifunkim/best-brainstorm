@@ -57,10 +57,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
     if ~isempty(OPTIONS) && isfield(OPTIONS, 'Comment') && ~isempty(OPTIONS.Comment)
         % Call from the process
         inputData   =   varargin{1};
-        DTS         =   {inputData.FileName};
-        SUBJ        =   cellfun( @(a) strrep( bst_fileparts( bst_fileparts( a ) ), filesep, '' ), DTS, 'uni', 0 );
-        [~, STD]    =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), DTS, 'uni', 0 );
-        STD         =   cell2mat( STD );
+        FileName    =   {inputData.FileName};
+        subjectList        =   cellfun( @(a) strrep( bst_fileparts( bst_fileparts( a ) ), filesep, '' ), FileName, 'uni', 0 );
+        [~, studyList]    =   cellfun( @(a) bst_get('Study', fullfile( bst_fileparts(a), 'brainstormstudy.mat' ) ), FileName, 'uni', 0 );
+        studyList         =   cell2mat( studyList );
         
         ChannelTypes = inputData(1).ChannelTypes;  
         ChannelFile  = inputData(1).ChannelFile; 
@@ -77,21 +77,28 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
 
         OPTIONS = be_struct_copy_fields(OPTIONS,be_main,[],0);
 
-    elseif numel(varargin)==0
+    elseif numel(varargin) == 0
+        
         % Call from the GUI
         bstPanel        = bst_get('Panel', 'Protocols');
         jTree           = get(bstPanel,'sControls');
-        selectedPaths   = awtinvoke(jTree.jTreeProtocols, 'getSelectionPaths()');
-        SUBJ={}; DTS={};STD=[];
-        for ii = 1 : numel( selectedPaths )
-            last    = awtinvoke( selectedPaths(ii), 'getLastPathComponent');
-            DTS{ii} = char(last.getFileName);
-            curS    = strrep( bst_fileparts( bst_fileparts( DTS{ii} ) ), filesep, '' );
-            SUBJ    = [SUBJ {curS}];
-            [st,is] = bst_get('Study', fullfile( bst_fileparts(DTS{ii}), 'brainstormstudy.mat' ) );
-            STD     = [STD is];
-        end
+        jSelectedFiles  = java_call(jTree.jTreeProtocols, 'getSelectionPaths');
+        nSelectedFiles  = length(jSelectedFiles);
 
+        subjectList     = cell(1, nSelectedFiles); 
+        FileName    = cell(1, nSelectedFiles);
+        studyList       = cell(1, nSelectedFiles);
+
+        for iFile = 1 : nSelectedFiles
+            filepath    = char(java_call(java_call(jSelectedFiles(iFile),'getLastPathComponent'), 'getFileName'));
+
+            FileName{iFile} = filepath;
+            curS    = strrep( bst_fileparts( bst_fileparts( filepath) ), filesep, '' );
+            subjectList{iFile} = curS;
+            
+            [st,is] = bst_get('Study', fullfile( bst_fileparts(FileName{iFile}), 'brainstormstudy.mat' ) );
+            studyList{iFile}  = is;
+        end
 
         ChannelTypes = st.Channel.Modalities; 
         ChannelFile  = st.Channel.FileName; 
@@ -113,9 +120,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
     jTXTver =   JTextField(OPTIONS.automatic.version);
     jTXTupd =   JTextField(OPTIONS.automatic.last_update);
 
-    MEMglobal.DataToProcess = DTS;
-    MEMglobal.SubjToProcess = SUBJ;
-    MEMglobal.StudToProcess = STD;
+    MEMglobal.DataToProcess = FileName;
+    MEMglobal.SubjToProcess = subjectList;
+    MEMglobal.StudToProcess = studyList;
     
     % Constants
     TEXT_WIDTH      = 60;
@@ -856,15 +863,24 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         jPanel.add('tab', jTxtWAVvm);
         
         % Shrinkage
-        jTxtWAVsh  = JTextField( num2str(OPTIONS.wavelet.shrinkage) );
-        jTxtWAVsh.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
-        jTxtWAVsh.setHorizontalAlignment(JTextField.RIGHT);
-        jTxtWAVsh.setToolTipText('<HTML><B>DWT denoising</B>:<BR>0 = no denoising<BR>1 = soft denoising (remove low energy coeff.)</HTML>');        
-        
+        jShrinkage  = JCheckBox( '' );
+        jShrinkage.setSelected(OPTIONS.wavelet.shrinkage);
+        jShrinkage.setToolTipText('<HTML><B>DWT denoising</B>:<BR>0 = no denoising<BR>1 = soft denoising (remove low energy coeff.)</HTML>');  
+
         jTxtWAVshLabel = JLabel('Coefficient shrinkage');
         jPanel.add('p left', jTxtWAVshLabel );
-        jPanel.add('tab', jTxtWAVsh);            
+        jPanel.add('tab', jShrinkage);            
     
+        jTxtWAVEnergyLabel =  JLabel('Energy threshold');
+
+        jTxtWAVenergyThreshold  = JTextField(num2str(OPTIONS.wavelet.energy_threshold) );
+        jTxtWAVenergyThreshold.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
+        jTxtWAVenergyThreshold.setHorizontalAlignment(JTextField.RIGHT);
+        jTxtWAVenergyThreshold.setToolTipText('<HTML><B>Total energy of the signal to reconstruct (between 0 and 1). Reconstruct the most important boxes, explaining X% of the energy of the signal.</HTML>');  
+        jPanel.add('p left', jTxtWAVEnergyLabel );
+        jPanel.add('tab', jTxtWAVenergyThreshold);
+
+
         % Order
         jTxtWAVorLabel =  JLabel('Wavelet order');
 
@@ -886,8 +902,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         ctrl = struct('jPanelWAV',      jPanel, ...
                       'jWavType',       jTxtWAVtp, ...
                       'jWavVanish',     jTxtWAVvm,...
-                      'jWavShrinkage',  jTxtWAVsh, ...
+                      'jWavShrinkage',  jShrinkage, ...
                       'jWavShrinkageLabel' , jTxtWAVshLabel, ...
+                      'jTxtWAVEnergyLabel', jTxtWAVEnergyLabel, ...
+                      'jTxtWAVenergyThreshold', jTxtWAVenergyThreshold, ...
                       'jWavOrder',      jTxtWAVor,...
                       'jWavOrderLabel', jTxtWAVorLabel, ... 
                       'jWavLevels',     jTxtWAVlv, ...
@@ -1130,7 +1148,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         % OPTIONS from CreatePanelWavelet
         ctrl.jWavType.setText(OPTIONS.wavelet.type);
         ctrl.jWavVanish.setText(num2str(OPTIONS.wavelet.vanish_moments))
-        ctrl.jWavShrinkage.setText(num2str(OPTIONS.wavelet.shrinkage))
+        ctrl.jWavShrinkage.setSelected(OPTIONS.wavelet.shrinkage)
+        ctrl.jTxtWAVenergyThreshold.setText(num2str(OPTIONS.wavelet.energy_threshold))
         ctrl.jWavOrder.setText(num2str(OPTIONS.wavelet.order))
         ctrl.jWavLevels.setText(num2str(OPTIONS.wavelet.nb_levels))
 
@@ -1175,6 +1194,11 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
 
         % Release mutex and keep the panel opened
         bst_mutex('release', panelName);
+
+        if bst_plugin('CompareVersions',  bst_get('Version').Version , '3.261008') >= 0 
+            gui_release_dialog(panelName);
+        end
+
         be_print_best(OPTIONS);
     end
 
@@ -1349,6 +1373,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
                 ctrl.jWavLevelsLabel.setVisible(0);
                 ctrl.jWavShrinkage.setVisible(1);
                 ctrl.jWavShrinkageLabel.setVisible(1);
+                ctrl.jTxtWAVEnergyLabel.setVisible(1);
+                ctrl.jTxtWAVenergyThreshold.setVisible(1);
                 ctrl.jWavLevels.setVisible(0);
 
             elseif  strcmp(choices(selected), 'rMEM')
@@ -1374,6 +1400,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
                 ctrl.jWavLevels.setVisible(1);
                 ctrl.jWavShrinkage.setVisible(0);
                 ctrl.jWavShrinkageLabel.setVisible(0);
+                ctrl.jTxtWAVEnergyLabel.setVisible(0);
+                ctrl.jTxtWAVenergyThreshold.setVisible(0);
             end
     
         end            
@@ -1719,8 +1747,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
             OPTIONS_wav.wavelet.nb_levels       = str2double( ctrl.jWavLevels.getText() );
             OPTIONS_wav.wavelet.order           = str2double( ctrl.jWavOrder.getText() );
             OPTIONS_wav.wavelet.vanish_moments  = str2double( ctrl.jWavVanish.getText() );
-            OPTIONS_wav.wavelet.shrinkage       = str2double( ctrl.jWavShrinkage.getText() );
-            
+            OPTIONS_wav.wavelet.shrinkage       = ctrl.jWavShrinkage.isSelected();
+            OPTIONS_wav.wavelet.energy_threshold = str2double( ctrl.jTxtWAVenergyThreshold.getText() );
+
             SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
     
             if any( strcmpi( SCL, {'all','0'} ) )|| isempty(SCL)
@@ -1924,8 +1953,9 @@ function s = GetPanelContents(varargin)
     end
 
     if strcmp(MEMpaneloptions.mandatory.pipeline, 'wMEM') 
-        MEMpaneloptions.wavelet.shrinkage   =  str2double( ctrl.jWavShrinkage.getText() );
-        
+        MEMpaneloptions.wavelet.shrinkage   =  ctrl.jWavShrinkage.isSelected();
+        MEMpaneloptions.wavelet.energy_threshold = str2double( ctrl.jTxtWAVenergyThreshold.getText() );
+
         % process scales
         SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
         if any( strcmpi( SCL, {'all','0'} ) )|| isempty(SCL)

@@ -80,7 +80,7 @@ function [OPTIONS, mem, active_var_out] = be_memstruct(OPTIONS, obj)
 % some basic parameters
 nb_clusters = max(obj.clusters);
 nb_sources  = obj.nb_sources;
-nb_sensors   = length(obj.data);
+nb_sensors  = size(obj.data, 1);
 
 
 % some definitions 
@@ -146,14 +146,9 @@ mem.G_active_var_Gt                  = G_active_var_Gt;
 
 % Lambda initialization
 switch OPTIONS.model.initial_lambda 
-    
     case 0
         mem.lambda	=   zeros(nb_sensors, 1);
-    
     case 1
         mem.lambda	=   randn(nb_sensors, 1) / mean( abs(mem.M), 1 ); 
-
 end
-
-
 end

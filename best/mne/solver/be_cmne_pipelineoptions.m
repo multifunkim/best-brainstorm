@@ -3,6 +3,13 @@ function DEF = be_cmne_pipelineoptions(DataTypes)
         if nargin < 1 || isempty(DataTypes)
             DataTypes = {'EEG'};
         end
+        
+        % Datatypes
+        if ischar(DataTypes)
+            DEF.mandatory.DataTypes = {DataTypes};
+        else
+            DEF.mandatory.DataTypes = DataTypes;
+        end
 
         % Datatypes
         if ischar(DataTypes)
