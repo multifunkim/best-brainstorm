@@ -55,12 +55,9 @@ t0_extended = obj.t0 - (obj.info_extension.start -1)/fs;
 % === Table of selection
 selected_values = cell(1, length(OPTIONS.mandatory.DataTypes));
 
-% we keep 99pc of power for EEG/MEG, 100% of power for fNIRS
-if any(strcmp(OPTIONS.mandatory.DataTypes,'NIRS'))
-    pc_power    = 1;
-else
-    pc_power    = 0.99;
-end
+% Keep only the main important boxes based on their energy:
+% By default, we keep 99pc of power for EEG/MEG, 100% of power for fNIRS
+pc_power    = OPTIONS.wavelet.energy_threshold;
 
 for iMod = 1 : length(OPTIONS.mandatory.DataTypes)
 
@@ -157,7 +154,7 @@ if OPTIONS.wavelet.single_box
 end
 
 if OPTIONS.optional.verbose
-    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d.\n', OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.selected_samples,2), nSampleExtended);
+    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d. (%.1f %% of the total energy) \n', OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.selected_samples,2), nbb, 100*pc_power);
 end
 
 end

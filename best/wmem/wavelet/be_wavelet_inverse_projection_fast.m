@@ -2,14 +2,16 @@ function inv_proj = be_wavelet_inverse_projection_fast(obj,OPTIONS)
 %BE_WAVELET_INVERSE_PROJECTION Compute the inverse projection from box to
 %time courses
 
-    nbSmp       = size(obj.ImageGridAmp,2);
-    nbSmpTime   = size(obj.data,2) ;
-
+    nbSmpTime   = size(obj.data, 2);
+    nbSmp       = size(OPTIONS.automatic.selected_samples, 2);
     all_scales  = OPTIONS.automatic.selected_samples(2, :);
     all_transls = OPTIONS.automatic.selected_samples(3, :);
 
     % Pre-compute one wavelet per scale
-    [unique_scales, mother_wavelet] = prepare_wavelet(nbSmpTime, OPTIONS);
+    [iBoxesRef, mother_wavelet] = prepare_wavelet(nbSmpTime, OPTIONS);
+
+    ref_scales = all_scales(iBoxesRef);
+    ref_transl = all_transls(iBoxesRef);
 
 
     all_rows = [];
@@ -17,9 +19,9 @@ function inv_proj = be_wavelet_inverse_projection_fast(obj,OPTIONS)
     all_vals = [];
 
 
-    for iScale = 1:length(unique_scales)
+    for iScale = 1:length(ref_scales)
         
-        iBoxes = find(all_scales == unique_scales(iScale));
+        iBoxes = find(all_scales == ref_scales(iScale));
 
         scales          = all_scales(iBoxes);
         transls         = all_transls(iBoxes);
@@ -31,9 +33,9 @@ function inv_proj = be_wavelet_inverse_projection_fast(obj,OPTIONS)
         [nz_row, nz_cols, nz_vals] = find(inv_wavelet);  % Find non-zero positions and values
         
         % Calculate shift amounts for ALL boxes at once
-        shift_amounts = shifting * (transls(1) - transls(:));  % [num_boxes, 1]
+        shift_amounts = shifting * (ref_transl(iScale) - transls(:));
         
-        % Vectorized: compute new columns (broadcasts to [num_boxes, num_nz])
+        % Vectorized: compute new columns
         new_cols = mod(nz_cols - shift_amounts - 1, nbSmpTime) + 1;
 
         % Accumulate indices and values
@@ -51,7 +53,7 @@ function inv_proj = be_wavelet_inverse_projection_fast(obj,OPTIONS)
 end
 
 
-function [unique_scales, mother_wavelet] = prepare_wavelet(nbSmpTime, OPTIONS)
+function [iBoxesRef, mother_wavelet] = prepare_wavelet(nbSmpTime, OPTIONS)
     
     all_scales  = OPTIONS.automatic.selected_samples(2, :);
     all_transls = OPTIONS.automatic.selected_samples(3, :);
@@ -59,7 +61,14 @@ function [unique_scales, mother_wavelet] = prepare_wavelet(nbSmpTime, OPTIONS)
     unique_scales = unique(all_scales);    
     iBoxesRef = zeros(1, length(unique_scales));
     for iScale = 1:length(unique_scales)
-        iBoxesRef(iScale) = find(all_scales == unique_scales(iScale), 1);
+        tmp = find(all_scales == unique_scales(iScale));
+            
+        % find all translations for the scale
+        translations = sort(all_transls(tmp));
+        % select a translation far from the edge
+        selected_translation = translations(round(length(tmp) / 2));
+
+        iBoxesRef(iScale) = find(all_scales == unique_scales(iScale) & all_transls == selected_translation, 1);
     end
     
     x = 1:length(unique_scales);

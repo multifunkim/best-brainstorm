@@ -137,6 +137,7 @@ function [noise_var] = estimate_noise_var(OPTIONS)
         end
 
         O.wavelet.single_box          = 0;
+        O.wavelet.energy_threshold    = 1;
         O.automatic.scales            = [];
         O.optional.verbose            = 0;
         O.automatic.scales            = [];
