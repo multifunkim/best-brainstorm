@@ -863,15 +863,24 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         jPanel.add('tab', jTxtWAVvm);
         
         % Shrinkage
-        jTxtWAVsh  = JTextField( num2str(OPTIONS.wavelet.shrinkage) );
-        jTxtWAVsh.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
-        jTxtWAVsh.setHorizontalAlignment(JTextField.RIGHT);
-        jTxtWAVsh.setToolTipText('<HTML><B>DWT denoising</B>:<BR>0 = no denoising<BR>1 = soft denoising (remove low energy coeff.)</HTML>');        
-        
+        jShrinkage  = JCheckBox( '' );
+        jShrinkage.setSelected(OPTIONS.wavelet.shrinkage);
+        jShrinkage.setToolTipText('<HTML><B>DWT denoising</B>:<BR>0 = no denoising<BR>1 = soft denoising (remove low energy coeff.)</HTML>');  
+
         jTxtWAVshLabel = JLabel('Coefficient shrinkage');
         jPanel.add('p left', jTxtWAVshLabel );
-        jPanel.add('tab', jTxtWAVsh);            
+        jPanel.add('tab', jShrinkage);            
     
+        jTxtWAVEnergyLabel =  JLabel('Energy threshold');
+
+        jTxtWAVenergyThreshold  = JTextField(num2str(OPTIONS.wavelet.energy_threshold) );
+        jTxtWAVenergyThreshold.setPreferredSize(Dimension(TEXT_WIDTH, DEFAULT_HEIGHT));
+        jTxtWAVenergyThreshold.setHorizontalAlignment(JTextField.RIGHT);
+        jTxtWAVenergyThreshold.setToolTipText('<HTML><B>Total energy of the signal to reconstruct (between 0 and 1). Reconstruct the most important boxes, explaining X% of the energy of the signal.</HTML>');  
+        jPanel.add('p left', jTxtWAVEnergyLabel );
+        jPanel.add('tab', jTxtWAVenergyThreshold);
+
+
         % Order
         jTxtWAVorLabel =  JLabel('Wavelet order');
 
@@ -893,8 +902,10 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         ctrl = struct('jPanelWAV',      jPanel, ...
                       'jWavType',       jTxtWAVtp, ...
                       'jWavVanish',     jTxtWAVvm,...
-                      'jWavShrinkage',  jTxtWAVsh, ...
+                      'jWavShrinkage',  jShrinkage, ...
                       'jWavShrinkageLabel' , jTxtWAVshLabel, ...
+                      'jTxtWAVEnergyLabel', jTxtWAVEnergyLabel, ...
+                      'jTxtWAVenergyThreshold', jTxtWAVenergyThreshold, ...
                       'jWavOrder',      jTxtWAVor,...
                       'jWavOrderLabel', jTxtWAVorLabel, ... 
                       'jWavLevels',     jTxtWAVlv, ...
@@ -1137,7 +1148,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
         % OPTIONS from CreatePanelWavelet
         ctrl.jWavType.setText(OPTIONS.wavelet.type);
         ctrl.jWavVanish.setText(num2str(OPTIONS.wavelet.vanish_moments))
-        ctrl.jWavShrinkage.setText(num2str(OPTIONS.wavelet.shrinkage))
+        ctrl.jWavShrinkage.setSelected(OPTIONS.wavelet.shrinkage)
+        ctrl.jTxtWAVenergyThreshold.setText(num2str(OPTIONS.wavelet.energy_threshold))
         ctrl.jWavOrder.setText(num2str(OPTIONS.wavelet.order))
         ctrl.jWavLevels.setText(num2str(OPTIONS.wavelet.nb_levels))
 
@@ -1361,6 +1373,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
                 ctrl.jWavLevelsLabel.setVisible(0);
                 ctrl.jWavShrinkage.setVisible(1);
                 ctrl.jWavShrinkageLabel.setVisible(1);
+                ctrl.jTxtWAVEnergyLabel.setVisible(1);
+                ctrl.jTxtWAVenergyThreshold.setVisible(1);
                 ctrl.jWavLevels.setVisible(0);
 
             elseif  strcmp(choices(selected), 'rMEM')
@@ -1386,6 +1400,8 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
                 ctrl.jWavLevels.setVisible(1);
                 ctrl.jWavShrinkage.setVisible(0);
                 ctrl.jWavShrinkageLabel.setVisible(0);
+                ctrl.jTxtWAVEnergyLabel.setVisible(0);
+                ctrl.jTxtWAVenergyThreshold.setVisible(0);
             end
     
         end            
@@ -1731,8 +1747,9 @@ function [bstPanelNew, panelName] = CreatePanel(OPTIONS, varargin)
             OPTIONS_wav.wavelet.nb_levels       = str2double( ctrl.jWavLevels.getText() );
             OPTIONS_wav.wavelet.order           = str2double( ctrl.jWavOrder.getText() );
             OPTIONS_wav.wavelet.vanish_moments  = str2double( ctrl.jWavVanish.getText() );
-            OPTIONS_wav.wavelet.shrinkage       = str2double( ctrl.jWavShrinkage.getText() );
-            
+            OPTIONS_wav.wavelet.shrinkage       = ctrl.jWavShrinkage.isSelected();
+            OPTIONS_wav.wavelet.energy_threshold = str2double( ctrl.jTxtWAVenergyThreshold.getText() );
+
             SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
     
             if any( strcmpi( SCL, {'all','0'} ) )|| isempty(SCL)
@@ -1936,8 +1953,9 @@ function s = GetPanelContents(varargin)
     end
 
     if strcmp(MEMpaneloptions.mandatory.pipeline, 'wMEM') 
-        MEMpaneloptions.wavelet.shrinkage   =  str2double( ctrl.jWavShrinkage.getText() );
-        
+        MEMpaneloptions.wavelet.shrinkage   =  ctrl.jWavShrinkage.isSelected();
+        MEMpaneloptions.wavelet.energy_threshold = str2double( ctrl.jTxtWAVenergyThreshold.getText() );
+
         % process scales
         SCL = lower( char( ctrl.jWavScales.getSelectedItem() ) );
         if any( strcmpi( SCL, {'all','0'} ) )|| isempty(SCL)

@@ -3,6 +3,13 @@ function DEF = be_rmem_pipelineoptions(DataTypes)
             DataTypes = {'EEG'};
         end
 
+        % Datatypes
+        if ischar(DataTypes)
+            DEF.mandatory.DataTypes = {DataTypes};
+        else
+            DEF.mandatory.DataTypes = DataTypes;
+        end
+        
         % clustering
         DEF.clustering.clusters_type    = 'blockwise';
         DEF.clustering.MSP_window       = 10;
