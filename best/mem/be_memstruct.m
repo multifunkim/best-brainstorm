@@ -80,7 +80,7 @@ function [OPTIONS, mem, active_var_out] = be_memstruct(OPTIONS, obj)
 % some basic parameters
 nb_clusters = max(obj.clusters);
 nb_sources  = obj.nb_sources;
-nb_sensors   = length(obj.data);
+nb_sensors  = size(obj.data, 1);
 
 
 % some definitions 
