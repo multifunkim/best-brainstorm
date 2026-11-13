@@ -40,6 +40,11 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         DEF.wavelet.order               = 10;
         DEF.wavelet.nb_levels           = 128;
         DEF.wavelet.shrinkage           = 0;
+        if any(ismember( 'nirs', lower(DataTypes)))
+            DEF.wavelet.energy_threshold    = 1;
+        else
+            DEF.wavelet.energy_threshold    = 0.99;
+        end
         DEF.wavelet.selected_scales     = 0;
         if any(ismember( 'nirs', lower(DataTypes)))
             DEF.wavelet.selected_scales_covariance     = 3;
