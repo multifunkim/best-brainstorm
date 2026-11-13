@@ -216,9 +216,9 @@ function Def_OPTIONS =   BEst_defaults()
     Def_OPTIONS.solver.active_var_mult              = 0.05;
     Def_OPTIONS.solver.inactive_var_mult            = 0;
     Def_OPTIONS.solver.Optim_method                 = 'fminunc';
+    Def_OPTIONS.solver.useHessian                 = 1;
     Def_OPTIONS.solver.covariance_scale             = 1;
     Def_OPTIONS.solver.parallel_matlab              = be_canUseParallelPool();
-    Def_OPTIONS.solver.useHessian                   = 0;
     
     % output options
     Def_OPTIONS.output.save_factor                  =  1;
