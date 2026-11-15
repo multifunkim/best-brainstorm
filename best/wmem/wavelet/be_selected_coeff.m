@@ -154,7 +154,7 @@ if OPTIONS.wavelet.single_box
 end
 
 if OPTIONS.optional.verbose
-    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d. (%.1f %% of the total energy) \n', OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.selected_samples,2), nbb, 100*pc_power);
+    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d. (%.1f %% of the total energy) \n', OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.selected_samples,2), nSampleExtended, 100*pc_power);
 end
 
 end
