@@ -53,6 +53,7 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
             DEF.wavelet.energy_threshold    = 0.99;
         end
         DEF.wavelet.selected_scales     = 0;
+        DEF.wavelet.localize_scales     = 1;
         if any(ismember( 'nirs', lower(DataTypes)))
             DEF.wavelet.selected_scales_covariance     = 3;
         else

@@ -74,7 +74,6 @@ if ~isempty(OPTIONS.solver.NoiseCov)
         noise_var   = OPTIONS.solver.NoiseCov;
     end
 else
-    
     for ii = 1 : numel(OPTIONS.automatic.Modality)
         
         if ~isempty( OPTIONS.automatic.Modality(ii).emptyroom )
@@ -123,11 +122,25 @@ function [noise_var] = estimate_noise_var(OPTIONS)
         O.mandatory.DataTypes       = O.mandatory.DataTypes(ii);
 
         % Construct wavelet
-        O.wavelet.selected_scales     = [];
+        O.wavelet.type                = 'rdw';
+
+        % For NoiseCov_method == 6, when there is no empty room, 
+        % we can limit the decomposition of the data to scale 2 (EEG/MEG) or 3 (NIRS) 
+        if ~(isempty( OPTIONS.automatic.Modality(ii).emptyroom ) && OPTIONS.solver.NoiseCov_method == 6)
+            O.wavelet.selected_scales     = [];
+        else
+            if strcmp(OPTIONS.automatic.Modality(ii).name, 'NIRS')
+                O.wavelet.selected_scales     = 1:3;
+            else
+                O.wavelet.selected_scales     = 1:2;
+            end
+        end
+
         O.wavelet.single_box          = 0;
         O.wavelet.energy_threshold    = 1;
         O.automatic.scales            = [];
         O.optional.verbose            = 0;
+        O.automatic.scales            = [];
         
         % Make transform
         wavelet_obj = struct();
