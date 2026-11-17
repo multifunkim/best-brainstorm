@@ -54,48 +54,48 @@ function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------
 
-nbl = size(OPTIONS.automatic.scales,2);   % number of scales
-nbb = size(WData,2);                      % number of time samples (extended)
-nbc = size(WData,1);                      % number of channels
-fs  = OPTIONS.automatic.sampling_rate;
-
-ext_start   = obj.info_extension.start;
-ext_end     = obj.info_extension.end;
-t0_extended = obj.t0 - (ext_start-1)/fs;  % time t0 in the extended data
-
-index     = [];
-scale     = [];
-k         = [];
-time      = [];
-power     = [];
-edge_dist = [];
-
-for j = 1:nbl
-    % Scale j occupies columns nbb/2^j+1 : nbb/2^(j-1), i.e. nj boxes.
-    nj  = nbb/2^j;
-    deb = 1 + nj;
-    fin = nbb/2^(j-1);
-    kj  = 1:nj;
-
-    power     = [power, sum(abs(WData(:,deb:fin)).^2,1)/nbc];
-    index     = [index, deb:fin];
-    scale     = [scale, j*ones(1,nj)];
-    k         = [k,     kj];
-    time      = [time,  t0_extended + (2^(j-1))*(2*kj-1)/fs];
-    edge_dist = [edge_dist, min(kj-1, nj-kj)];
-end
-
-% Box edges in the true data samples (not extended)
-win_l = max((k-1).*(2.^scale)+1, ext_start) - ext_start + 1;
-win_r = min( k   .*(2.^scale),   ext_end)   - ext_start + 1;
-
-Labels = struct('index', index, ...
-                'scale', scale, ...
-                'k',     k, ...
-                'time',  time, ...
-                'power', power, ...
-                'win_l', win_l, ...
-                'win_r', win_r, ...
-                'edge_dist', edge_dist);
+    nbl = size(OPTIONS.automatic.scales,2);   % number of scales
+    nbb = size(WData,2);                      % number of time samples (extended)
+    nbc = size(WData,1);                      % number of channels
+    fs  = OPTIONS.automatic.sampling_rate;
+    
+    ext_start   = obj.info_extension.start;
+    ext_end     = obj.info_extension.end;
+    t0_extended = obj.t0 - (ext_start-1)/fs;  % time t0 in the extended data
+    
+    index     = [];
+    scale     = [];
+    k         = [];
+    time      = [];
+    power     = [];
+    edge_dist = [];
+    
+    for iScale = 1:nbl
+        % Scale j occupies columns nbb/2^j+1 : nbb/2^(j-1), i.e. nj boxes.
+        nj  = nbb/2^iScale;
+        scale_start = 1 + nj;
+        scale_end = nbb/2^(iScale-1);
+        kj  = 1:nj;
+    
+        power     = [power, sum(abs(WData(:,scale_start:scale_end)).^2,1)/nbc];
+        index     = [index, scale_start:scale_end];
+        scale     = [scale, iScale*ones(1,nj)];
+        k         = [k,     kj];
+        time      = [time,  t0_extended + (2^(iScale-1))*(2*kj-1)/fs];
+        edge_dist = [edge_dist, min(kj-1, nj-kj)];
+    end
+    
+    % Box edges in the true data samples (not extended)
+    win_l = max((k-1).*(2.^scale)+1, ext_start) - ext_start + 1;
+    win_r = min( k   .*(2.^scale),   ext_end)   - ext_start + 1;
+    
+    Labels = struct('index', index, ...
+                    'scale', scale, ...
+                    'k',     k, ...
+                    'time',  time, ...
+                    'power', power, ...
+                    'win_l', win_l, ...
+                    'win_r', win_r, ...
+                    'edge_dist', edge_dist);
 
 end
