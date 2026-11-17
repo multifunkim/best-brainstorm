@@ -26,11 +26,16 @@ function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
 %           .power  : mean power over sensors of the coefficient
 %           .win_l  : left  edge of the box, in true (non-extended) samples
 %           .win_r  : right edge of the box, in true (non-extended) samples
-%           .edge_dist : number of boxes between this box and the nearest
-%                     border of its scale (0 = outermost box). Use it to
-%                     discard edge effects, e.g. edge_dist >= 2
+%           .edge_dist : number of whole boxes between this box and the
+%                     nearest end of the TRUE data (not the zero-padded
+%                     extension). 0 = box starts/ends exactly at the data
+%                     edge; negative = box starts before the data start or
+%                     ends after the data end (e.g. in the padding).
+%                     Use it to discard edge effects, e.g. edge_dist >= 2
 %
-%       All boxes of all scales are returned; nothing is filtered here.
+%       All detail boxes of all scales are returned, padding included;
+%       nothing is filtered here. The coarsest (approximation)
+%       coefficients are not boxes: they are zeroed in WData and live in SData.
 %
 %% ==============================================
 % Copyright (C) 2012 - LATIS Team
@@ -68,7 +73,6 @@ function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
     k         = [];
     time      = [];
     power     = [];
-    edge_dist = [];
     
     for iScale = 1:nbl
         % Scale j occupies columns nbb/2^j+1 : nbb/2^(j-1), i.e. nj boxes.
@@ -82,12 +86,19 @@ function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
         scale     = [scale, iScale*ones(1,nj)];
         k         = [k,     kj];
         time      = [time,  t0_extended + (2^(iScale-1))*(2*kj-1)/fs];
-        edge_dist = [edge_dist, min(kj-1, nj-kj)];
     end
+    % Box extent in extended-data samples
+    box_l = (k-1).*(2.^scale) + 1;
+    box_r =  k   .*(2.^scale);
     
-    % Box edges in the true data samples (not extended)
-    win_l = max((k-1).*(2.^scale)+1, ext_start) - ext_start + 1;
-    win_r = min( k   .*(2.^scale),   ext_end)   - ext_start + 1;
+    % Box edges in the true data samples (not extended), clipped to the data
+    win_l = max(box_l, ext_start) - ext_start + 1;
+    win_r = min(box_r, ext_end)   - ext_start + 1;
+    
+    % Distance (in whole boxes) to the nearest end of the true data.
+    % Negative when the box starts before the data start or ends after the data end.
+    edge_dist = min(floor((box_l - ext_start)./2.^scale), ...
+                    floor((ext_end - box_r)   ./2.^scale));
     
     Labels = struct('index', index, ...
                     'scale', scale, ...
