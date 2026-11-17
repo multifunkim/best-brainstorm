@@ -73,10 +73,11 @@ n_edge = OPTIONS.wavelet.edge_boxes;
 % === 1-2. Label, remove edge boxes, select by power, per modality
 nmod = length(OPTIONS.mandatory.DataTypes);
 Sel  = cell(1, nmod);
-for jj = 1:nmod
-    Labels  = be_wavelet_box_labels(WM{jj}, OPTIONS, obj);
+
+for iMod = 1:nmod
+    Labels  =  obj.box_labels(iMod);
     Labels  = be_labels_subset(Labels, Labels.edge_dist >= n_edge);
-    Sel{jj} = be_select_boxes_by_power(Labels, pc_power);
+    Sel{iMod} = be_select_boxes_by_power(Labels, pc_power);
 end
 
 % === 3. Fusion of modalities
@@ -87,10 +88,10 @@ t1 = max(OPTIONS.mandatory.DataTime(5), OPTIONS.optional.TimeSegment(1));
 t2 = min(OPTIONS.mandatory.DataTime(end-5), OPTIONS.optional.TimeSegment(end));
 
 % per-modality bookkeeping kept for downstream code
-for jj = 1:nmod
-    in_win = box_in_window(Sel{jj}, fs, t1, t2, true);
-    OPTIONS.automatic.Modality(jj).selected_jk = to_matrix(Sel{jj}, false);
-    OPTIONS.automatic.selected_values{jj} = [Sel{jj}.power ; Sel{jj}.energy ; in_win];
+for iMod = 1:nmod
+    in_win = box_in_window(Sel{iMod}, fs, t1, t2, true);
+    OPTIONS.automatic.Modality(iMod).selected_jk = to_matrix(Sel{iMod}, false);
+    OPTIONS.automatic.selected_values{iMod} = [Sel{iMod}.power ; Sel{iMod}.energy ; in_win];
 end
 
 in_time = box_in_window(Fused, fs, t1, t2, false);

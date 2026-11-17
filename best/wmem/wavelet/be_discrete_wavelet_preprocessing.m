@@ -64,6 +64,10 @@ if OPTIONS.wavelet.shrinkage
     end
 end
 
+for ii = 1 : numel(OPTIONS.mandatory.DataTypes)
+    obj.box_labels(ii) = be_wavelet_box_labels(obj, obj.data{ii},  obj.scaling_data{ii}, OPTIONS);
+end
+
 % selection of boxes with power
 [OPTIONS] = be_selected_coeff(obj.data, obj, OPTIONS);
 

@@ -1,4 +1,4 @@
-function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
+function Labels = be_wavelet_box_labels(obj, WData, SData, OPTIONS)
 % BE_WAVELET_BOX_LABELS describes every time-frequency box of a wavelet
 % decomposition: where it sits in the coefficient matrix, which scale it
 % belongs to, when it happens and how much power it carries.
@@ -8,6 +8,9 @@ function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
 %   INPUTS:
 %       -   WData   :   wavelet transform of ONE modality (Nsensors x Nsamples_extended),
 %                       with the coarsest (approximation) coefficients zeroed
+%       -   SData   :   (optional) approximation coefficients, as returned by
+%                       be_discrete_wavelet_transform. Only used for the
+%                       power of the approximation boxes (NaN if absent).
 %       -   OPTIONS :   options structure. Uses:
 %                           OPTIONS.automatic.scales          (set by be_discrete_wavelet_transform)
 %                           OPTIONS.automatic.sampling_rate
@@ -33,9 +36,15 @@ function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
 %                     ends after the data end (e.g. in the padding).
 %                     Use it to discard edge effects, e.g. edge_dist >= 2
 %
-%       All detail boxes of all scales are returned, padding included;
-%       nothing is filtered here. The coarsest (approximation)
-%       coefficients are not boxes: they are zeroed in WData and live in SData.
+%           .is_approx : true for the approximation (coarsest) coefficients.
+%                     They have the same support (2^nbl samples) as the
+%                     coarsest detail scale, so they carry scale = nbl; only
+%                     is_approx tells them apart. Their power needs SData
+%                     (they are zeroed in WData), otherwise it is NaN.
+%
+%       All boxes are returned, padding and approximation included;
+%       nothing is filtered here. Detail boxes come first (by scale, then
+%       k), approximation boxes last.
 %
 %% ==============================================
 % Copyright (C) 2012 - LATIS Team
@@ -87,6 +96,23 @@ function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
         k         = [k,     kj];
         time      = [time,  t0_extended + (2^(iScale-1))*(2*kj-1)/fs];
     end
+
+    % Approximation coefficients: columns 1:nbb/2^nbl (kept in SData).
+    % Same support as the coarsest detail scale -> scale = nbl.
+    nc = nbb/2^nbl;
+    kc = 1:nc;
+    if nargin >= 4 && ~isempty(SData)
+        power_c = sum(abs(SData(:,1:nc)).^2,1)/nbc;
+    else
+        power_c = NaN(1,nc);
+    end
+    index     = [index, kc];
+    scale     = [scale, nbl*ones(1,nc)];
+    k         = [k,     kc];
+    time      = [time,  t0_extended + (2^(nbl-1))*(2*kc-1)/fs];
+    power     = [power, power_c];
+    is_approx = [false(1,numel(index)-nc), true(1,nc)];
+
     % Box extent in extended-data samples
     box_l = (k-1).*(2.^scale) + 1;
     box_r =  k   .*(2.^scale);
@@ -107,6 +133,7 @@ function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
                     'power', power, ...
                     'win_l', win_l, ...
                     'win_r', win_r, ...
-                    'edge_dist', edge_dist);
+                    'edge_dist', edge_dist, ...
+                    'is_approx', is_approx);
 
 end
