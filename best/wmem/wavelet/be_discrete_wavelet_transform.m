@@ -4,9 +4,14 @@ function [WData, SData, OPTIONS] = be_discrete_wavelet_transform(Data, OPTIONS, 
 %   INPUTS:
 %       -   Data    :   data matrix (Nsensors x Nsamples)
 %       -   OPTIONS :   options structure
+%       -   varargin{1} (optional) : obj structure (obj.t0, obj.info_extension)
+%                         needed to label the boxes. If absent, Labels = [].
 %
 %   OUTPUTS:
-%       -   WData   :   wavelet transform
+%       -   WData   :   wavelet transform (coarsest scale zeroed)
+%       -   SData   :   coarsest (approximation) coefficients
+%       -   OPTIONS :   updated with OPTIONS.automatic.scales
+%       -   Labels  :   box labels (see be_wavelet_box_labels), [] if no obj given
 %
 %% ==============================================   
 % Copyright (C) 2012 - LATIS Team
@@ -85,5 +90,8 @@ switch (OPTIONS.wavelet.type)
              end
         end
        
-end       
+end
+
+
+
 end
