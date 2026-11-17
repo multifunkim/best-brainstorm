@@ -8,7 +8,8 @@ function [OPTIONS] = be_selected_coeff(WM, obj, OPTIONS)
 %
 % Pipeline (all steps work on label structures, see be_wavelet_box_labels):
 %   1. label the boxes of each modality     be_wavelet_box_labels
-%   2. keep the strongest boxes (power)     be_select_boxes_by_power
+%   2. drop edge boxes (OPTIONS.wavelet.edge_boxes, default 2), then
+%      keep the strongest boxes (power)     be_select_boxes_by_power
 %   3. fuse the modalities                  be_fusion_of_samples
 %   4. keep boxes in time window and scales (here)
 %   5. export to the legacy OPTIONS fields  (here, to_matrix)
@@ -62,11 +63,17 @@ fs  = OPTIONS.automatic.sampling_rate;
 % By default, we keep 99pc of power for EEG/MEG, 100% of power for fNIRS
 pc_power = OPTIONS.wavelet.energy_threshold;
 
-% === 1-2. Label and select by power, per modality
+% Number of boxes treated as edge effect on each side of each scale.
+% Edge boxes are removed BEFORE the power selection, so they do not count
+% in the total power.
+n_edge = OPTIONS.wavelet.edge_boxes;
+
+% === 1-2. Label, remove edge boxes, select by power, per modality
 nmod = length(OPTIONS.mandatory.DataTypes);
 Sel  = cell(1, nmod);
 for jj = 1:nmod
     Labels  = be_wavelet_box_labels(WM{jj}, OPTIONS, obj);
+    Labels  = be_labels_subset(Labels, Labels.edge_dist >= n_edge);
     Sel{jj} = be_select_boxes_by_power(Labels, pc_power);
 end
 
@@ -132,7 +139,7 @@ end
 
 % -------------------------------------------------------------------------
 function M = to_matrix(L, with_modality)
-    % Legacy matrix layout expected by downstream code.
+% Legacy matrix layout expected by downstream code.
     M = [L.index ; L.scale ; L.k ; L.win_l ; L.win_r ; L.time];
     if with_modality
         M = [M ; L.modality];

@@ -26,6 +26,11 @@ function Labels = be_wavelet_box_labels(WData, OPTIONS, obj)
 %           .power  : mean power over sensors of the coefficient
 %           .win_l  : left  edge of the box, in true (non-extended) samples
 %           .win_r  : right edge of the box, in true (non-extended) samples
+%           .edge_dist : number of boxes between this box and the nearest
+%                     border of its scale (0 = outermost box). Use it to
+%                     discard edge effects, e.g. edge_dist >= 2
+%
+%       All boxes of all scales are returned; nothing is filtered here.
 %
 %% ==============================================
 % Copyright (C) 2012 - LATIS Team
@@ -58,24 +63,26 @@ ext_start   = obj.info_extension.start;
 ext_end     = obj.info_extension.end;
 t0_extended = obj.t0 - (ext_start-1)/fs;  % time t0 in the extended data
 
-index = [];
-scale = [];
-k     = [];
-time  = [];
-power = [];
+index     = [];
+scale     = [];
+k         = [];
+time      = [];
+power     = [];
+edge_dist = [];
 
 for j = 1:nbl
-    % Scale j occupies columns nbb/2^j+1 : nbb/2^(j-1).
-    % 2 boxes are dropped on each side (edge effects).
-    deb = 1 + nbb/2^j + 2;
-    fin = nbb/2^(j-1) - 2;
-    kj  = (deb-nbb/2^j):(fin-nbb/2^j);
+    % Scale j occupies columns nbb/2^j+1 : nbb/2^(j-1), i.e. nj boxes.
+    nj  = nbb/2^j;
+    deb = 1 + nj;
+    fin = nbb/2^(j-1);
+    kj  = 1:nj;
 
-    power = [power, sum(abs(WData(:,deb:fin)).^2,1)/nbc];
-    index = [index, deb:fin];
-    scale = [scale, j*ones(1,length(deb:fin))];
-    k     = [k,     kj];
-    time  = [time,  t0_extended + (2^(j-1))*(2*kj-1)/fs];
+    power     = [power, sum(abs(WData(:,deb:fin)).^2,1)/nbc];
+    index     = [index, deb:fin];
+    scale     = [scale, j*ones(1,nj)];
+    k         = [k,     kj];
+    time      = [time,  t0_extended + (2^(j-1))*(2*kj-1)/fs];
+    edge_dist = [edge_dist, min(kj-1, nj-kj)];
 end
 
 % Box edges in the true data samples (not extended)
@@ -88,6 +95,7 @@ Labels = struct('index', index, ...
                 'time',  time, ...
                 'power', power, ...
                 'win_l', win_l, ...
-                'win_r', win_r);
+                'win_r', win_r, ...
+                'edge_dist', edge_dist);
 
 end
