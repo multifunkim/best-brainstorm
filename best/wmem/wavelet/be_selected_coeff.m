@@ -5,6 +5,14 @@ function [OPTIONS] = be_selected_coeff(WM, obj, OPTIONS)
 % Only the boxes in the selected scale are kept.
 % A maximum of 99% of the energy is kept. (except for nirs - keeping all the
 % power)
+%
+% Pipeline (all steps work on label structures, see be_wavelet_box_labels):
+%   1. label the boxes of each modality     be_wavelet_box_labels
+%   2. drop edge boxes (OPTIONS.wavelet.edge_boxes, default 2), then
+%      keep the strongest boxes (power)     be_select_boxes_by_power
+%   3. fuse the modalities                  be_fusion_of_samples
+%   4. keep boxes in time window and scales (here)
+%   5. export to the legacy OPTIONS fields  (here, to_matrix)
 
 % NOTES:
 %     - This function is not optimized for stand-alone command calls.
@@ -19,6 +27,12 @@ function [OPTIONS] = be_selected_coeff(WM, obj, OPTIONS)
 %     - Results : Structure
 %          |- OPTIONS       : Keep track of parameters
 %                           with the seleted wavelet coefficients
+%                           OPTIONS.automatic.selected_samples (7 x nboxes):
+%                               [index; scale; k; win_l; win_r; time; modality]
+%                           OPTIONS.automatic.Modality(i).selected_jk (6 x nboxes):
+%                               [index; scale; k; win_l; win_r; time]
+%                           OPTIONS.automatic.selected_values{i} (3 x nboxes):
+%                               [power; energy (%); in time window]
 %
 %
 %% ==============================================
@@ -43,110 +57,94 @@ function [OPTIONS] = be_selected_coeff(WM, obj, OPTIONS)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-% === Initialize the parameters
-% number of scales (total)
-nbl = size(OPTIONS.automatic.scales,2);
-% number of time samples (extended)
-nbb = size(WM{1},2);
-% number of channels
-nbc = size(WM{1},1);
-% time t0 in the extended data
-fs = OPTIONS.automatic.sampling_rate;
-t0_extended = obj.t0 - (obj.info_extension.start -1)/fs;
+nbb = size(WM{1},2);                       % number of time samples (extended)
+fs  = OPTIONS.automatic.sampling_rate;
 
-% === Table of selection
-selected_jk = struct([]);
-
-% Keep only the main important boxes based on their energy:
 % By default, we keep 99pc of power for EEG/MEG, 100% of power for fNIRS
-pc_power    = OPTIONS.wavelet.energy_threshold;
+pc_power = OPTIONS.wavelet.energy_threshold;
 
-for jj = 1 : length(OPTIONS.mandatory.DataTypes)
-    i_kept = [];
-    j_kept = [];
-    k_kept = [];
-    t_kept = [];
-    Wgfp   = [];
-    selected_jk{jj} = [];
-    for j=1:nbl
-        deb    = 1+nbb/2^j + 2;
-        fin    = nbb/2^(j-1)-2;
-        Wgfp   = [Wgfp (sum(abs(WM{jj}(:,deb:fin)).^2,1)/nbc)];
-        i_kept = [i_kept deb:fin];
-        j_kept = [j_kept j*ones(1,length(deb:fin))];
-        k_kept = [k_kept (deb-nbb/2^j):(fin-nbb/2^j)];
-        t_kept = [t_kept t0_extended+(2^(j-1))*(2*((deb-nbb/2^j):(fin-nbb/2^j))-1)/fs ];
-    end
-    
-    % === selection (based on the power)
-    [Wgfp_sorted, I] = sort(Wgfp,'descend');
-    Ic = find(cumsum(Wgfp_sorted)/sum(Wgfp_sorted) <= pc_power,1,'last');
-    i_kept = i_kept(I(1:Ic));
-    j_kept = j_kept(I(1:Ic));
-    k_kept = k_kept(I(1:Ic));
-    t_kept = t_kept(I(1:Ic));
-    e_kept = 100*Wgfp(I(1:Ic))/sum(Wgfp(I(1:Ic)));
-    % what we finally keep:
-    selected_jk{jj} = [i_kept ; j_kept ; k_kept ];
-    
-    % MSP windows (in the true data samples -not extended-)
-    win_l = max((selected_jk{jj}(3,:)-1).*(2.^selected_jk{jj}(2,:))+1,obj.info_extension.start) - obj.info_extension.start +1;
-    win_r = min( selected_jk{jj}(3,:).*(2.^selected_jk{jj}(2,:)),obj.info_extension.end)        - obj.info_extension.start +1;
+% Number of boxes treated as edge effect at each end of the TRUE data
+% (see edge_dist in be_wavelet_box_labels). Boxes in the zero padding or
+% straddling the data edge have edge_dist < 0 and are removed too.
+% Edge boxes are removed BEFORE the power selection, so they do not count
+% in the total power.
+n_edge = OPTIONS.wavelet.edge_boxes;
 
-    % === what we keep, finally:
-    OPTIONS.automatic.Modality(jj).selected_jk = [selected_jk{jj} ; win_l ; win_r ; t_kept];
-    selected_values{jj} = [Wgfp_sorted(1:Ic) ; e_kept];
+% === 1-2. Label, remove edge boxes, select by power, per modality
+nmod = length(OPTIONS.mandatory.DataTypes);
+Sel  = cell(1, nmod);
+
+for iMod = 1:nmod
+    Labels  =  obj.box_labels(iMod);
+    Labels  = be_labels_subset(Labels, Labels.edge_dist >= n_edge);
+    Sel{iMod} = be_select_boxes_by_power(Labels, pc_power);
 end
 
-% we keep the selection in the OPTIONS
-OPTIONS.automatic.selected_values  = selected_values;
+% === 3. Fusion of modalities
+Fused = be_fusion_of_samples(Sel);
 
-% Fusion of modalities in the selection: here we define OPTIONS.automatic.selected_samples
-OPTIONS = be_fusion_of_samples(OPTIONS);
-
-% We flag the boxes in the temporal interval of interest:
-% Also remove edge effect.
-
+% === 4. Time window of interest (also removes edge effect)
 t1 = max(OPTIONS.mandatory.DataTime(5), OPTIONS.optional.TimeSegment(1));
 t2 = min(OPTIONS.mandatory.DataTime(end-5), OPTIONS.optional.TimeSegment(end));
 
-tmi = OPTIONS.automatic.selected_samples(6,:)-2.^(OPTIONS.automatic.selected_samples(2,:)-1)/fs/2;
-tma = OPTIONS.automatic.selected_samples(6,:)+2.^(OPTIONS.automatic.selected_samples(2,:)-1)/fs/2;
-sl = ~((tma<=t1)|(tmi>=t2));
-OPTIONS.automatic.selected_samples = [OPTIONS.automatic.selected_samples ; sl];
-for ii = 1 : length(OPTIONS.mandatory.DataTypes)
-    tmi = OPTIONS.automatic.Modality(ii).selected_jk(6,:)-2.^(OPTIONS.automatic.Modality(ii).selected_jk(2,:)-1)/fs/2;
-    tma = OPTIONS.automatic.Modality(ii).selected_jk(6,:)+2.^(OPTIONS.automatic.Modality(ii).selected_jk(2,:)-1)/fs/2;
-    sl = ~((tma<t1)|(tmi>t2));
-    OPTIONS.automatic.selected_values{ii} = [OPTIONS.automatic.selected_values{ii} ; sl];
+% per-modality bookkeeping kept for downstream code
+for iMod = 1:nmod
+    in_win = box_in_window(Sel{iMod}, fs, t1, t2, true);
+    OPTIONS.automatic.Modality(iMod).selected_jk = to_matrix(Sel{iMod}, false);
+    OPTIONS.automatic.selected_values{iMod} = [Sel{iMod}.power ; Sel{iMod}.energy ; in_win];
 end
 
-% we flag the boxes with the scales of interest:
-if ~isempty(OPTIONS.wavelet.selected_scales) && logical(prod(OPTIONS.wavelet.selected_scales))
-    sl = ismember(OPTIONS.automatic.selected_samples(2,:),OPTIONS.wavelet.selected_scales);
+in_time = box_in_window(Fused, fs, t1, t2, false);
+
+% scales of interest
+if ~isempty(OPTIONS.wavelet.selected_scales)
+    in_scale = ismember(Fused.scale, OPTIONS.wavelet.selected_scales);
 else
     if OPTIONS.optional.verbose
         fprintf('%s, No specific scales selected\n', OPTIONS.mandatory.pipeline);
     end
-    OPTIONS.wavelet.selected_scales = sort(unique(OPTIONS.automatic.selected_samples(2,:)));
-    sl = ones(1,size(OPTIONS.automatic.selected_samples,2));
+    OPTIONS.wavelet.selected_scales = sort(unique(Fused.scale));
+    in_scale = true(1, numel(Fused.index));
 end
-OPTIONS.automatic.selected_samples = [OPTIONS.automatic.selected_samples ; sl];
 
-% what do we keep finally ? coeff in the selected time window and selected
-% scales:
-
-sel = OPTIONS.automatic.selected_samples(8,:) .* OPTIONS.automatic.selected_samples(9,:);
-OPTIONS.automatic.selected_samples = OPTIONS.automatic.selected_samples(:, sel == 1);
-OPTIONS.automatic.selected_samples(8:end,:) = []; % (we can forget about the preselection, it is done)
+% what do we keep finally ? coeff in the selected time window and selected scales
+Fused = be_labels_subset(Fused, in_time & in_scale);
 
 % Keep only strongest t-f box
 if OPTIONS.wavelet.single_box
-    OPTIONS.automatic.selected_samples(:,2:end) = [];
+    Fused = be_labels_subset(Fused, 1:min(1, numel(Fused.index)));
 end
+
+% === 5. Export
+OPTIONS.automatic.selected_samples = to_matrix(Fused, true);
 
 if OPTIONS.optional.verbose
-    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d. (%.1f %% of the total energy) \n', OPTIONS.mandatory.pipeline, size(OPTIONS.automatic.selected_samples,2), nbb, 100*pc_power);
+    fprintf('%s, wavelet selected boxes: you kept %d t-f boxes over a total of %d. (%.1f %% of the total energy) \n', OPTIONS.mandatory.pipeline, numel(Fused.index), nbb, 100*pc_power);
 end
 
+end
+
+
+% -------------------------------------------------------------------------
+function in_win = box_in_window(L, fs, t1, t2, touch_is_inside)
+% True for boxes that overlap [t1, t2]. A box is represented by its centre
+% +/- 2^(scale-1)/fs/2.  touch_is_inside decides whether a box that only
+% touches t1 or t2 counts as inside.
+    half = 2.^(L.scale-1)/fs/2;
+    tmi  = L.time - half;
+    tma  = L.time + half;
+    if touch_is_inside
+        in_win = ~((tma <  t1) | (tmi >  t2));
+    else
+        in_win = ~((tma <= t1) | (tmi >= t2));
+    end
+end
+
+% -------------------------------------------------------------------------
+function M = to_matrix(L, with_modality)
+% Legacy matrix layout expected by downstream code.
+    M = [L.index ; L.scale ; L.k ; L.win_l ; L.win_r ; L.time];
+    if with_modality
+        M = [M ; L.modality];
+    end
 end

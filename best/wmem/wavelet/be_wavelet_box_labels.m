@@ -1,0 +1,139 @@
+function Labels = be_wavelet_box_labels(obj, WData, SData, OPTIONS)
+% BE_WAVELET_BOX_LABELS describes every time-frequency box of a wavelet
+% decomposition: where it sits in the coefficient matrix, which scale it
+% belongs to, when it happens and how much power it carries.
+%
+% This function ONLY labels. It does not select, threshold, sort or fuse.
+%
+%   INPUTS:
+%       -   WData   :   wavelet transform of ONE modality (Nsensors x Nsamples_extended),
+%                       with the coarsest (approximation) coefficients zeroed
+%       -   SData   :   (optional) approximation coefficients, as returned by
+%                       be_discrete_wavelet_transform. Only used for the
+%                       power of the approximation boxes (NaN if absent).
+%       -   OPTIONS :   options structure. Uses:
+%                           OPTIONS.automatic.scales          (set by be_discrete_wavelet_transform)
+%                           OPTIONS.automatic.sampling_rate
+%       -   obj     :   structure with
+%                           obj.t0                  : time of first true sample
+%                           obj.info_extension.start: first true sample in the extended data
+%                           obj.info_extension.end  : last  true sample in the extended data
+%
+%   OUTPUTS:
+%       -   Labels  :   structure of row vectors, one entry per box, boxes
+%                       ordered by scale (j = 1, 2, ...) then by position k:
+%           .index  : column index of the box in WData (extended data)
+%           .scale  : scale j
+%           .k      : position of the box within its scale
+%           .time   : time of the box centre (s)
+%           .power  : mean power over sensors of the coefficient
+%           .win_l  : left  edge of the box, in true (non-extended) samples
+%           .win_r  : right edge of the box, in true (non-extended) samples
+%           .edge_dist : number of whole boxes between this box and the
+%                     nearest end of the TRUE data (not the zero-padded
+%                     extension). 0 = box starts/ends exactly at the data
+%                     edge; negative = box starts before the data start or
+%                     ends after the data end (e.g. in the padding).
+%                     Use it to discard edge effects, e.g. edge_dist >= 2
+%
+%           .is_approx : true for the approximation (coarsest) coefficients.
+%                     They have the same support (2^nbl samples) as the
+%                     coarsest detail scale, so they carry scale = nbl; only
+%                     is_approx tells them apart. Their power needs SData
+%                     (they are zeroed in WData), otherwise it is NaN.
+%
+%       All boxes are returned, padding and approximation included;
+%       nothing is filtered here. Detail boxes come first (by scale, then
+%       k), approximation boxes last.
+%
+%% ==============================================
+% Copyright (C) 2012 - LATIS Team
+%
+%  Authors: LATIS, 2012
+%
+%% ==============================================
+% License 
+%
+% BEst is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+%
+%    BEst is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with BEst. If not, see <http://www.gnu.org/licenses/>.
+% -------------------------------------------------------------------------
+
+    nbl = size(OPTIONS.automatic.scales,2);   % number of scales
+    nbb = size(WData,2);                      % number of time samples (extended)
+    nbc = size(WData,1);                      % number of channels
+    fs  = OPTIONS.automatic.sampling_rate;
+    
+    ext_start   = obj.info_extension.start;
+    ext_end     = obj.info_extension.end;
+    t0_extended = obj.t0 - (ext_start-1)/fs;  % time t0 in the extended data
+    
+    index     = [];
+    scale     = [];
+    k         = [];
+    time      = [];
+    power     = [];
+    
+    for iScale = 1:nbl
+        % Scale j occupies columns nbb/2^j+1 : nbb/2^(j-1), i.e. nj boxes.
+        nj  = nbb/2^iScale;
+        scale_start = 1 + nj;
+        scale_end = nbb/2^(iScale-1);
+        kj  = 1:nj;
+    
+        power     = [power, sum(abs(WData(:,scale_start:scale_end)).^2,1)/nbc];
+        index     = [index, scale_start:scale_end];
+        scale     = [scale, iScale*ones(1,nj)];
+        k         = [k,     kj];
+        time      = [time,  t0_extended + (2^(iScale-1))*(2*kj-1)/fs];
+    end
+
+    % Approximation coefficients: columns 1:nbb/2^nbl (kept in SData).
+    % Same support as the coarsest detail scale -> scale = nbl.
+    nc = nbb/2^nbl;
+    kc = 1:nc;
+    if nargin >= 4 && ~isempty(SData)
+        power_c = sum(abs(SData(:,1:nc)).^2,1)/nbc;
+    else
+        power_c = NaN(1,nc);
+    end
+    index     = [index, kc];
+    scale     = [scale, nbl*ones(1,nc)];
+    k         = [k,     kc];
+    time      = [time,  t0_extended + (2^(nbl-1))*(2*kc-1)/fs];
+    power     = [power, power_c];
+    is_approx = [false(1,numel(index)-nc), true(1,nc)];
+
+    % Box extent in extended-data samples
+    box_l = (k-1).*(2.^scale) + 1;
+    box_r =  k   .*(2.^scale);
+    
+    % Box edges in the true data samples (not extended), clipped to the data
+    win_l = max(box_l, ext_start) - ext_start + 1;
+    win_r = min(box_r, ext_end)   - ext_start + 1;
+    
+    % Distance (in whole boxes) to the nearest end of the true data.
+    % Negative when the box starts before the data start or ends after the data end.
+    edge_dist = min(floor((box_l - ext_start)./2.^scale), ...
+                    floor((ext_end - box_r)   ./2.^scale));
+    
+    Labels = struct('index', index, ...
+                    'scale', scale, ...
+                    'k',     k, ...
+                    'time',  time, ...
+                    'power', power, ...
+                    'win_l', win_l, ...
+                    'win_r', win_r, ...
+                    'edge_dist', edge_dist, ...
+                    'is_approx', is_approx);
+
+end

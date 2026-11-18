@@ -47,6 +47,7 @@ function DEF = be_wmem_pipelineoptions(DataTypes)
         DEF.wavelet.order               = 10;
         DEF.wavelet.nb_levels           = 128;
         DEF.wavelet.shrinkage           = 0;
+        DEF.wavelet.edge_boxes          = 2;
         if any(ismember( 'nirs', lower(DataTypes)))
             DEF.wavelet.energy_threshold    = 1;
         else
