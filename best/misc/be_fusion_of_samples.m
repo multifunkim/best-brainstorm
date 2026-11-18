@@ -12,7 +12,7 @@ function Fused = be_fusion_of_samples(Sel)
 %
 %   OUTPUTS:
 %       -   Fused :   structure of row vectors with fields
-%                     index, scale, k, time, win_l, win_r, modality
+%                     index, scale, k, time, win_l, win_r, is_approx, modality
 %
 % Ordering (unchanged from the original behavior):
 %   - 1 modality  : decreasing power
@@ -41,30 +41,31 @@ function Fused = be_fusion_of_samples(Sel)
 %    along with BEst. If not, see <http://www.gnu.org/licenses/>.
 % -------------------------------------------------------------------------   
 
-geom = {'index','scale','k','time','win_l','win_r'};
-
-if numel(Sel) == 2
-    A = Sel{1};
-    B = Sel{2};
-    idx = union(A.index, B.index);                 % sorted ascending
-
-    [inA, locA] = ismember(idx, A.index);
-    [~,   locB] = ismember(idx, B.index);
-
-    for ii = 1:numel(geom)
-        f = geom{ii};
-        Fused.(f)       = zeros(1, numel(idx));
-        Fused.(f)(inA)  = A.(f)(locA(inA));
-        Fused.(f)(~inA) = B.(f)(locB(~inA));
+    geom = {'index','scale','k','time','win_l','win_r','is_approx'};
+    
+    if numel(Sel) == 2
+        A = Sel{1};
+        B = Sel{2};
+        idx = union(A.index, B.index);                 % sorted ascending
+    
+        [inA, locA] = ismember(idx, A.index);
+        [~,   locB] = ismember(idx, B.index);
+    
+        for ii = 1:numel(geom)
+            f = geom{ii};
+            Fused.(f)       = zeros(1, numel(idx));
+            Fused.(f)(inA)  = A.(f)(locA(inA));
+            Fused.(f)(~inA) = B.(f)(locB(~inA));
+        end
+        Fused.is_approx = logical(Fused.is_approx);   % zeros() above made it double
+    else
+        % only one modality: we keep the ordering related to the power
+        for ii = 1:numel(geom)
+            Fused.(geom{ii}) = Sel{1}.(geom{ii});
+        end
     end
-else
-    % only one modality: we keep the ordering related to the power
-    for ii = 1:numel(geom)
-        Fused.(geom{ii}) = Sel{1}.(geom{ii});
-    end
-end
-
-% modality code (always 1, as in the original)
-Fused.modality = ones(1, numel(Fused.index));
+    
+    % modality code (always 1, as in the original)
+    Fused.modality = ones(1, numel(Fused.index));
 
 end

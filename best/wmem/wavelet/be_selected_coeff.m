@@ -97,7 +97,7 @@ end
 in_time = box_in_window(Fused, fs, t1, t2, false);
 
 % scales of interest
-if ~isempty(OPTIONS.wavelet.selected_scales) && logical(prod(OPTIONS.wavelet.selected_scales))
+if ~isempty(OPTIONS.wavelet.selected_scales)
     in_scale = ismember(Fused.scale, OPTIONS.wavelet.selected_scales);
 else
     if OPTIONS.optional.verbose
